@@ -31,6 +31,21 @@ size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               char* __restrict__ targetBuffer,
                               size_t targetBufferSize);
 
+//!
+//! \brief  Writes the provided data to the file specified.
+//!
+//! \param[in]  sourceBuffer      The data to be written to the file. Does not need to be null terminated.
+//! \param[in]  sourceBufferSize  The number of bytes to read from the source buffer.
+//! \param[in]  fileDescriptor    The file to write the data to.
+//!
+//! \returns  The number of bytes written to the file.
+//!
+//! \note  This function is async signal safe.
+//!
+size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
+                                       size_t sourceBufferSize,
+                                       int fileDescriptor);
+
 #ifdef __cplusplus
 }
 #endif

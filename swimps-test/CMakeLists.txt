@@ -14,6 +14,7 @@ add_executable(
     swimps-test
     source/swimps-test.cpp
     swimps-io-test/source/swimps-write-to-buffer-test.cpp
+    swimps-io-test/source/swimps-write-to-file-descriptor-test.cpp
 )
 
 target_include_directories(swimps-test PUBLIC include)
