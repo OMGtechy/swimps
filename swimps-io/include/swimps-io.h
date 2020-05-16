@@ -24,6 +24,8 @@ extern "C" {
 //!
 //! \note  The source and target must not be NULL.
 //!
+//! \note  This function is async signal safe.
+//!
 size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
                               char* __restrict__ targetBuffer,
