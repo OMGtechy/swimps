@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stddef.h>
 
 //!
 //! \brief  Writes the provided data to the buffer specified, up to the target size.
