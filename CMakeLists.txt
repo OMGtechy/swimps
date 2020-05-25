@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(swimps VERSION 0.0.1 LANGUAGES C)
 
+add_compile_options(-Wall -Wextra -pedantic -Werror)
+
 add_subdirectory(swimps-test)
 add_subdirectory(swimps-preload)
 add_subdirectory(swimps-log)
