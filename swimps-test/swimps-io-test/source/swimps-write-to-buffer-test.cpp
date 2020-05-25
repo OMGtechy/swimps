@@ -7,7 +7,7 @@ SCENARIO("swimps_write_to_buffer", "[swimps-io]") {
 
         // Not really a test, but an assumption of the test setup.
         // If violated, all bets are off anyway.
-        REQUIRE(std::all_of(std::begin(targetBuffer), std::end(targetBuffer), [](char byte) { return byte == 0; }));
+        REQUIRE(std::all_of(std::begin(targetBuffer), std::end(targetBuffer), [](const char byte) { return byte == 0; }));
 
         WHEN("4 bytes of non-zero data are written in.") {
             const char sourceBuffer[4] = {1, 2, 3, 4};
