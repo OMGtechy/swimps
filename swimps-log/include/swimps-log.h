@@ -28,9 +28,11 @@ typedef enum swimps_log_level {
 //!
 //! \note  The formatted message is not null terminated.
 //!
+//! \note  Message and target buffers must not overlap.
+//!
 size_t swimps_format_log_message(
     const swimps_log_level_t logLevel,
-    const char* const message,
+    const char* const __restrict__ message,
     const size_t messageSize,
-    char* targetBuffer,
+    char* __restrict__ targetBuffer,
     const size_t targetBufferSize);
