@@ -46,6 +46,35 @@ size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
                                        size_t sourceBufferSize,
                                        int fileDescriptor);
 
+//!
+//! \brief  Formats the string, as per printf rules (see supported list), into the target buffer.
+//!
+//! \param[in]   formatBuffer      The buffer containing the format string. Does not need to be null terminated.
+//! \param[in]   formatBufferSize  The size of the format buffer, in bytes.
+//! \param[out]  targetBuffer      Where to write the formatted string.
+//! \param[in]   targetBufferSize  The size of the target buffer, in bytes.
+//! \param[in]   ...               The values to use when formatting the string.
+//!
+//! \returns  The number of bytes written to the target buffer.
+//!
+//! \note  If there isn't enough room in the target buffer to write the formatted string,
+//!        it will be truncated.
+//!
+//! \note  The resulting string is not NULL terminated.
+//!
+//! \note  This function is async signal safe.
+//!
+//! \note  Only single-byte ASCII characters are supported.
+//!
+//! \note  Supported format specifiers are:
+//!        - %d: int
+//!
+size_t swimps_format_string(const char* __restrict__ formatBuffer,
+                            size_t formatBufferSize,
+                            char* __restrict__ targetBuffer,
+                            size_t targetBufferSize,
+                            ...);
+
 #ifdef __cplusplus
 }
 #endif

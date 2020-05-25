@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
@@ -32,4 +33,49 @@ size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
     }
 
     return bytesWrittenTotal;
+}
+
+size_t swimps_format_string(const char* __restrict__ formatBuffer,
+                            size_t formatBufferSize,
+                            char* __restrict__ targetBuffer,
+                            size_t targetBufferSize,
+                            ...) {
+    size_t bytesWritten = 0;
+
+    do {
+        const size_t bytesToProcess = swimps_min(formatBufferSize, targetBufferSize);
+
+        // the return value is either:
+        // 1) NULL, meaning the we're done.
+        // 2) A pointer to the character after the %, meaning some formatting needs doing.
+        const char* formatCharacter = memccpy(targetBuffer,
+                                              formatBuffer,
+                                              '%',
+                                              bytesToProcess);
+
+        {
+            const size_t newBytesWritten =
+                formatCharacter == NULL ? bytesToProcess
+                                        : ((size_t)(formatCharacter - targetBuffer));
+
+            formatBuffer += newBytesWritten;
+            formatBufferSize -= newBytesWritten;
+
+            targetBuffer += newBytesWritten;
+            targetBufferSize -= newBytesWritten;
+
+            bytesWritten += newBytesWritten;
+        }
+
+        if (formatCharacter == NULL) {
+            // end of string!
+            break;
+        }
+
+        assert(targetBuffer == formatCharacter);
+
+        // TODO: format
+    } while(formatBufferSize > 0 && targetBufferSize > 0);
+
+    return bytesWritten;
 }
