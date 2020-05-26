@@ -58,4 +58,25 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("An uninitialised target buffer of 2 bytes.") {
+        char targetBuffer[2];
+
+        WHEN("A 2 byte string with an integer format specifier, a single digit vararg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%', 'd' };
+            const size_t bytesWritten = swimps_format_string(formatBuffer,
+                                                             sizeof formatBuffer,
+                                                             targetBuffer,
+                                                             sizeof targetBuffer,
+                                                             7);
+
+            THEN("The function returns that it has written 1 byte.") {
+                REQUIRE(bytesWritten == 1);
+            }
+
+            THEN("The formatted character is present in the target buffer.") {
+                REQUIRE(targetBuffer[0] == '7');
+            }
+        }
+    }
 }

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdarg.h>
 
 size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
@@ -40,23 +41,27 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                             char* __restrict__ targetBuffer,
                             size_t targetBufferSize,
                             ...) {
+
+    va_list varargs;
+    va_start(varargs, targetBufferSize);
+
     size_t bytesWritten = 0;
 
     do {
         const size_t bytesToProcess = swimps_min(formatBufferSize, targetBufferSize);
 
-        // the return value is either:
+        // The return value is either:
         // 1) NULL, meaning the we're done.
         // 2) A pointer to the character after the %, meaning some formatting needs doing.
-        const char* formatCharacter = memccpy(targetBuffer,
-                                              formatBuffer,
-                                              '%',
-                                              bytesToProcess);
+        const char* const formatCharacterTarget = memccpy(targetBuffer,
+                                                          formatBuffer,
+                                                          '%',
+                                                          bytesToProcess);
 
         {
             const size_t newBytesWritten =
-                formatCharacter == NULL ? bytesToProcess
-                                        : ((size_t)(formatCharacter - targetBuffer));
+                formatCharacterTarget == NULL ? bytesToProcess
+                                              : ((size_t)(formatCharacterTarget - targetBuffer));
 
             formatBuffer += newBytesWritten;
             formatBufferSize -= newBytesWritten;
@@ -67,15 +72,50 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
             bytesWritten += newBytesWritten;
         }
 
-        if (formatCharacter == NULL) {
+        if (formatCharacterTarget == NULL || formatBufferSize == 0 || targetBufferSize == 0) {
             // end of string!
             break;
         }
 
-        assert(targetBuffer == formatCharacter);
+        assert(targetBuffer == formatCharacterTarget);
 
-        // TODO: format
+        // Since we've hit a format string, targetBuffer now contains % as the last character.
+        // We want to overwrite this with the formatted data, hence the - 1.
+        bytesWritten -= 1;
+        targetBuffer -= 1;
+        targetBufferSize += 1;
+
+        switch(*formatBuffer) {
+        case 'd':
+            {
+                formatBuffer += 1;
+                formatBufferSize -=1;
+                int value = va_arg(varargs, int);
+                assert(targetBufferSize != 0);
+                do {
+                    *targetBuffer = '0' + (value % 10);
+                    targetBuffer += 1;
+                    targetBufferSize -= 1;
+                    bytesWritten += 1;
+                    value /= 10;
+                } while (targetBufferSize > 0 && value > 0);
+                break;
+            }
+        default:
+            {
+                *targetBuffer = '?';
+                targetBuffer += 1;
+                targetBufferSize -= 1;
+                formatBuffer += 1;
+                formatBufferSize -=1;
+                bytesWritten += 1;
+                break;
+            }
+        }
+
     } while(formatBufferSize > 0 && targetBufferSize > 0);
+
+    va_end(varargs);
 
     return bytesWritten;
 }
