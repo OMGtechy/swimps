@@ -14,18 +14,16 @@ swimps_error_code_t swimps_profile(const char* const executable) {
     case -1: {
         // Fork failed.
         char logMessageBuffer[128] = { 0 };
-        const char* const formatString = "fork failed, errno %d.";
 
-        const size_t logBytesWritten = swimps_format_string(formatString,
-                                                         strlen(formatString),
-                                                         logMessageBuffer,
-                                                         sizeof logMessageBuffer,
-                                                         errno);
+        snprintf(logMessageBuffer,
+                 sizeof logMessageBuffer,
+                 "fork failed, errno %d.",
+                 errno);
 
         char formattedLogMessageBuffer[128] = { 0 };
         const size_t formattedLogBytesWritten = swimps_format_log_message(SWIMPS_LOG_LEVEL_DEBUG,
                                                                           logMessageBuffer,
-                                                                          logBytesWritten,
+                                                                          strlen(logMessageBuffer),
                                                                           formattedLogMessageBuffer,
                                                                           sizeof formattedLogMessageBuffer);
 
