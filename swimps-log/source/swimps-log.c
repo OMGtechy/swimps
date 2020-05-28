@@ -1,7 +1,8 @@
 #include "swimps-log.h"
 #include "swimps-io.h"
 
-#include "string.h"
+#include <string.h>
+#include <unistd.h>
 
 size_t swimps_format_log_message(
     const swimps_log_level_t logLevel,
@@ -38,4 +39,35 @@ size_t swimps_format_log_message(
                                            targetBufferSize - bytesWritten);
 
     return bytesWritten;
+}
+
+size_t swimps_write_to_log(
+    const swimps_log_level_t logLevel,
+    const char* const message,
+    const size_t messageSize) {
+
+    char targetBuffer[2048] = { 0 };
+
+    const size_t bytesWritten = swimps_format_log_message(logLevel,
+                                                          message,
+                                                          messageSize,
+                                                          targetBuffer,
+                                                          sizeof targetBuffer);
+
+    int targetFileDescriptor;
+
+    switch(logLevel) {
+    case SWIMPS_LOG_LEVEL_FATAL:
+    case SWIMPS_LOG_LEVEL_ERROR:
+    case SWIMPS_LOG_LEVEL_WARNING:
+        targetFileDescriptor = STDERR_FILENO;
+        break;
+    default:
+        targetFileDescriptor = STDOUT_FILENO;
+        break;
+    }
+
+    return swimps_write_to_file_descriptor(targetBuffer,
+                                           bytesWritten,
+                                           targetFileDescriptor);
 }

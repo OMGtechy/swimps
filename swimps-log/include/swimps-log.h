@@ -30,9 +30,29 @@ typedef enum swimps_log_level {
 //!
 //! \note  Message and target buffers must not overlap.
 //!
+//! \note  This function is async signal safe.
+//!
 size_t swimps_format_log_message(
     const swimps_log_level_t logLevel,
     const char* const __restrict__ message,
     const size_t messageSize,
     char* __restrict__ targetBuffer,
     const size_t targetBufferSize);
+
+//!
+//! \brief  Writes a message to all log targets, with the correct formatting.
+//!
+//! \param[in]  logLevel     The kind of log message (error, info, etc).
+//! \param[in]  message      The message to write.
+//! \param[in]  messageSize  The size of the message, in bytes.
+//!
+//! \returns  The number of bytes written to the log.
+//!
+//! \note  Messages must be less than 2048 bytes long *after* formatting.
+//!
+//! \note  This function is async signal safe.
+//!
+size_t swimps_write_to_log(
+    const swimps_log_level_t loglLevel,
+    const char* const message,
+    const size_t messageSize);
