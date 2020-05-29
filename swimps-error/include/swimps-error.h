@@ -6,7 +6,8 @@ extern "C" {
 
 typedef enum swimps_error_code {
     SWIMPS_ERROR_NONE,
-    SWIMPS_ERROR_FORK_FAILED
+    SWIMPS_ERROR_FORK_FAILED,
+    SWIMPS_ERROR_PTRACE_FAILED
 } swimps_error_code_t;
 
 #ifdef __cplusplus
