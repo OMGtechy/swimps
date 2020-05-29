@@ -79,4 +79,69 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
             }
         }
     }
+    
+    GIVEN("An uninitialised target buffer of 64 bytes.") {
+        char targetBuffer[64];
+
+        WHEN("A 2 byte string with a string format specifier, a string vararg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%', 's' };
+            const size_t bytesWritten = swimps_format_string(formatBuffer,
+                                                             sizeof formatBuffer,
+                                                             targetBuffer,
+                                                             sizeof targetBuffer,
+                                                             "The quick fox jumps over the lazy brown dog.");
+
+            THEN("The function returns that it has written 45 bytes.") {
+                REQUIRE(bytesWritten == 45);
+            }
+
+            THEN("The formatted character is present in the target buffer.") {
+                REQUIRE(targetBuffer[0] == 'T');
+                REQUIRE(targetBuffer[1] == 'h');
+                REQUIRE(targetBuffer[2] == 'e');
+                REQUIRE(targetBuffer[3] == ' ');
+                REQUIRE(targetBuffer[4] == 'q');
+                REQUIRE(targetBuffer[5] == 'u');
+                REQUIRE(targetBuffer[6] == 'i');
+                REQUIRE(targetBuffer[7] == 'c');
+                REQUIRE(targetBuffer[8] == 'k');
+                REQUIRE(targetBuffer[9] == ' ');
+                REQUIRE(targetBuffer[10] == 'f');
+                REQUIRE(targetBuffer[11] == 'o');
+                REQUIRE(targetBuffer[12] == 'x');
+                REQUIRE(targetBuffer[13] == ' ');
+                REQUIRE(targetBuffer[14] == 'j');
+                REQUIRE(targetBuffer[15] == 'u');
+                REQUIRE(targetBuffer[16] == 'm');
+                REQUIRE(targetBuffer[17] == 'p');
+                REQUIRE(targetBuffer[18] == 's');
+                REQUIRE(targetBuffer[19] == ' ');
+                REQUIRE(targetBuffer[20] == 'o');
+                REQUIRE(targetBuffer[21] == 'v');
+                REQUIRE(targetBuffer[22] == 'e');
+                REQUIRE(targetBuffer[23] == 'r');
+                REQUIRE(targetBuffer[24] == ' ');
+                REQUIRE(targetBuffer[25] == 't');
+                REQUIRE(targetBuffer[26] == 'h');
+                REQUIRE(targetBuffer[27] == 'e');
+                REQUIRE(targetBuffer[28] == ' ');
+                REQUIRE(targetBuffer[29] == 'l');
+                REQUIRE(targetBuffer[30] == 'a');
+                REQUIRE(targetBuffer[31] == 'z');
+                REQUIRE(targetBuffer[32] == 'y');
+                REQUIRE(targetBuffer[33] == ' ');
+                REQUIRE(targetBuffer[34] == 'b');
+                REQUIRE(targetBuffer[35] == 'r');
+                REQUIRE(targetBuffer[36] == 'o');
+                REQUIRE(targetBuffer[37] == 'w');
+                REQUIRE(targetBuffer[38] == 'n');
+                REQUIRE(targetBuffer[39] == ' ');
+                REQUIRE(targetBuffer[40] == 'd');
+                REQUIRE(targetBuffer[41] == 'o');
+                REQUIRE(targetBuffer[42] == 'g');
+                REQUIRE(targetBuffer[43] == '.');
+                REQUIRE(targetBuffer[44] == '\0');
+            }
+        }
+    }  
 }
