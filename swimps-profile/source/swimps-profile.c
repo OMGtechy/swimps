@@ -13,8 +13,6 @@
 extern char** environ;
 
 swimps_error_code_t child(const char* const executable) {
-    (void) executable;
-
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
         char logMessageBuffer[128] = { 0 };
@@ -81,7 +79,51 @@ swimps_error_code_t child(const char* const executable) {
     environment[i++] = absolutePathToLDPreload;
     environment[i] = NULL;
 
-    return SWIMPS_ERROR_NONE;
+    // TODO: support user passing arguments to program
+    char* argv[] = {
+        strdup(executable),
+        NULL
+    };
+
+    // TODO: include args
+    {
+        char logMessageBuffer[1024] = { 0 };
+        const size_t bytesWritten = snprintf(logMessageBuffer,
+                                             sizeof logMessageBuffer,
+                                             "Executing program: %s",
+                                             executable);
+
+        swimps_write_to_log(SWIMPS_LOG_LEVEL_INFO,
+                            logMessageBuffer,
+                            bytesWritten);
+    }
+
+    for(char** envIter = environment; *envIter != NULL; ++envIter) {
+        swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+                            *envIter,
+                            strlen(*envIter));
+    }
+
+    execve(executable, argv, environment);
+
+    // we only get here if execve failed
+    {
+        char logMessageBuffer[128] = { 0 };
+        const size_t bytesWritten = snprintf(logMessageBuffer,
+                                             sizeof logMessageBuffer,
+                                             "Failed to execute target program, errno %d.",
+                                             errno);
+
+        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+                            logMessageBuffer,
+                            bytesWritten);
+    }
+
+    for(size_t i = 0; i < ((sizeof argv)  / (sizeof argv[0])); ++i) {
+        free(argv[i]);
+    }
+
+    return SWIMPS_ERROR_EXECVE_FAILED;
 }
 
 swimps_error_code_t swimps_profile(const char* const executable) {
