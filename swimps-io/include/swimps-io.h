@@ -68,6 +68,7 @@ size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
 //!
 //! \note  Supported format specifiers are:
 //!        - %d: int
+//!        - %s: a null terminated string as a const char*
 //!
 size_t swimps_format_string(const char* __restrict__ formatBuffer,
                             size_t formatBufferSize,

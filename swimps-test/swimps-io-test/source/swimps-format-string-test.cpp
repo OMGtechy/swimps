@@ -91,8 +91,8 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
                                                              sizeof targetBuffer,
                                                              "The quick fox jumps over the lazy brown dog.");
 
-            THEN("The function returns that it has written 45 bytes.") {
-                REQUIRE(bytesWritten == 45);
+            THEN("The function returns that it has written 44 bytes.") {
+                REQUIRE(bytesWritten == 44);
             }
 
             THEN("The formatted character is present in the target buffer.") {
@@ -140,7 +140,6 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
                 REQUIRE(targetBuffer[41] == 'o');
                 REQUIRE(targetBuffer[42] == 'g');
                 REQUIRE(targetBuffer[43] == '.');
-                REQUIRE(targetBuffer[44] == '\0');
             }
         }
     }  
