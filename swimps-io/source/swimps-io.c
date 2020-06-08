@@ -101,6 +101,20 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                 } while (targetBufferSize > 0 && value > 0);
                 break;
             }
+        case 's':
+            {
+                formatBuffer += 1;
+                formatBufferSize -=1;
+                const char* const value = va_arg(varargs, const char*);
+                for (size_t index = 0; value[index] != '\0' || targetBufferSize == 0; ++index)
+                {
+                    *targetBuffer = value[index];
+                    targetBuffer += 1;
+                    targetBufferSize -= 1;
+                    bytesWritten += 1;
+                }
+                break;
+            }
         default:
             {
                 *targetBuffer = '?';
