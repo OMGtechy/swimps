@@ -28,9 +28,7 @@ swimps_error_code_t swimps_profile(const char* const executable) {
     case 0:
         return swimps_profile_child(executable);
     default:
-        // We're the parent process.
-        // TODO: implement parent
-        return SWIMPS_ERROR_NONE;
+        return swimps_profile_parent(pid);
     }
 }
 

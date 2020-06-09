@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(swimps-profile VERSION 0.0.1 LANGUAGES C)
 
-add_library(swimps-profile SHARED source/swimps-profile.c source/swimps-profile-child.c)
+add_library(swimps-profile SHARED source/swimps-profile.c source/swimps-profile-child.c source/swimps-profile-parent.c)
 target_include_directories(swimps-profile PUBLIC include)
 target_link_libraries(swimps-profile swimps-error swimps-log swimps-io)
 
