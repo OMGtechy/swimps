@@ -53,6 +53,6 @@ size_t swimps_format_log_message(
 //! \note  This function is async signal safe.
 //!
 size_t swimps_write_to_log(
-    const swimps_log_level_t loglLevel,
+    const swimps_log_level_t logLevel,
     const char* const message,
     const size_t messageSize);
