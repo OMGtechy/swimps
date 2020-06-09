@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <math.h>
+#include <stdlib.h>
 
 size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
@@ -91,14 +93,31 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                 formatBuffer += 1;
                 formatBufferSize -=1;
                 int value = va_arg(varargs, int);
+                const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
+                unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
                 assert(targetBufferSize != 0);
-                do {
-                    *targetBuffer = '0' + (value % 10);
-                    targetBuffer += 1;
-                    targetBufferSize -= 1;
-                    bytesWritten += 1;
+
+                // Ensure that we do not write to memory we do not own.
+                while (targetBufferSize <= numberOfDigitsInValueLeft - 1)
+                {
+                    numberOfDigitsInValueLeft -= 1;
                     value /= 10;
-                } while (targetBufferSize > 0 && value > 0);
+                }
+
+                targetBuffer += numberOfDigitsInValueLeft - 1;
+
+                while (targetBufferSize > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
+                {
+                    *targetBuffer = '0' + (value % 10);
+                    targetBuffer -= 1;
+                    targetBufferSize -= 1;
+
+                    bytesWritten += 1;
+                    numberOfDigitsInValueLeft -= 1;
+                    value /= 10;
+                }
+
+                targetBuffer += numberOfDigitsInValue + 1;
                 break;
             }
         case 's':
