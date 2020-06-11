@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 swimps_error_code_t swimps_profile(const char* const executable) {
     const pid_t pid = fork();
@@ -16,8 +17,9 @@ swimps_error_code_t swimps_profile(const char* const executable) {
 
         const size_t bytesWritten = snprintf(logMessageBuffer,
                                              sizeof logMessageBuffer,
-                                             "fork failed, errno %d.",
-                                             errno);
+                                             "fork failed, errno %d (%s).",
+                                             errno,
+                                             strerror(errno));
 
         swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
                             logMessageBuffer,

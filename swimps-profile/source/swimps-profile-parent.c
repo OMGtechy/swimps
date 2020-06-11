@@ -59,12 +59,13 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
 
             if (ptrace(PTRACE_CONT, childPid, 0 /* ignored */, signalToSend) == -1) {
                 char targetBuffer[128] = { 0 };
-                const char formatBuffer[] = "ptrace(PTRACE_CONT) failed, errno %d.";
+                const char formatBuffer[] = "ptrace(PTRACE_CONT) failed, errno %d (%s).";
                 const size_t bytesWritten = swimps_format_string(formatBuffer,
                                                                  strlen(formatBuffer),
                                                                  targetBuffer,
                                                                  sizeof targetBuffer,
-                                                                 errno);
+                                                                 errno,
+                                                                 strerror(errno));
 
                 swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
                                     targetBuffer,

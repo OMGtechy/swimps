@@ -18,8 +18,9 @@ swimps_error_code_t swimps_profile_child(const char* const executable) {
         char logMessageBuffer[128] = { 0 };
         const size_t bytesWritten = snprintf(logMessageBuffer,
                                              sizeof logMessageBuffer,
-                                             "ptrace(PTRACE_TRACEME) failed, errno %d.",
-                                             errno);
+                                             "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
+                                             errno,
+                                             strerror(errno));
 
         swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
                             logMessageBuffer,
@@ -111,8 +112,9 @@ swimps_error_code_t swimps_profile_child(const char* const executable) {
         char logMessageBuffer[128] = { 0 };
         const size_t bytesWritten = snprintf(logMessageBuffer,
                                              sizeof logMessageBuffer,
-                                             "Failed to execute target program, errno %d.",
-                                             errno);
+                                             "Failed to execute target program, errno %d (%s).",
+                                             errno,
+                                             strerror(errno));
 
         swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
                             logMessageBuffer,
