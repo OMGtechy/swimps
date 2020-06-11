@@ -22,6 +22,15 @@ swimps_error_code_t swimps_profile_child(char** args) {
         return SWIMPS_ERROR_NULL_PARAMETER;
     }
 
+    if (args[0] == NULL) {
+        char message[] = "No program specified.";
+        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+                            message,
+                            sizeof message);
+
+        return SWIMPS_ERROR_INVALID_PARAMETER;
+    }
+
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
         char logMessageBuffer[128] = { 0 };
