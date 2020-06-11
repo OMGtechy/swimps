@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-swimps_error_code_t swimps_profile(const char* const executable) {
+swimps_error_code_t swimps_profile(char** args) {
     const pid_t pid = fork();
 
     switch(pid) {
@@ -28,7 +28,7 @@ swimps_error_code_t swimps_profile(const char* const executable) {
         return SWIMPS_ERROR_FORK_FAILED;
     }
     case 0:
-        return swimps_profile_child(executable);
+        return swimps_profile_child(args);
     default:
         return swimps_profile_parent(pid);
     }

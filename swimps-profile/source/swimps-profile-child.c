@@ -12,7 +12,16 @@
 
 extern char** environ;
 
-swimps_error_code_t swimps_profile_child(const char* const executable) {
+swimps_error_code_t swimps_profile_child(char** args) {
+    if (args == NULL) {
+        char message[] = "swimps_profile_child given NULL args";
+        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+                            message,
+                            sizeof message);
+
+        return SWIMPS_ERROR_NULL_PARAMETER;
+    }
+
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
         char logMessageBuffer[128] = { 0 };
@@ -80,23 +89,29 @@ swimps_error_code_t swimps_profile_child(const char* const executable) {
     environment[i++] = absolutePathToLDPreload;
     environment[i] = NULL;
 
-    // TODO: support user passing arguments to program
-    char* argv[] = {
-        strdup(executable),
-        NULL
-    };
-
-    // TODO: include args
     {
         char logMessageBuffer[1024] = { 0 };
-        const size_t bytesWritten = snprintf(logMessageBuffer,
-                                             sizeof logMessageBuffer,
-                                             "Executing program: %s",
-                                             executable);
+        char* logMessageBufferPtr = logMessageBuffer;
+        char* const logMessageBufferPtrEnd = logMessageBuffer + (sizeof logMessageBuffer);
+        size_t totalBytesWritten = snprintf(logMessageBufferPtr,
+                                            logMessageBufferPtrEnd - logMessageBufferPtr,
+                                            "Executing program:");
+
+        logMessageBufferPtr += totalBytesWritten;
+
+        for(char** argToPrint = args; *argToPrint != NULL && logMessageBufferPtr < logMessageBufferPtrEnd; ++argToPrint) {
+            const size_t bytesWritten = snprintf(logMessageBufferPtr,
+                                                 logMessageBufferPtrEnd - logMessageBufferPtr,
+                                                 " %s",
+                                                 *argToPrint);
+
+            logMessageBufferPtr += bytesWritten;
+            totalBytesWritten += bytesWritten;
+        }
 
         swimps_write_to_log(SWIMPS_LOG_LEVEL_INFO,
                             logMessageBuffer,
-                            bytesWritten);
+                            totalBytesWritten);
     }
 
     for(char** envIter = environment; *envIter != NULL; ++envIter) {
@@ -105,7 +120,7 @@ swimps_error_code_t swimps_profile_child(const char* const executable) {
                             strlen(*envIter));
     }
 
-    execve(executable, argv, environment);
+    execve(*args, args, environment);
 
     // we only get here if execve failed
     {
@@ -119,10 +134,6 @@ swimps_error_code_t swimps_profile_child(const char* const executable) {
         swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
                             logMessageBuffer,
                             bytesWritten);
-    }
-
-    for(size_t i = 0; i < ((sizeof argv)  / (sizeof argv[0])); ++i) {
-        free(argv[i]);
     }
 
     return SWIMPS_ERROR_EXECVE_FAILED;

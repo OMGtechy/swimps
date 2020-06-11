@@ -11,22 +11,24 @@ extern "C" {
 //!
 //! \brief  Starts a profile.
 //!
-//! \param[in]  executable  The executable to profile.
+//! \param[in]  args  argv-esk parameters: the first should be the program to execute,
+//!                                        followed by its args.
 //!
 //! \returns  An error code, if there was an error.
 //!
-swimps_error_code_t swimps_profile(const char* const executable);
+swimps_error_code_t swimps_profile(char** args);
 
 //!
 //! \brief  Sets up a process in the "child" role for profiling.
 //!
-//! \param[in]  executable  The executable to profile.
+//! \param[in]  args  argv-esk parameters: the first should be the program to execute,
+//!                                        followed by its args.
 //!
 //! \returns  An error code, if there was an error.
 //!
 //! \note  If successful, this function never returns.
 //!
-swimps_error_code_t swimps_profile_child(const char* const executable);
+swimps_error_code_t swimps_profile_child(char** args);
 
 //!
 //! \brief  Sets up a process in the "parent" to monitor the profiled executable.
