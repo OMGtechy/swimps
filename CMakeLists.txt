@@ -12,3 +12,6 @@ add_subdirectory(swimps-log)
 add_subdirectory(swimps-io)
 add_subdirectory(swimps-profile)
 add_subdirectory(swimps-error)
+
+add_executable(swimps source/swimps.c)
+target_link_libraries(swimps PRIVATE swimps-profile)
