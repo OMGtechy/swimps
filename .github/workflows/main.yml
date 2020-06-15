@@ -27,3 +27,6 @@ jobs:
       with:
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
+        
+    - name: run-tests
+      run: ${{ github.workspace }}/build/swimps-test/swimps/test
