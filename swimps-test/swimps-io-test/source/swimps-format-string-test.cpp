@@ -1,6 +1,8 @@
 #include "swimps-test.h"
 #include "swimps-io.h"
 
+#include <cstring>
+
 SCENARIO("swimps_format_string", "[swimps-io]") {
     GIVEN("A zero-initialised target buffer of 8 bytes.") {
         char targetBuffer[8] = { };
@@ -79,11 +81,39 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
             }
         }
     }
-    
+
+    GIVEN("A target buffer of 4 bytes where each byte has been initialised as 8.") {
+        char targetBuffer[4];
+        memset(targetBuffer, 8, sizeof targetBuffer);
+
+        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a four digit vararg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%', 'd' };
+            const size_t bytesWritten = swimps_format_string(formatBuffer,
+                                                             sizeof formatBuffer,
+                                                             targetBuffer,
+                                                             2,
+                                                             1234);
+
+            THEN("The function returns that it has written 2 bytes.") {
+                REQUIRE(bytesWritten == 2);
+            }
+
+            THEN("The provided characters are present in the first 2 bytes of the target buffer.") {
+                REQUIRE(targetBuffer[0] == '1');
+                REQUIRE(targetBuffer[1] == '2');
+            }
+
+            THEN("The remaining 2 bytes are unchanged (still 8).") {
+                REQUIRE(targetBuffer[2] == 8);
+                REQUIRE(targetBuffer[3] == 8);
+            }
+        }
+    }
+
     GIVEN("An uninitialised target buffer of 64 bytes.") {
         char targetBuffer[64];
 
-        WHEN("A 2 byte string with a string format specifier, a string vararg and no null terminator is written into it.") {
+        WHEN("A 2 byte string with a string format specifier that has no null terminator and a string vararg is written into it.") {
             const char formatBuffer[] = { '%', 's' };
             const size_t bytesWritten = swimps_format_string(formatBuffer,
                                                              sizeof formatBuffer,
@@ -142,5 +172,40 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
                 REQUIRE(targetBuffer[43] == '.');
             }
         }
-    }  
+    }
+
+    GIVEN("A target buffer of 53 bytes where each byte has been initialised as 1.") {
+        char targetBuffer[53];
+        memset(targetBuffer, 1, sizeof targetBuffer);
+
+        WHEN("A 41 byte string with two string format specifiers, an integer format specifier, a null terminator and corresponding varargs.") {
+            const char formatBuffer[] = "%s, my name is %s and I am %d years old.";
+            const size_t bytesWritten = swimps_format_string(formatBuffer,
+                                                             sizeof formatBuffer,
+                                                             targetBuffer,
+                                                             sizeof targetBuffer,
+                                                             "Greetings",
+                                                             "Dave",
+                                                             30);
+
+            THEN("The function returns that it has written 50 bytes.") {
+                REQUIRE(bytesWritten == 50);
+            }
+
+            THEN("The formatted character is present in the target buffer.") {
+                const char stringToTestAgainst[] = "Greetings, my name is Dave and I am 30 years old.";
+                REQUIRE(strncmp(targetBuffer, stringToTestAgainst, strlen(stringToTestAgainst)) == 0);
+            }
+
+            THEN("A null terminator is present after the string") {                                                                   
+                REQUIRE(targetBuffer[49] == '\0');
+            }
+
+            THEN("The remaining 3 bytes are unchanged (still 1).") {
+                REQUIRE(targetBuffer[50] == 1);
+                REQUIRE(targetBuffer[51] == 1);
+                REQUIRE(targetBuffer[52] == 1);
+            }
+        }
+    }
 }
