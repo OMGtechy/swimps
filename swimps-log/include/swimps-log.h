@@ -11,7 +11,7 @@ typedef enum swimps_log_level {
 } swimps_log_level_t;
 
 //!
-//! \brief  Formats a message so that it's ready to be written to a log
+//! \brief  Formats a message so that it's ready to be written to a log.
 //!
 //! \param[in]   logLevel          The kind of log message (error, info, etc).
 //! \param[in]   message           The message to be written.
