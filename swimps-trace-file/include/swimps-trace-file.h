@@ -12,6 +12,8 @@
 //!
 //! \returns  The file descriptor for the trace file, or -1 if something went wrong.
 //!
+//! \note  This function is async signal safe.
+//!
 int swimps_trace_file_create(const char* const path);
 
 //!
