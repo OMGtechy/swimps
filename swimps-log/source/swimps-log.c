@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 size_t swimps_format_log_message(
     const swimps_log_level_t logLevel,
@@ -10,6 +11,9 @@ size_t swimps_format_log_message(
     const size_t messageSize,
     char* __restrict__ targetBuffer,
     const size_t targetBufferSize) {
+
+    assert(message != NULL);
+    assert(targetBuffer != NULL);
 
     const char* logLevelString = NULL;
 
@@ -45,6 +49,8 @@ size_t swimps_write_to_log(
     const swimps_log_level_t logLevel,
     const char* const message,
     const size_t messageSize) {
+
+    assert(message != NULL);
 
     char targetBuffer[2048] = { 0 };
 

@@ -12,6 +12,10 @@ size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
                               char* __restrict__ targetBuffer,
                               size_t targetBufferSize) {
+
+    assert(sourceBuffer != NULL);
+    assert(targetBuffer != NULL);
+
     const size_t bytesToWrite = swimps_min(sourceBufferSize, targetBufferSize);
     memcpy(targetBuffer, sourceBuffer, bytesToWrite);
     return bytesToWrite;
@@ -20,6 +24,9 @@ size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
 size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
                                        size_t sourceBufferSize,
                                        int fileDescriptor) {
+
+    assert(sourceBuffer != NULL);
+
     size_t bytesWrittenTotal = 0;
 
     while(sourceBufferSize > 0) {
@@ -43,6 +50,9 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                             char* __restrict__ targetBuffer,
                             size_t targetBufferSize,
                             ...) {
+
+    assert(formatBuffer != NULL);
+    assert(targetBuffer != NULL);
 
     va_list varargs;
     va_start(varargs, targetBufferSize);
@@ -95,6 +105,7 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                 int value = va_arg(varargs, int);
                 const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
                 unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
+
                 assert(targetBufferSize != 0);
 
                 // Ensure that we do not write to memory we do not own.

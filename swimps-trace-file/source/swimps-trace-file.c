@@ -10,6 +10,9 @@
 static const char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file\n";
 
 int swimps_trace_file_create(const char* const path) {
+
+    swimps_assert(path != NULL);
+
     const int file = open(
         path,
         O_CREAT | O_EXCL | O_RDWR, // Create a file with read and write access.
@@ -41,6 +44,7 @@ size_t swimps_trace_file_generate_name(const char* const programName,
                                        const pid_t pid,
                                        char* const targetBuffer,
                                        const size_t targetBufferSize) {
+
     swimps_assert(programName != NULL);
     swimps_assert(time != NULL);
     swimps_assert(targetBuffer != NULL);
