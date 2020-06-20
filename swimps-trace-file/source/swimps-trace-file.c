@@ -1,5 +1,6 @@
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
+#include "swimps-assert.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -40,6 +41,10 @@ size_t swimps_trace_file_generate_name(const char* const programName,
                                        const pid_t pid,
                                        char* const targetBuffer,
                                        const size_t targetBufferSize) {
+    swimps_assert(programName != NULL);
+    swimps_assert(time != NULL);
+    swimps_assert(targetBuffer != NULL);
+
     return snprintf(
         targetBuffer,
         targetBufferSize,
