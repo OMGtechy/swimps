@@ -14,6 +14,7 @@ add_subdirectory(swimps-profile)
 add_subdirectory(swimps-error)
 add_subdirectory(swimps-time)
 add_subdirectory(swimps-trace)
+add_subdirectory(swimps-trace-file)
 
 add_executable(swimps source/swimps.c)
 target_link_libraries(swimps PRIVATE swimps-profile)
