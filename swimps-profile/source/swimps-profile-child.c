@@ -66,34 +66,33 @@ swimps_error_code_t swimps_profile_child(char** args) {
     }
 
     // Add LD_PRELOAD
-    // In its current form this requires the library to be in the same working directory
-    // This will have to be changed in future.
     const char* const ldPreloadStr = "LD_PRELOAD=";
     const size_t ldPreloadStrLen = strlen(ldPreloadStr);
     char absolutePathToLDPreload[PATH_MAX] = { 0 };
     strncat(absolutePathToLDPreload, ldPreloadStr, ldPreloadStrLen);
 
-    const char* getCwdResult = getcwd(
+    const ssize_t swimpsPathBufferBytes = readlink(
+        "/proc/self/exe",
         absolutePathToLDPreload + ldPreloadStrLen,
         (sizeof absolutePathToLDPreload) - ldPreloadStrLen
     );
 
-    if (getCwdResult == NULL) {
+    if (swimpsPathBufferBytes == 0) {
         char logMessageBuffer[128] = { 0 };
         const size_t bytesWritten = snprintf(logMessageBuffer,
                                              sizeof logMessageBuffer,
-                                             "getcwd failed, errno %d.",
+                                             "readlink failed, errno %d.",
                                              errno);
 
         swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
                             logMessageBuffer,
                             bytesWritten);
 
-        return SWIMPS_ERROR_GETCWD_FAILED;
+        return SWIMPS_ERROR_READLINK_FAILED;
     }
 
-    const char* preloadLibFileName = "/libswimps-preload.so";
-    strncat(absolutePathToLDPreload, preloadLibFileName, strlen(preloadLibFileName));
+    const char* preloadLibPathSuffix = "-preload/libswimps-preload.so";
+    strncat(absolutePathToLDPreload, preloadLibPathSuffix, strlen(preloadLibPathSuffix));
 
     environment[i++] = absolutePathToLDPreload;
     environment[i] = NULL;
