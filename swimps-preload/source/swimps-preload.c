@@ -36,7 +36,7 @@ static int swimps_preload_create_trace_file() {
     );
 
     // Whilst it could be *exactly* the right size,
-    // changes are there's just not enough room.
+    // chances are there's just not enough room.
     if (bytesWritten == sizeof traceFileNameBuffer) {
 
         const char message[] = "Could not generate trace file name.";
