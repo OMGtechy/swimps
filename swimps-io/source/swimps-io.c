@@ -4,7 +4,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include <stdarg.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -51,11 +50,30 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
                             size_t targetBufferSize,
                             ...) {
 
-    assert(formatBuffer != NULL);
-    assert(targetBuffer != NULL);
-
     va_list varargs;
     va_start(varargs, targetBufferSize);
+
+    const size_t bytesWritten = swimps_format_string_valist(
+        formatBuffer,
+        formatBufferSize,
+        targetBuffer,
+        targetBufferSize,
+        varargs
+    );
+
+    va_end(varargs);
+
+    return bytesWritten;
+}
+
+size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
+                                   size_t formatBufferSize,
+                                   char* __restrict__ targetBuffer,
+                                   size_t targetBufferSize,
+                                   va_list varargs) {
+
+    assert(formatBuffer != NULL);
+    assert(targetBuffer != NULL);
 
     size_t bytesWritten = 0;
 
@@ -158,8 +176,6 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
         }
 
     } while(formatBufferSize > 0 && targetBufferSize > 0);
-
-    va_end(varargs);
 
     return bytesWritten;
 }

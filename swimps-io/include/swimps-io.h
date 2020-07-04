@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include <stddef.h>
+#include <stdarg.h>
 
 //!
 //! \brief  Writes the provided data to the buffer specified, up to the target size.
@@ -70,11 +71,22 @@ size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
 //!        - %d: int
 //!        - %s: a null terminated string as a const char*
 //!
-size_t swimps_format_string(const char* __restrict__ formatBuffer,
-                            size_t formatBufferSize,
-                            char* __restrict__ targetBuffer,
-                            size_t targetBufferSize,
+size_t swimps_format_string(const char* __restrict__ formatbuffer,
+                            size_t formatbuffersize,
+                            char* __restrict__ targetbuffer,
+                            size_t targetbuffersize,
                             ...);
+
+//!
+//! \brief  A variant of swimps_format_string that takes a va_list.
+//!
+//! \see swimps_format_string.
+//!
+size_t swimps_format_string_valist(const char* __restrict__ formatbuffer,
+                                   size_t formatbuffersize,
+                                   char* __restrict__ targetbuffer,
+                                   size_t targetbuffersize,
+                                   va_list varargs);
 
 #ifdef __cplusplus
 }
