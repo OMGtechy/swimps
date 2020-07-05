@@ -208,4 +208,44 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("errno is 0 and a zero-iniitalised target buffer of 12 bytes") {
+        errno = 0;
+        char targetBuffer[12] = { 0 };
+
+        WHEN("A format specifier of %d is passed alongside errno.") {
+            const char formatBuffer[] = "errno %d.";
+            const size_t bytesWritten = swimps_format_string(formatBuffer,
+                                                             sizeof formatBuffer,
+                                                             targetBuffer,
+                                                             sizeof targetBuffer,
+                                                             errno);
+
+            THEN("The number of bytes claimed to be written is as expected.") {
+                REQUIRE(bytesWritten == 8);
+            }
+
+            THEN("errno's value is unchanged.") {
+                REQUIRE(errno == 0);
+            }
+
+            THEN("The resulting string is correct.") {
+                REQUIRE(targetBuffer[0] == 'e');
+                REQUIRE(targetBuffer[1] == 'r');
+                REQUIRE(targetBuffer[2] == 'r');
+                REQUIRE(targetBuffer[3] == 'n');
+                REQUIRE(targetBuffer[4] == 'o');
+                REQUIRE(targetBuffer[5] == ' ');
+                REQUIRE(targetBuffer[6] == '0');
+                REQUIRE(targetBuffer[7] == '.');
+            }
+
+            THEN("The remaining bytes are unchanged.") {
+                REQUIRE(targetBuffer[8]  == 0);
+                REQUIRE(targetBuffer[9]  == 0);
+                REQUIRE(targetBuffer[10] == 0);
+                REQUIRE(targetBuffer[11] == 0);
+            }
+        }
+    }
 }

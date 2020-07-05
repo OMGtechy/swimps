@@ -121,6 +121,14 @@ size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
                 formatBuffer += 1;
                 formatBufferSize -=1;
                 int value = va_arg(varargs, int);
+
+                if (value == 0) {
+                    *targetBuffer = '0';
+                    targetBuffer += 1;
+                    targetBufferSize -= 1;
+                    break;
+                }
+
                 const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
                 unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
 
@@ -140,7 +148,6 @@ size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
                     *targetBuffer = '0' + (value % 10);
                     targetBuffer -= 1;
                     targetBufferSize -= 1;
-
                     bytesWritten += 1;
                     numberOfDigitsInValueLeft -= 1;
                     value /= 10;
