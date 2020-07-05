@@ -3,4 +3,4 @@ project(swimps-time VERSION 0.0.1 LANGUAGES C)
 
 add_library(swimps-time SHARED source/swimps-time.c)
 target_include_directories(swimps-time PUBLIC include)
-target_link_libraries(swimps-time swimps-assert)
+target_link_libraries(swimps-time rt swimps-assert)
