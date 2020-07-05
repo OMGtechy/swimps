@@ -77,3 +77,34 @@ size_t swimps_write_to_log(
                                            bytesWritten,
                                            targetFileDescriptor);
 }
+
+size_t swimps_format_and_write_to_log(
+    const swimps_log_level_t logLevel,
+    const char* const __restrict__ formatBuffer,
+    const size_t formatBufferSize,
+    char* __restrict__ targetBuffer,
+    const size_t targetBufferSize,
+    ...) {
+
+    assert(formatBuffer != NULL);
+    assert(targetBuffer != NULL);
+
+    va_list varargs;
+    va_start(varargs, targetBufferSize);
+
+    const size_t bytesWritten = swimps_format_string_valist(
+        formatBuffer,
+        formatBufferSize,
+        targetBuffer,
+        targetBufferSize,
+        varargs
+    );
+
+    va_end(varargs);
+
+    return swimps_write_to_log(
+        logLevel,
+        targetBuffer,
+        bytesWritten
+    );
+}

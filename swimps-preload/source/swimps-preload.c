@@ -115,19 +115,14 @@ void swimps_preload_constructor() {
         const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
         char targetBuffer[1024] = { 0 };
 
-        const size_t bytesWritten = swimps_format_string(
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
             formatBuffer,
             sizeof formatBuffer,
             targetBuffer,
             sizeof targetBuffer,
             errno,
             strerror(errno)
-        );
-
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            targetBuffer,
-            bytesWritten
         );
 
         abort();
