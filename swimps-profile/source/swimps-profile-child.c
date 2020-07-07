@@ -48,33 +48,57 @@ swimps_error_code_t swimps_profile_child(char** args) {
     }
 
     // Work out how big the environment is
+    // and where the existing LD_PRELOAD is (if there is one)
+    const char* const ldPreloadStr = "LD_PRELOAD=";
+    const char* existingLDPreload = NULL;
+    size_t existingLDPreloadIndex = 0;
+
     size_t environmentSize = 0;
     while(environ[environmentSize] != NULL) {
+        if (strncmp(environ[environmentSize], ldPreloadStr, strlen(ldPreloadStr)) == 0) {
+            existingLDPreload = environ[environmentSize];
+            existingLDPreloadIndex = environmentSize;
+        }
+
         environmentSize += 1;
     }
 
-    // Add one for LD_PRELOAD and another for the NULL at the end
-    environmentSize += 2;
+    // Add one for LD_PRELOAD if necessary
+    if (existingLDPreload == NULL) {
+        environmentSize += 1;
+    }
+
+    // Add one for the NULL at the end
+    environmentSize += 1;
 
     // Allocate space for the environment
     char** environment = malloc(environmentSize * sizeof(char*));
 
-    // Copy over the existing environment
+    // Copy over the existing environment (except LD_PRELOAD)
     size_t i = 0;
     for(; environ[i] != NULL; ++i) {
+        if (environ[i] == existingLDPreload) {
+            continue;
+        }
+
         environment[i] = environ[i];
     }
 
     // Add LD_PRELOAD
-    const char* const ldPreloadStr = "LD_PRELOAD=";
-    const size_t ldPreloadStrLen = strlen(ldPreloadStr);
     char absolutePathToLDPreload[PATH_MAX] = { 0 };
-    strncat(absolutePathToLDPreload, ldPreloadStr, ldPreloadStrLen);
+
+    if (existingLDPreload != NULL) {
+        strcat(absolutePathToLDPreload, existingLDPreload);
+        const char* separator = ":";
+        strcat(absolutePathToLDPreload, separator);
+    } else {
+        strcat(absolutePathToLDPreload, ldPreloadStr);
+    }
 
     const ssize_t swimpsPathBufferBytes = readlink(
         "/proc/self/exe",
-        absolutePathToLDPreload + ldPreloadStrLen,
-        (sizeof absolutePathToLDPreload) - ldPreloadStrLen
+        absolutePathToLDPreload + strlen(absolutePathToLDPreload),
+        (sizeof absolutePathToLDPreload) - strlen(absolutePathToLDPreload)
     );
 
     if (swimpsPathBufferBytes == 0) {
@@ -92,9 +116,14 @@ swimps_error_code_t swimps_profile_child(char** args) {
     }
 
     const char* preloadLibPathSuffix = "-preload/libswimps-preload.so";
-    strncat(absolutePathToLDPreload, preloadLibPathSuffix, strlen(preloadLibPathSuffix));
+    strcat(absolutePathToLDPreload, preloadLibPathSuffix);
 
-    environment[i++] = absolutePathToLDPreload;
+    if (existingLDPreload != NULL) {
+        environment[existingLDPreloadIndex] = absolutePathToLDPreload;
+    } else {
+        environment[i++] = absolutePathToLDPreload;
+    }
+
     environment[i] = NULL;
 
     {
