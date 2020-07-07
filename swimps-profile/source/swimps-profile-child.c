@@ -34,15 +34,16 @@ swimps_error_code_t swimps_profile_child(char** args) {
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
         char logMessageBuffer[128] = { 0 };
-        const size_t bytesWritten = snprintf(logMessageBuffer,
-                                             sizeof logMessageBuffer,
-                                             "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
-                                             errno,
-                                             strerror(errno));
-
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
-                            logMessageBuffer,
-                            bytesWritten);
+        const char formatString[] = "ptrace(PTRACE_TRACEME) failed, errno %d (%s).";
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
+            formatString,
+            sizeof formatString,
+            logMessageBuffer,
+            sizeof logMessageBuffer,
+            errno,
+            strerror(errno)
+        );
 
         return SWIMPS_ERROR_PTRACE_FAILED;
     }
@@ -103,14 +104,17 @@ swimps_error_code_t swimps_profile_child(char** args) {
 
     if (swimpsPathBufferBytes == 0) {
         char logMessageBuffer[128] = { 0 };
-        const size_t bytesWritten = snprintf(logMessageBuffer,
-                                             sizeof logMessageBuffer,
-                                             "readlink failed, errno %d.",
-                                             errno);
+        const char formatBuffer[] = "readlink failed, errno %d (%s).";
 
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
-                            logMessageBuffer,
-                            bytesWritten);
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
+            formatBuffer,
+            sizeof formatBuffer,
+            logMessageBuffer,
+            sizeof logMessageBuffer,
+            errno,
+            strerror(errno)
+        );
 
         return SWIMPS_ERROR_READLINK_FAILED;
     }
@@ -162,15 +166,17 @@ swimps_error_code_t swimps_profile_child(char** args) {
     // we only get here if execve failed
     {
         char logMessageBuffer[128] = { 0 };
-        const size_t bytesWritten = snprintf(logMessageBuffer,
-                                             sizeof logMessageBuffer,
-                                             "Failed to execute target program, errno %d (%s).",
-                                             errno,
-                                             strerror(errno));
+        const char formatBuffer[] = "Failed to execute target program, errno %d (%s).";
 
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
-                            logMessageBuffer,
-                            bytesWritten);
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
+            formatBuffer,
+            sizeof formatBuffer,
+            logMessageBuffer,
+            sizeof logMessageBuffer,
+            errno,
+            strerror(errno)
+        );
     }
 
     return SWIMPS_ERROR_EXECVE_FAILED;

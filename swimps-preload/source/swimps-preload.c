@@ -130,46 +130,34 @@ void swimps_preload_constructor() {
 
     timer_t timer;
     if (swimps_create_signal_timer(swimps_preload_clock_id, SIGPROF, &timer) == -1) {
-
         const char formatBuffer[] = "Could not create timer, errno %d (%s).";
         char targetBuffer[1024] = { 0 };
 
-        const size_t bytesWritten = swimps_format_string(
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
             formatBuffer,
             sizeof formatBuffer,
             targetBuffer,
             sizeof targetBuffer,
             errno,
             strerror(errno)
-        );
-
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            targetBuffer,
-            bytesWritten
         );
 
         abort();
     }
 
     if (swimps_preload_start_timer(timer) == -1) {
-
         const char formatBuffer[] = "Could not start timer, errno %d (%s).";
         char targetBuffer[1024] = { 0 };
 
-        const size_t bytesWritten = swimps_format_string(
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
             formatBuffer,
             sizeof formatBuffer,
             targetBuffer,
             sizeof targetBuffer,
             errno,
             strerror(errno)
-        );
-
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            targetBuffer,
-            bytesWritten
         );
 
         abort();
