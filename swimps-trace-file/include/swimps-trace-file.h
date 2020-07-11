@@ -1,6 +1,7 @@
 #pragma once
 
 #include "swimps-time.h"
+#include "swimps-trace.h"
 
 #include <stddef.h>
 #include <unistd.h>
@@ -36,3 +37,32 @@ size_t swimps_trace_file_generate_name(const char* const programName,
                                        char* const targetBuffer,
                                        const size_t targetBufferSize);
 
+//!
+//! \brief  Adds a sample to the given file.
+//!
+//! \param[in]  targetFileDescriptor  The file to add to.
+//! \param[in]  sample                The sample to add.
+//!
+//! \returns  The number of bytes written to the file.
+//!
+//! \note  This function is async signal safe.
+//!
+size_t swimps_trace_file_add_sample(const int targetFileDescriptor,
+                                    const swimps_sample_t* const sample);
+
+//!
+//! \brief  Adds a raw (i.e. non-symbolic) backtrace to the given file.
+//!
+//! \param[in]  targetFileDescriptor  The file to add to.
+//! \param[in]  backtraceID           The backtrace ID to assocaited with the backtrace.
+//! \param[in]  entries               An array of stack frame addresses.
+//! \param[in]  entriesCount          How many entries are in the array.
+//!
+//! \returns  The number of bytes written to the file.
+//!
+//! \note  This function is async signal safe.
+//!
+size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
+                                           const swimps_backtrace_id_t backtraceID,
+                                           void** entries,
+                                           const swimps_stack_frame_count_t entriesCount);

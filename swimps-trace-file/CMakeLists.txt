@@ -3,4 +3,4 @@ project(swimps-trace-file VERSION 0.0.1 LANGUAGES C)
 
 add_library(swimps-trace-file SHARED source/swimps-trace-file.c)
 target_include_directories(swimps-trace-file PUBLIC include)
-target_link_libraries(swimps-trace-file swimps-io swimps-time swimps-assert)
+target_link_libraries(swimps-trace-file swimps-io swimps-time swimps-assert swimps-trace)

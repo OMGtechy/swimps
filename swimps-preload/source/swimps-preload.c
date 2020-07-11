@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
+#include <execinfo.h>
 
 // Should be set by glibc
 extern const char* program_invocation_short_name;
@@ -18,7 +19,8 @@ static const clockid_t swimps_preload_clock_id = CLOCK_MONOTONIC;
 static atomic_flag swimps_preload_sigprof_running_flag = ATOMIC_FLAG_INIT;
 static int swimps_preload_trace_file = -1;
 
-static void swimps_preload_sigprof_handler(int signalNumber) {
+static swimps_backtrace_id_t nextBacktraceID = 1;
+static void swimps_preload_sigprof_handler(const int signalNumber) {
     (void) signalNumber;
 
     if (atomic_flag_test_and_set(&swimps_preload_sigprof_running_flag)) {
@@ -26,13 +28,35 @@ static void swimps_preload_sigprof_handler(int signalNumber) {
         return;
     }
 
-    const char message[] = "Signal being handled.";
-    swimps_write_to_log(
-        SWIMPS_LOG_LEVEL_DEBUG,
-        message,
-        sizeof message
-    );
+    swimps_sample_t sample;
+    sample.backtraceID = nextBacktraceID++;
 
+    {
+        if (swimps_gettime(swimps_preload_clock_id, &sample.timestamp) != 0) {
+            const char message[] = "swimps_gettime failed whilst taking sample.";
+            swimps_write_to_log(
+                SWIMPS_LOG_LEVEL_ERROR,
+                message,
+                sizeof message
+            );
+
+            goto swimps_preload_sigprof_cleanup;
+        }
+    }
+
+    swimps_trace_file_add_sample(swimps_preload_trace_file, &sample);
+
+    {
+        void* backtraceBuffer[2048];
+        const int numberOfStackFrames = backtrace(backtraceBuffer, sizeof backtraceBuffer / sizeof backtraceBuffer[0]);
+
+        swimps_trace_file_add_raw_backtrace(swimps_preload_trace_file,
+                                            sample.backtraceID,
+                                            backtraceBuffer,
+                                            numberOfStackFrames);
+    }
+
+swimps_preload_sigprof_cleanup:
     atomic_flag_clear(&swimps_preload_sigprof_running_flag);
 }
 
@@ -109,6 +133,21 @@ int swimps_preload_start_timer(timer_t timer) {
 
 __attribute__((constructor))
 void swimps_preload_constructor() {
+    // From https://man7.org/linux/man-pages/man3/backtrace.3.html:
+    //
+    // "backtrace() and backtrace_symbols_fd() don't call malloc()
+    //  explicitly, but they are part of libgcc, which gets loaded
+    //  dynamically when first used.  Dynamic loading usually triggers a
+    //  call to malloc(3).  If you need certain calls to these two
+    //  functions to not allocate memory (in signal handlers, for
+    //  example), you need to make sure libgcc is loaded beforehand."
+    //
+    // TL;DR: Force libgcc to load so backtrace and backtrace_symbols_fd functions are signal safe.
+    {
+        void* dummy[1];
+        backtrace(dummy, 1);
+    }
+
     swimps_preload_trace_file = swimps_preload_create_trace_file();
 
     if (swimps_preload_setup_signal_handler() == -1) {
