@@ -66,3 +66,16 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
                                            const swimps_backtrace_id_t backtraceID,
                                            void** entries,
                                            const swimps_stack_frame_count_t entriesCount);
+
+//!
+//! \brief  Finalises an opened trace file.
+//!
+//! \param[in]  fileDescriptor  The file to finalise.
+//!
+//! \returns  0 if successful, -1 otherwise (errno may be set).
+//!
+//! \note  You should not modify the file are finalising it.
+//!
+//! \note  This function is *not* async signal safe.
+//!
+int swimps_trace_file_finalise(const int fileDescriptor);

@@ -18,6 +18,7 @@ extern const char* program_invocation_short_name;
 static const clockid_t swimps_preload_clock_id = CLOCK_MONOTONIC;
 static atomic_flag swimps_preload_sigprof_running_flag = ATOMIC_FLAG_INIT;
 static int swimps_preload_trace_file = -1;
+static timer_t swimps_preload_timer;
 
 static swimps_backtrace_id_t nextBacktraceID = 1;
 static void swimps_preload_sigprof_handler(const int signalNumber) {
@@ -131,6 +132,14 @@ int swimps_preload_start_timer(timer_t timer) {
     return timer_settime(timer, 0, &timerSpec, NULL);
 }
 
+int swimps_preload_stop_timer(timer_t timer) {
+    struct itimerspec timerSpec;
+    timerSpec.it_interval.tv_sec = 0;
+    timerSpec.it_interval.tv_nsec = 0;
+    timerSpec.it_value = timerSpec.it_interval;
+    return timer_settime(timer, 0, &timerSpec, NULL);
+}
+
 __attribute__((constructor))
 void swimps_preload_constructor() {
     // From https://man7.org/linux/man-pages/man3/backtrace.3.html:
@@ -167,8 +176,7 @@ void swimps_preload_constructor() {
         abort();
     }
 
-    timer_t timer;
-    if (swimps_create_signal_timer(swimps_preload_clock_id, SIGPROF, &timer) == -1) {
+    if (swimps_create_signal_timer(swimps_preload_clock_id, SIGPROF, &swimps_preload_timer) == -1) {
         const char formatBuffer[] = "Could not create timer, errno %d (%s).";
         char targetBuffer[1024] = { 0 };
 
@@ -185,7 +193,7 @@ void swimps_preload_constructor() {
         abort();
     }
 
-    if (swimps_preload_start_timer(timer) == -1) {
+    if (swimps_preload_start_timer(swimps_preload_timer) == -1) {
         const char formatBuffer[] = "Could not start timer, errno %d (%s).";
         char targetBuffer[1024] = { 0 };
 
@@ -201,4 +209,18 @@ void swimps_preload_constructor() {
 
         abort();
     }
+}
+
+__attribute__((destructor))
+void swimps_preload_destructor() {
+    // Disable the signal handler so that non-async signal safe code can be used.
+    // TODO: is this safe if the timer fails to get created properly?
+    swimps_preload_stop_timer(swimps_preload_timer);
+
+    // Wait until the all in-progress samples are finished.
+    while (atomic_flag_test_and_set(&swimps_preload_sigprof_running_flag));
+
+    // Tidy up the data in the trace file.
+    // TODO: What happens if the trace file fails to be created properly?
+    swimps_trace_file_finalise(swimps_preload_trace_file);
 }

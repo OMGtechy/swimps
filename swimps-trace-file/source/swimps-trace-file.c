@@ -6,10 +6,14 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
+#include <errno.h>
 
 static const char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
-static const char swimps_v1_trace_raw_backtrace_marker[] = "\nrb!\n";
-static const char swimps_v1_trace_sample_marker[] = "\nsp!\n";
+
+#define swimps_v1_trace_entry_marker_size (sizeof "\n__!\n")
+static const char swimps_v1_trace_raw_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nrb!\n";
+static const char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
 
 int swimps_trace_file_create(const char* const path) {
 
@@ -89,5 +93,111 @@ size_t swimps_trace_file_add_sample(const int targetFileDescriptor, const swimps
     bytesWritten += swimps_write_to_file_descriptor((char*)&sample->timestamp, sizeof sample->timestamp, targetFileDescriptor);
 
     return bytesWritten;
+}
+
+static int swimps_trace_file_internal_read_trace_file_marker(const int fileDescriptor) {
+    char buffer[sizeof swimps_v1_trace_file_marker];
+    const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+    if (readReturnCode != sizeof swimps_v1_trace_file_marker) {
+        return -1;
+    }
+
+    return memcmp(buffer, swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
+}
+
+typedef enum swimps_trace_file_entry_kind {
+    SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN,
+    SWIMPS_TRACE_FILE_ENTRY_KIND_END_OF_FILE,
+    SWIMPS_TRACE_FILE_ENTRY_KIND_SAMPLE,
+    SWIMPS_TRACE_FILE_ENTRY_KIND_RAW_BACKTRACE
+} swimps_trace_file_entry_kind_t;
+
+static swimps_trace_file_entry_kind_t swimps_trace_file_internal_read_next_entry_kind(const int fileDescriptor) {
+    char buffer[swimps_v1_trace_entry_marker_size];
+
+    const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+    if (readReturnCode != swimps_v1_trace_entry_marker_size) {
+        return -1;
+    }
+
+    if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
+        return SWIMPS_TRACE_FILE_ENTRY_KIND_SAMPLE;
+    }
+
+    if (memcmp(buffer, swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker) == 0) {
+        return SWIMPS_TRACE_FILE_ENTRY_KIND_RAW_BACKTRACE;
+    }
+
+    return SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
+}
+
+int swimps_trace_file_finalise(const int fileDescriptor) {
+    // Go to the start of the file.
+    if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
+        const char formatBuffer[] = "Could not lseek to start of trace file to begin finalising, errno %d (%s).";
+        char targetBuffer[512] = { 0 };
+
+        swimps_format_and_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
+            formatBuffer,
+            sizeof formatBuffer,
+            targetBuffer,
+            sizeof targetBuffer,
+            errno,
+            strerror(errno)
+        );
+
+        return -1;
+    }
+
+    // Make sure this is actually a swimps trace file
+    if (swimps_trace_file_internal_read_trace_file_marker(fileDescriptor) != 0) {
+        const char message[] = "Missing swimps trace file marker.";
+
+        swimps_write_to_log(
+            SWIMPS_LOG_LEVEL_FATAL,
+            message,
+            sizeof message
+        );
+
+        return -1;
+    }
+
+    swimps_trace_file_entry_kind_t entryKind = SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
+
+    do {
+        entryKind = swimps_trace_file_internal_read_next_entry_kind(fileDescriptor);
+
+        {
+            const char formatBuffer[] = "Trace file entry kind: %d.";
+            char targetBuffer[128] = { 0 };
+
+            swimps_format_and_write_to_log(
+                SWIMPS_LOG_LEVEL_DEBUG,
+                formatBuffer,
+                sizeof formatBuffer,
+                targetBuffer,
+                sizeof targetBuffer,
+                entryKind
+            );
+        }
+
+        if (entryKind == SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN) {
+            const char message[] = "Unknown entry kind detected, bailing.";
+
+            swimps_write_to_log(
+                SWIMPS_LOG_LEVEL_DEBUG,
+                message,
+                sizeof message
+            );
+
+            return -1;
+        }
+
+        // TODO: read entry, gather symbols and eliminate duplicate backtraces.
+    }
+    while (entryKind != SWIMPS_TRACE_FILE_ENTRY_KIND_END_OF_FILE);
+
+    return 0;
 }
 
