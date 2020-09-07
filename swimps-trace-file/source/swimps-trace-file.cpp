@@ -79,7 +79,7 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
 
     for(swimps_stack_frame_count_t i = 0; i < entriesCount; ++i) {
         void* const stackFrame = entries[i];
-        bytesWritten += swimps_write_to_file_descriptor(stackFrame, sizeof stackFrame, targetFileDescriptor);
+        bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(stackFrame), sizeof stackFrame, targetFileDescriptor);
     }
 
     return bytesWritten;
@@ -117,7 +117,8 @@ static swimps_trace_file_entry_kind_t swimps_trace_file_internal_read_next_entry
 
     const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
     if (readReturnCode != swimps_v1_trace_entry_marker_size) {
-        return -1;
+        // TODO: sometimes, this will be due to end of file and should return the appropriate value for that.
+        return SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
     }
 
     if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {

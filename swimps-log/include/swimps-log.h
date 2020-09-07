@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum swimps_log_level {
     SWIMPS_LOG_LEVEL_FATAL,   //! something bad *is* happening and it cannot be recovered from
     SWIMPS_LOG_LEVEL_ERROR,   //! something bad *is* happening
@@ -78,3 +82,7 @@ size_t swimps_format_and_write_to_log(
     char* __restrict__ targetBuffer,
     const size_t targetBufferSize,
     ...);
+
+#ifdef __cplusplus
+}
+#endif
