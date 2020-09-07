@@ -3,20 +3,18 @@
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
 
+#include <atomic>
+#include <cerrno>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdatomic.h>
 #include <signal.h>
-#include <errno.h>
 #include <string.h>
 #include <execinfo.h>
 
-// Should be set by glibc
-extern const char* program_invocation_short_name;
-
 static const clockid_t swimps_preload_clock_id = CLOCK_MONOTONIC;
-static atomic_flag swimps_preload_sigprof_running_flag = ATOMIC_FLAG_INIT;
+static std::atomic_flag swimps_preload_sigprof_running_flag = ATOMIC_FLAG_INIT;
 static int swimps_preload_trace_file = -1;
 static timer_t swimps_preload_timer;
 

@@ -3,6 +3,10 @@
 #include <time.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // If the original typedef is anything other than the type specified,
 // this'll cause a compile time error...
 //
@@ -46,3 +50,7 @@ int swimps_gettime(const clockid_t clockID, swimps_timespec_t* const out);
 //! \note  This function is *not* async signal safe.
 //!
 int swimps_create_signal_timer(const clockid_t clockID, const int signal, timer_t* const out);
+
+#ifdef __cplusplus
+}
+#endif

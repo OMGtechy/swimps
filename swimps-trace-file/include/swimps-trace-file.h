@@ -6,6 +6,10 @@
 #include <stddef.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //!
 //! \brief  Creates a file with the necessary headers to store a swimps_trace.
 //!
@@ -79,3 +83,7 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
 //! \note  This function is *not* async signal safe.
 //!
 int swimps_trace_file_finalise(const int fileDescriptor);
+
+#ifdef __cplusplus
+}
+#endif
