@@ -5,220 +5,222 @@
 
 #include <atomic>
 #include <cerrno>
+#include <cstdlib>
+#include <cstring>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <string.h>
 #include <execinfo.h>
 
-static const clockid_t swimps_preload_clock_id = CLOCK_MONOTONIC;
-static std::atomic_flag swimps_preload_sigprof_running_flag = ATOMIC_FLAG_INIT;
-static int swimps_preload_trace_file = -1;
-static timer_t swimps_preload_timer;
+namespace {
 
-static swimps_backtrace_id_t nextBacktraceID = 1;
-static void swimps_preload_sigprof_handler(const int signalNumber) {
-    (void) signalNumber;
+    constexpr clockid_t clockID = CLOCK_MONOTONIC;
 
-    if (atomic_flag_test_and_set(&swimps_preload_sigprof_running_flag)) {
-        // Drop samples that occur when a sample is already being taken.
-        return;
+    std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
+    int traceFile = -1;
+    timer_t sampleTimer;
+    swimps_backtrace_id_t nextBacktraceID = 1;
+
+    void swimps_preload_sigprof_handler(const int) {
+        if (sigprofRunningFlag.test_and_set()) {
+            // Drop samples that occur when a sample is already being taken.
+            return;
+        }
+
+        swimps_sample_t sample;
+        sample.backtraceID = nextBacktraceID++;
+
+        {
+            if (swimps_gettime(clockID, &sample.timestamp) != 0) {
+                const char message[] = "swimps_gettime failed whilst taking sample.";
+                swimps_write_to_log(
+                    SWIMPS_LOG_LEVEL_ERROR,
+                    message,
+                    sizeof message
+                );
+
+                goto swimps_preload_sigprof_cleanup;
+            }
+        }
+
+        swimps_trace_file_add_sample(traceFile, &sample);
+
+        {
+            void* backtraceBuffer[2048];
+            const int numberOfStackFrames = backtrace(backtraceBuffer, sizeof backtraceBuffer / sizeof backtraceBuffer[0]);
+
+            swimps_trace_file_add_raw_backtrace(traceFile,
+                                                sample.backtraceID,
+                                                backtraceBuffer,
+                                                numberOfStackFrames);
+        }
+
+    swimps_preload_sigprof_cleanup:
+        sigprofRunningFlag.clear();
     }
 
-    swimps_sample_t sample;
-    sample.backtraceID = nextBacktraceID++;
+    int swimps_preload_create_trace_file() {
+        swimps_timespec_t time;
+        if (swimps_gettime(clockID, &time) == -1) {
 
-    {
-        if (swimps_gettime(swimps_preload_clock_id, &sample.timestamp) != 0) {
-            const char message[] = "swimps_gettime failed whilst taking sample.";
+            const char message[] = "Could not get time to generate trace file name.";
             swimps_write_to_log(
-                SWIMPS_LOG_LEVEL_ERROR,
+                SWIMPS_LOG_LEVEL_FATAL,
                 message,
                 sizeof message
             );
 
-            goto swimps_preload_sigprof_cleanup;
+            abort();
+        }
+
+        char traceFileNameBuffer[2048] = { 0 };
+
+        const size_t bytesWritten = swimps_trace_file_generate_name(
+            program_invocation_short_name,
+            &time,
+            getpid(),
+            traceFileNameBuffer,
+            sizeof traceFileNameBuffer
+        );
+
+        // Whilst it could be *exactly* the right size,
+        // chances are there's just not enough room.
+        if (bytesWritten == sizeof traceFileNameBuffer) {
+
+            const char message[] = "Could not generate trace file name.";
+            swimps_write_to_log(
+                SWIMPS_LOG_LEVEL_FATAL,
+                message,
+                sizeof message
+            );
+
+            abort();
+        }
+
+        const int file = swimps_trace_file_create(traceFileNameBuffer);
+        if (file == -1) {
+
+            const char message[] = "Could not create trace file.";
+            swimps_write_to_log(
+                SWIMPS_LOG_LEVEL_FATAL,
+                message,
+                sizeof message
+            );
+
+            abort();
+        }
+
+        return file;
+    }
+
+    int swimps_preload_setup_signal_handler() {
+        struct sigaction action;
+        action.sa_handler = swimps_preload_sigprof_handler;
+        action.sa_flags = SA_SIGINFO | SA_RESTART;
+        sigemptyset(&action.sa_mask);
+
+        return sigaction(SIGPROF, &action, NULL);
+    }
+
+    int swimps_preload_start_timer(timer_t timer) {
+        struct itimerspec timerSpec;
+        timerSpec.it_interval.tv_sec = 1;
+        timerSpec.it_interval.tv_nsec = 0;
+        timerSpec.it_value = timerSpec.it_interval;
+        return timer_settime(timer, 0, &timerSpec, NULL);
+    }
+
+    int swimps_preload_stop_timer(timer_t timer) {
+        struct itimerspec timerSpec;
+        timerSpec.it_interval.tv_sec = 0;
+        timerSpec.it_interval.tv_nsec = 0;
+        timerSpec.it_value = timerSpec.it_interval;
+        return timer_settime(timer, 0, &timerSpec, NULL);
+    }
+
+    __attribute__((constructor))
+    void swimps_preload_constructor() {
+        // From https://man7.org/linux/man-pages/man3/backtrace.3.html:
+        //
+        // "backtrace() and backtrace_symbols_fd() don't call malloc()
+        //  explicitly, but they are part of libgcc, which gets loaded
+        //  dynamically when first used.  Dynamic loading usually triggers a
+        //  call to malloc(3).  If you need certain calls to these two
+        //  functions to not allocate memory (in signal handlers, for
+        //  example), you need to make sure libgcc is loaded beforehand."
+        //
+        // TL;DR: Force libgcc to load so backtrace and backtrace_symbols_fd functions are signal safe.
+        {
+            void* dummy[1];
+            backtrace(dummy, 1);
+        }
+
+        traceFile = swimps_preload_create_trace_file();
+
+        if (swimps_preload_setup_signal_handler() == -1) {
+            const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
+            char targetBuffer[1024] = { 0 };
+
+            swimps_format_and_write_to_log(
+                SWIMPS_LOG_LEVEL_FATAL,
+                formatBuffer,
+                sizeof formatBuffer,
+                targetBuffer,
+                sizeof targetBuffer,
+                errno,
+                strerror(errno)
+            );
+
+            abort();
+        }
+
+        if (swimps_create_signal_timer(clockID, SIGPROF, &sampleTimer) == -1) {
+            const char formatBuffer[] = "Could not create timer, errno %d (%s).";
+            char targetBuffer[1024] = { 0 };
+
+            swimps_format_and_write_to_log(
+                SWIMPS_LOG_LEVEL_FATAL,
+                formatBuffer,
+                sizeof formatBuffer,
+                targetBuffer,
+                sizeof targetBuffer,
+                errno,
+                strerror(errno)
+            );
+
+            abort();
+        }
+
+        if (swimps_preload_start_timer(sampleTimer) == -1) {
+            const char formatBuffer[] = "Could not start timer, errno %d (%s).";
+            char targetBuffer[1024] = { 0 };
+
+            swimps_format_and_write_to_log(
+                SWIMPS_LOG_LEVEL_FATAL,
+                formatBuffer,
+                sizeof formatBuffer,
+                targetBuffer,
+                sizeof targetBuffer,
+                errno,
+                strerror(errno)
+            );
+
+            abort();
         }
     }
 
-    swimps_trace_file_add_sample(swimps_preload_trace_file, &sample);
+    __attribute__((destructor))
+    void swimps_preload_destructor() {
+        // Disable the signal handler so that non-async signal safe code can be used.
+        // TODO: is this safe if the timer fails to get created properly?
+        swimps_preload_stop_timer(sampleTimer);
 
-    {
-        void* backtraceBuffer[2048];
-        const int numberOfStackFrames = backtrace(backtraceBuffer, sizeof backtraceBuffer / sizeof backtraceBuffer[0]);
+        // Wait until the all in-progress samples are finished.
+        while (sigprofRunningFlag.test_and_set());
 
-        swimps_trace_file_add_raw_backtrace(swimps_preload_trace_file,
-                                            sample.backtraceID,
-                                            backtraceBuffer,
-                                            numberOfStackFrames);
+        // Tidy up the data in the trace file.
+        // TODO: What happens if the trace file fails to be created properly?
+        swimps_trace_file_finalise(traceFile);
     }
 
-swimps_preload_sigprof_cleanup:
-    atomic_flag_clear(&swimps_preload_sigprof_running_flag);
-}
-
-static int swimps_preload_create_trace_file() {
-    swimps_timespec_t time;
-    if (swimps_gettime(swimps_preload_clock_id, &time) == -1) {
-
-        const char message[] = "Could not get time to generate trace file name.";
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            message,
-            sizeof message
-        );
-
-        abort();
-    }
-
-    char traceFileNameBuffer[2048] = { 0 };
-
-    const size_t bytesWritten = swimps_trace_file_generate_name(
-        program_invocation_short_name,
-        &time,
-        getpid(),
-        traceFileNameBuffer,
-        sizeof traceFileNameBuffer
-    );
-
-    // Whilst it could be *exactly* the right size,
-    // chances are there's just not enough room.
-    if (bytesWritten == sizeof traceFileNameBuffer) {
-
-        const char message[] = "Could not generate trace file name.";
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            message,
-            sizeof message
-        );
-
-        abort();
-    }
-
-    const int file = swimps_trace_file_create(traceFileNameBuffer);
-    if (file == -1) {
-
-        const char message[] = "Could not create trace file.";
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            message,
-            sizeof message
-        );
-
-        abort();
-    }
-
-    return file;
-}
-
-int swimps_preload_setup_signal_handler() {
-    struct sigaction action;
-    action.sa_handler = swimps_preload_sigprof_handler;
-    action.sa_flags = SA_SIGINFO | SA_RESTART;
-    sigemptyset(&action.sa_mask);
-
-    return sigaction(SIGPROF, &action, NULL);
-}
-
-int swimps_preload_start_timer(timer_t timer) {
-    struct itimerspec timerSpec;
-    timerSpec.it_interval.tv_sec = 1;
-    timerSpec.it_interval.tv_nsec = 0;
-    timerSpec.it_value = timerSpec.it_interval;
-    return timer_settime(timer, 0, &timerSpec, NULL);
-}
-
-int swimps_preload_stop_timer(timer_t timer) {
-    struct itimerspec timerSpec;
-    timerSpec.it_interval.tv_sec = 0;
-    timerSpec.it_interval.tv_nsec = 0;
-    timerSpec.it_value = timerSpec.it_interval;
-    return timer_settime(timer, 0, &timerSpec, NULL);
-}
-
-__attribute__((constructor))
-void swimps_preload_constructor() {
-    // From https://man7.org/linux/man-pages/man3/backtrace.3.html:
-    //
-    // "backtrace() and backtrace_symbols_fd() don't call malloc()
-    //  explicitly, but they are part of libgcc, which gets loaded
-    //  dynamically when first used.  Dynamic loading usually triggers a
-    //  call to malloc(3).  If you need certain calls to these two
-    //  functions to not allocate memory (in signal handlers, for
-    //  example), you need to make sure libgcc is loaded beforehand."
-    //
-    // TL;DR: Force libgcc to load so backtrace and backtrace_symbols_fd functions are signal safe.
-    {
-        void* dummy[1];
-        backtrace(dummy, 1);
-    }
-
-    swimps_preload_trace_file = swimps_preload_create_trace_file();
-
-    if (swimps_preload_setup_signal_handler() == -1) {
-        const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
-        char targetBuffer[1024] = { 0 };
-
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            formatBuffer,
-            sizeof formatBuffer,
-            targetBuffer,
-            sizeof targetBuffer,
-            errno,
-            strerror(errno)
-        );
-
-        abort();
-    }
-
-    if (swimps_create_signal_timer(swimps_preload_clock_id, SIGPROF, &swimps_preload_timer) == -1) {
-        const char formatBuffer[] = "Could not create timer, errno %d (%s).";
-        char targetBuffer[1024] = { 0 };
-
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            formatBuffer,
-            sizeof formatBuffer,
-            targetBuffer,
-            sizeof targetBuffer,
-            errno,
-            strerror(errno)
-        );
-
-        abort();
-    }
-
-    if (swimps_preload_start_timer(swimps_preload_timer) == -1) {
-        const char formatBuffer[] = "Could not start timer, errno %d (%s).";
-        char targetBuffer[1024] = { 0 };
-
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
-            formatBuffer,
-            sizeof formatBuffer,
-            targetBuffer,
-            sizeof targetBuffer,
-            errno,
-            strerror(errno)
-        );
-
-        abort();
-    }
-}
-
-__attribute__((destructor))
-void swimps_preload_destructor() {
-    // Disable the signal handler so that non-async signal safe code can be used.
-    // TODO: is this safe if the timer fails to get created properly?
-    swimps_preload_stop_timer(swimps_preload_timer);
-
-    // Wait until the all in-progress samples are finished.
-    while (atomic_flag_test_and_set(&swimps_preload_sigprof_running_flag));
-
-    // Tidy up the data in the trace file.
-    // TODO: What happens if the trace file fails to be created properly?
-    swimps_trace_file_finalise(swimps_preload_trace_file);
 }
