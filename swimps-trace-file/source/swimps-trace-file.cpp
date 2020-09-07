@@ -2,18 +2,59 @@
 #include "swimps-io.h"
 #include "swimps-assert.h"
 
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <cinttypes>
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <string.h>
-#include <errno.h>
 
-static const char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
+namespace {
+    constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
 
-#define swimps_v1_trace_entry_marker_size (sizeof "\n__!\n")
-static const char swimps_v1_trace_raw_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nrb!\n";
-static const char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
+    constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
+    constexpr char swimps_v1_trace_raw_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nrb!\n";
+    constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
+
+    enum class EntryKind : int {
+        Unknown,
+        EndOfFile,
+        Sample,
+        RawBacktrace
+    };
+
+    int swimps_trace_file_internal_read_trace_file_marker(const int fileDescriptor) {
+        char buffer[sizeof swimps_v1_trace_file_marker];
+        const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+        if (readReturnCode != sizeof swimps_v1_trace_file_marker) {
+            return -1;
+        }
+
+        return memcmp(buffer, swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
+    }
+
+
+    EntryKind swimps_trace_file_internal_read_next_entry_kind(const int fileDescriptor) {
+        char buffer[swimps_v1_trace_entry_marker_size];
+
+        const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+        if (readReturnCode != swimps_v1_trace_entry_marker_size) {
+            // TODO: sometimes, this will be due to end of file and should return the appropriate value for that.
+            return EntryKind::Unknown;
+        }
+
+        if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
+            return EntryKind::Sample;
+        }
+
+        if (memcmp(buffer, swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker) == 0) {
+            return EntryKind::RawBacktrace;
+        }
+
+        return EntryKind::Unknown;
+    }
+}
 
 int swimps_trace_file_create(const char* const path) {
 
@@ -74,8 +115,8 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
     size_t bytesWritten = 0;
 
     bytesWritten += swimps_write_to_file_descriptor(swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor((char*)&backtraceID, sizeof backtraceID, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor((char*)&entriesCount, sizeof entriesCount, targetFileDescriptor);
+    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&backtraceID), sizeof backtraceID, targetFileDescriptor);
+    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(entriesCount), sizeof entriesCount, targetFileDescriptor);
 
     for(swimps_stack_frame_count_t i = 0; i < entriesCount; ++i) {
         void* const stackFrame = entries[i];
@@ -89,47 +130,10 @@ size_t swimps_trace_file_add_sample(const int targetFileDescriptor, const swimps
     size_t bytesWritten = 0;
 
     bytesWritten += swimps_write_to_file_descriptor(swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor((char*)&sample->backtraceID, sizeof sample->backtraceID, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor((char*)&sample->timestamp, sizeof sample->timestamp, targetFileDescriptor);
+    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&sample->backtraceID), sizeof sample->backtraceID, targetFileDescriptor);
+    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&sample->timestamp), sizeof sample->timestamp, targetFileDescriptor);
 
     return bytesWritten;
-}
-
-static int swimps_trace_file_internal_read_trace_file_marker(const int fileDescriptor) {
-    char buffer[sizeof swimps_v1_trace_file_marker];
-    const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
-    if (readReturnCode != sizeof swimps_v1_trace_file_marker) {
-        return -1;
-    }
-
-    return memcmp(buffer, swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
-}
-
-typedef enum swimps_trace_file_entry_kind {
-    SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN,
-    SWIMPS_TRACE_FILE_ENTRY_KIND_END_OF_FILE,
-    SWIMPS_TRACE_FILE_ENTRY_KIND_SAMPLE,
-    SWIMPS_TRACE_FILE_ENTRY_KIND_RAW_BACKTRACE
-} swimps_trace_file_entry_kind_t;
-
-static swimps_trace_file_entry_kind_t swimps_trace_file_internal_read_next_entry_kind(const int fileDescriptor) {
-    char buffer[swimps_v1_trace_entry_marker_size];
-
-    const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
-    if (readReturnCode != swimps_v1_trace_entry_marker_size) {
-        // TODO: sometimes, this will be due to end of file and should return the appropriate value for that.
-        return SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
-    }
-
-    if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
-        return SWIMPS_TRACE_FILE_ENTRY_KIND_SAMPLE;
-    }
-
-    if (memcmp(buffer, swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker) == 0) {
-        return SWIMPS_TRACE_FILE_ENTRY_KIND_RAW_BACKTRACE;
-    }
-
-    return SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
 }
 
 int swimps_trace_file_finalise(const int fileDescriptor) {
@@ -164,7 +168,7 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
         return -1;
     }
 
-    swimps_trace_file_entry_kind_t entryKind = SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN;
+    auto entryKind = EntryKind::Unknown;
 
     do {
         entryKind = swimps_trace_file_internal_read_next_entry_kind(fileDescriptor);
@@ -179,11 +183,11 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
                 sizeof formatBuffer,
                 targetBuffer,
                 sizeof targetBuffer,
-                entryKind
+                static_cast<int>(entryKind)
             );
         }
 
-        if (entryKind == SWIMPS_TRACE_FILE_ENTRY_KIND_UNKNOWN) {
+        if (entryKind == EntryKind::Unknown) {
             const char message[] = "Unknown entry kind detected, bailing.";
 
             swimps_write_to_log(
@@ -197,7 +201,7 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
 
         // TODO: read entry, gather symbols and eliminate duplicate backtraces.
     }
-    while (entryKind != SWIMPS_TRACE_FILE_ENTRY_KIND_END_OF_FILE);
+    while (entryKind != EntryKind::EndOfFile);
 
     return 0;
 }
