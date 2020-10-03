@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(swimps VERSION 0.0.1 LANGUAGES C)
+project(swimps VERSION 0.0.1 LANGUAGES C CXX)
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)
 
@@ -17,5 +17,5 @@ add_subdirectory(swimps-trace)
 add_subdirectory(swimps-trace-file)
 add_subdirectory(swimps-assert)
 
-add_executable(swimps source/swimps.c)
+add_executable(swimps source/swimps.cpp)
 target_link_libraries(swimps PRIVATE swimps-profile)
