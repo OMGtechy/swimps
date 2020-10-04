@@ -73,7 +73,7 @@ swimps_error_code_t swimps_profile_child(char** args) {
     environmentSize += 1;
 
     // Allocate space for the environment
-    char** environment = malloc(environmentSize * sizeof(char*));
+    char** environment = static_cast<char**>(malloc(environmentSize * sizeof(char*)));
 
     // Copy over the existing environment (except LD_PRELOAD)
     size_t i = 0;
