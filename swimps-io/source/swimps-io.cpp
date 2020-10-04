@@ -83,10 +83,10 @@ size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
         // The return value is either:
         // 1) NULL, meaning the we're done.
         // 2) A pointer to the character after the %, meaning some formatting needs doing.
-        const char* const formatCharacterTarget = memccpy(targetBuffer,
-                                                          formatBuffer,
-                                                          '%',
-                                                          bytesToProcess);
+        const char* const formatCharacterTarget = static_cast<char*>(memccpy(targetBuffer,
+                                                                     formatBuffer,
+                                                                     '%',
+                                                                     bytesToProcess));
 
         {
             const size_t newBytesWritten =
