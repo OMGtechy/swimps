@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(swimps-profile VERSION 0.0.1 LANGUAGES C CXX)
+project(swimps-profile VERSION 0.0.1 LANGUAGES CXX)
 
 add_library(swimps-profile SHARED source/swimps-profile.cpp source/swimps-profile-child.cpp source/swimps-profile-parent.cpp)
 target_include_directories(swimps-profile PUBLIC include)

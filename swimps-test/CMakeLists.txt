@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(swimps-test VERSION 0.0.1 LANGUAGES C CXX)
+project(swimps-test VERSION 0.0.1 LANGUAGES CXX)
 
 include(FetchContent)
 FetchContent_Declare(
