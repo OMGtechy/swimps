@@ -66,11 +66,11 @@ namespace swimps::log {
     //!
     //! \brief  Formats a message and writes to all log targets
     //!
+    //! \tparam     targetBufferSize  The size of the internal buffer to use for the formatted message.
+    //!
     //! \param[in]  logLevel          The kind of log message (error, info, etc).
     //! \param[in]  formatBuffer      The format string.
     //! \param[in]  formatBufferSize  The format string size in bytes.
-    //! \param[in]  targetBuffer      Memory where it's safe to write the formatted string.
-    //! \param[in]  targetBufferSize  The size of the target buffer in bytes.
     //! \param[in]  ...               The args for the format buffer.
     //!
     //! \returns  The number of bytes written to the log.
