@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <sys/ptrace.h>
 
-swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
+swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
     while(1) {
         int status = 0;
         waitpid(childPid, &status, 0);
@@ -17,7 +17,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
             swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                 message,
                                 strlen(message));
-            return SWIMPS_ERROR_NONE;
+            return swimps::error::ErrorCode::None;
         }
 
         if (WIFSIGNALED(status)) {
@@ -25,7 +25,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
             swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                 message,
                                 strlen(message));
-            return SWIMPS_ERROR_NONE;
+            return swimps::error::ErrorCode::None;
         }
 
         if (WIFSTOPPED(status)) {
@@ -71,7 +71,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
                                     targetBuffer,
                                     bytesWritten);
 
-                return SWIMPS_ERROR_PTRACE_FAILED;
+                return swimps::error::ErrorCode::PtraceFailed;
             }
         }
     }

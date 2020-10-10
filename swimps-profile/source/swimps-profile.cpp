@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-swimps_error_code_t swimps_profile(char** args) {
+swimps::error::ErrorCode swimps_profile(char** args) {
     const pid_t pid = fork();
 
     switch(pid) {
@@ -25,7 +25,7 @@ swimps_error_code_t swimps_profile(char** args) {
                             logMessageBuffer,
                             bytesWritten);
 
-        return SWIMPS_ERROR_FORK_FAILED;
+        return swimps::error::ErrorCode::ForkFailed;
     }
     case 0:
         return swimps_profile_child(args);

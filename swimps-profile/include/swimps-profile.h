@@ -16,7 +16,7 @@ extern "C" {
 //!
 //! \returns  An error code, if there was an error.
 //!
-swimps_error_code_t swimps_profile(char** args);
+swimps::error::ErrorCode swimps_profile(char** args);
 
 //!
 //! \brief  Sets up a process in the "child" role for profiling.
@@ -28,7 +28,7 @@ swimps_error_code_t swimps_profile(char** args);
 //!
 //! \note  If successful, this function never returns.
 //!
-swimps_error_code_t swimps_profile_child(char** args);
+swimps::error::ErrorCode swimps_profile_child(char** args);
 
 //!
 //! \brief  Sets up a process in the "parent" to monitor the profiled executable.
@@ -37,7 +37,7 @@ swimps_error_code_t swimps_profile_child(char** args);
 //!
 //! \returns An error code, if there was an error.
 //!
-swimps_error_code_t swimps_profile_parent(const pid_t childPid);
+swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid);
 
 #ifdef __cplusplus
 }

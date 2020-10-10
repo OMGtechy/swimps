@@ -12,14 +12,14 @@
 
 extern char** environ;
 
-swimps_error_code_t swimps_profile_child(char** args) {
+swimps::error::ErrorCode swimps_profile_child(char** args) {
     if (args == NULL) {
         char message[] = "swimps_profile_child given NULL args";
         swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
                             message,
                             sizeof message);
 
-        return SWIMPS_ERROR_NULL_PARAMETER;
+        return swimps::error::ErrorCode::NullParameter;
     }
 
     if (args[0] == NULL) {
@@ -28,7 +28,7 @@ swimps_error_code_t swimps_profile_child(char** args) {
                             message,
                             sizeof message);
 
-        return SWIMPS_ERROR_INVALID_PARAMETER;
+        return swimps::error::ErrorCode::InvalidParameter;
     }
 
     // Enable tracing of the program we're about to exec into
@@ -43,7 +43,7 @@ swimps_error_code_t swimps_profile_child(char** args) {
             strerror(errno)
         );
 
-        return SWIMPS_ERROR_PTRACE_FAILED;
+        return swimps::error::ErrorCode::PtraceFailed;
     }
 
     // Work out how big the environment is
@@ -111,7 +111,7 @@ swimps_error_code_t swimps_profile_child(char** args) {
             strerror(errno)
         );
 
-        return SWIMPS_ERROR_READLINK_FAILED;
+        return swimps::error::ErrorCode::ReadlinkFailed;
     }
 
     const char* preloadLibPathSuffix = "-preload/libswimps-preload.so";
@@ -171,5 +171,5 @@ swimps_error_code_t swimps_profile_child(char** args) {
         );
     }
 
-    return SWIMPS_ERROR_EXECVE_FAILED;
+    return swimps::error::ErrorCode::ExecveFailed;
 }
