@@ -21,7 +21,7 @@ size_t swimps_format_log_message(
     case swimps::log::LogLevel::Warning: logLevelString = "SWIMPS: WRN - "; break;
     case swimps::log::LogLevel::Info:    logLevelString = "SWIMPS: INF - "; break;
     case swimps::log::LogLevel::Debug:   logLevelString = "SWIMPS: DBG - "; break;
-    default:                       logLevelString = "SWIMPS: ??? - "; break;
+    default:                             logLevelString = "SWIMPS: ??? - "; break;
     }
 
     size_t bytesWritten = swimps_write_to_buffer(logLevelString,

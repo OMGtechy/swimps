@@ -106,5 +106,5 @@ namespace swimps::log {
             targetBuffer,
             bytesWritten
         );
-        }
+    }
 }
