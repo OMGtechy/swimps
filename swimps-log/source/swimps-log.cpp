@@ -6,7 +6,7 @@
 #include <assert.h>
 
 size_t swimps_format_log_message(
-    const swimps_log_level_t logLevel,
+    const swimps::log::LogLevel logLevel,
     const char* const __restrict__ message,
     const size_t messageSize,
     char* __restrict__ targetBuffer,
@@ -18,11 +18,11 @@ size_t swimps_format_log_message(
     const char* logLevelString = NULL;
 
     switch(logLevel) {
-    case SWIMPS_LOG_LEVEL_FATAL:   logLevelString = "SWIMPS: FTL - "; break;
-    case SWIMPS_LOG_LEVEL_ERROR:   logLevelString = "SWIMPS: ERR - "; break;
-    case SWIMPS_LOG_LEVEL_WARNING: logLevelString = "SWIMPS: WRN - "; break;
-    case SWIMPS_LOG_LEVEL_INFO:    logLevelString = "SWIMPS: INF - "; break;
-    case SWIMPS_LOG_LEVEL_DEBUG:   logLevelString = "SWIMPS: DBG - "; break;
+    case swimps::log::LogLevel::Fatal:   logLevelString = "SWIMPS: FTL - "; break;
+    case swimps::log::LogLevel::Error:   logLevelString = "SWIMPS: ERR - "; break;
+    case swimps::log::LogLevel::Warning: logLevelString = "SWIMPS: WRN - "; break;
+    case swimps::log::LogLevel::Info:    logLevelString = "SWIMPS: INF - "; break;
+    case swimps::log::LogLevel::Debug:   logLevelString = "SWIMPS: DBG - "; break;
     default:                       logLevelString = "SWIMPS: ??? - "; break;
     }
 
@@ -45,8 +45,8 @@ size_t swimps_format_log_message(
     return bytesWritten;
 }
 
-size_t swimps_write_to_log(
-    const swimps_log_level_t logLevel,
+size_t swimps::log::write_to_log(
+    const swimps::log::LogLevel logLevel,
     const char* const message,
     const size_t messageSize) {
 
@@ -63,9 +63,9 @@ size_t swimps_write_to_log(
     int targetFileDescriptor;
 
     switch(logLevel) {
-    case SWIMPS_LOG_LEVEL_FATAL:
-    case SWIMPS_LOG_LEVEL_ERROR:
-    case SWIMPS_LOG_LEVEL_WARNING:
+    case swimps::log::LogLevel::Fatal:
+    case swimps::log::LogLevel::Error:
+    case swimps::log::LogLevel::Warning:
         targetFileDescriptor = STDERR_FILENO;
         break;
     default:
@@ -78,8 +78,8 @@ size_t swimps_write_to_log(
                                            targetFileDescriptor);
 }
 
-size_t swimps_format_and_write_to_log(
-    const swimps_log_level_t logLevel,
+size_t swimps::log::format_and_write_to_log(
+    const swimps::log::LogLevel logLevel,
     const char* const __restrict__ formatBuffer,
     const size_t formatBufferSize,
     char* __restrict__ targetBuffer,
@@ -102,7 +102,7 @@ size_t swimps_format_and_write_to_log(
 
     va_end(varargs);
 
-    return swimps_write_to_log(
+    return swimps::log::write_to_log(
         logLevel,
         targetBuffer,
         bytesWritten

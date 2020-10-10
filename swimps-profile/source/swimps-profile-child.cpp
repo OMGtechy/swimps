@@ -15,7 +15,7 @@ extern char** environ;
 swimps_error_code_t swimps_profile_child(char** args) {
     if (args == NULL) {
         char message[] = "swimps_profile_child given NULL args";
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
                             message,
                             sizeof message);
 
@@ -24,7 +24,7 @@ swimps_error_code_t swimps_profile_child(char** args) {
 
     if (args[0] == NULL) {
         char message[] = "No program specified.";
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
                             message,
                             sizeof message);
 
@@ -35,8 +35,8 @@ swimps_error_code_t swimps_profile_child(char** args) {
     if (ptrace(PTRACE_TRACEME) == -1) {
         char logMessageBuffer[128] = { 0 };
         const char formatString[] = "ptrace(PTRACE_TRACEME) failed, errno %d (%s).";
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::format_and_write_to_log(
+            swimps::log::LogLevel::Fatal,
             formatString,
             sizeof formatString,
             logMessageBuffer,
@@ -106,8 +106,8 @@ swimps_error_code_t swimps_profile_child(char** args) {
         char logMessageBuffer[128] = { 0 };
         const char formatBuffer[] = "readlink failed, errno %d (%s).";
 
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::format_and_write_to_log(
+            swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
             logMessageBuffer,
@@ -150,13 +150,13 @@ swimps_error_code_t swimps_profile_child(char** args) {
             totalBytesWritten += bytesWritten;
         }
 
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_INFO,
+        swimps::log::write_to_log(swimps::log::LogLevel::Info,
                             logMessageBuffer,
                             totalBytesWritten);
     }
 
     for(char** envIter = environment; *envIter != NULL; ++envIter) {
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+        swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                             *envIter,
                             strlen(*envIter));
     }
@@ -168,8 +168,8 @@ swimps_error_code_t swimps_profile_child(char** args) {
         char logMessageBuffer[128] = { 0 };
         const char formatBuffer[] = "Failed to execute target program, errno %d (%s).";
 
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::format_and_write_to_log(
+            swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
             logMessageBuffer,

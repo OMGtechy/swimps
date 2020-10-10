@@ -3,6 +3,8 @@ project(swimps VERSION 0.0.1 LANGUAGES CXX)
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)
 
+set(CMAKE_CXX_STANDARD 17)
+
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 

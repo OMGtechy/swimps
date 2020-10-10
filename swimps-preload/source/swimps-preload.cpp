@@ -33,8 +33,8 @@ namespace {
         {
             if (swimps_gettime(clockID, &sample.timestamp) != 0) {
                 const char message[] = "swimps_gettime failed whilst taking sample.";
-                swimps_write_to_log(
-                    SWIMPS_LOG_LEVEL_ERROR,
+                swimps::log::write_to_log(
+                    swimps::log::LogLevel::Error,
                     message,
                     sizeof message
                 );
@@ -64,8 +64,8 @@ namespace {
         if (swimps_gettime(clockID, &time) == -1) {
 
             const char message[] = "Could not get time to generate trace file name.";
-            swimps_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
                 message,
                 sizeof message
             );
@@ -88,8 +88,8 @@ namespace {
         if (bytesWritten == sizeof traceFileNameBuffer) {
 
             const char message[] = "Could not generate trace file name.";
-            swimps_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
                 message,
                 sizeof message
             );
@@ -101,8 +101,8 @@ namespace {
         if (file == -1) {
 
             const char message[] = "Could not create trace file.";
-            swimps_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
                 message,
                 sizeof message
             );
@@ -161,8 +161,8 @@ namespace {
             const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
             char targetBuffer[1024] = { 0 };
 
-            swimps_format_and_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::format_and_write_to_log(
+                swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
                 targetBuffer,
@@ -178,8 +178,8 @@ namespace {
             const char formatBuffer[] = "Could not create timer, errno %d (%s).";
             char targetBuffer[1024] = { 0 };
 
-            swimps_format_and_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::format_and_write_to_log(
+                swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
                 targetBuffer,
@@ -195,8 +195,8 @@ namespace {
             const char formatBuffer[] = "Could not start timer, errno %d (%s).";
             char targetBuffer[1024] = { 0 };
 
-            swimps_format_and_write_to_log(
-                SWIMPS_LOG_LEVEL_FATAL,
+            swimps::log::format_and_write_to_log(
+                swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
                 targetBuffer,

@@ -142,8 +142,8 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
         const char formatBuffer[] = "Could not lseek to start of trace file to begin finalising, errno %d (%s).";
         char targetBuffer[512] = { 0 };
 
-        swimps_format_and_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::format_and_write_to_log(
+            swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
             targetBuffer,
@@ -159,8 +159,8 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
     if (swimps_trace_file_internal_read_trace_file_marker(fileDescriptor) != 0) {
         const char message[] = "Missing swimps trace file marker.";
 
-        swimps_write_to_log(
-            SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Fatal,
             message,
             sizeof message
         );
@@ -177,8 +177,8 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
             const char formatBuffer[] = "Trace file entry kind: %d.";
             char targetBuffer[128] = { 0 };
 
-            swimps_format_and_write_to_log(
-                SWIMPS_LOG_LEVEL_DEBUG,
+            swimps::log::format_and_write_to_log(
+                swimps::log::LogLevel::Debug,
                 formatBuffer,
                 sizeof formatBuffer,
                 targetBuffer,
@@ -190,8 +190,8 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
         if (entryKind == EntryKind::Unknown) {
             const char message[] = "Unknown entry kind detected, bailing.";
 
-            swimps_write_to_log(
-                SWIMPS_LOG_LEVEL_DEBUG,
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Debug,
                 message,
                 sizeof message
             );

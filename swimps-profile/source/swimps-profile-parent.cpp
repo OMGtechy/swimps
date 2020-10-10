@@ -14,7 +14,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
 
         if (WIFEXITED(status)) {
             const char message[] = "Child process exited normally.";
-            swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+            swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                 message,
                                 strlen(message));
             return SWIMPS_ERROR_NONE;
@@ -22,7 +22,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
 
         if (WIFSIGNALED(status)) {
             const char message[] = "Child process exited due to a signal.";
-            swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+            swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                 message,
                                 strlen(message));
             return SWIMPS_ERROR_NONE;
@@ -41,7 +41,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
                                                                  signalNumber,
                                                                  strsignal(signalNumber));
 
-                swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+                swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                     targetBuffer,
                                     bytesWritten);
             }
@@ -67,7 +67,7 @@ swimps_error_code_t swimps_profile_parent(const pid_t childPid) {
                                                                  errno,
                                                                  strerror(errno));
 
-                swimps_write_to_log(SWIMPS_LOG_LEVEL_DEBUG,
+                swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                     targetBuffer,
                                     bytesWritten);
 

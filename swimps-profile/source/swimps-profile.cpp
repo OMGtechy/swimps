@@ -21,7 +21,7 @@ swimps_error_code_t swimps_profile(char** args) {
                                              errno,
                                              strerror(errno));
 
-        swimps_write_to_log(SWIMPS_LOG_LEVEL_FATAL,
+        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
                             logMessageBuffer,
                             bytesWritten);
 

@@ -20,8 +20,8 @@ do { \
             __LINE__ \
         ); \
 \
-        swimps_write_to_log( \
-            SWIMPS_LOG_LEVEL_FATAL, \
+        swimps::log::write_to_log( \
+            swimps::log::LogLevel::Fatal, \
             message, \
             bytesWritten \
         ); \
