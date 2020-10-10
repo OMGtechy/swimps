@@ -91,7 +91,7 @@ namespace swimps::log {
         va_list varargs;
         va_start(varargs, formatBufferSize);
 
-        const size_t bytesWritten = swimps_format_string_valist(
+        const size_t bytesWritten = swimps::io::format_string_valist(
             formatBuffer,
             formatBufferSize,
             targetBuffer,

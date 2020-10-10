@@ -1,7 +1,7 @@
 #include "swimps-test.h"
 #include "swimps-io.h"
 
-SCENARIO("swimps_write_to_buffer", "[swimps-io]") {
+SCENARIO("swimps::io::write_to_buffer", "[swimps-io]") {
     GIVEN("A zero-initialised target buffer of 8 bytes.") {
         char targetBuffer[8] = { };
 
@@ -12,7 +12,7 @@ SCENARIO("swimps_write_to_buffer", "[swimps-io]") {
         WHEN("4 bytes of non-zero data are written in.") {
             const char sourceBuffer[4] = {1, 2, 3, 4};
 
-            const auto bytesWritten = swimps_write_to_buffer(
+            const auto bytesWritten = swimps::io::write_to_buffer(
                 sourceBuffer,
                 sizeof sourceBuffer,
                 targetBuffer,

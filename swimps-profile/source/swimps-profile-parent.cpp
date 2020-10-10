@@ -34,7 +34,7 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             {
                 char targetBuffer[128] = { 0 };
                 const char formatBuffer[] = "Child process stopped due to signal %d (%s).";
-                const size_t bytesWritten = swimps_format_string(formatBuffer,
+                const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                                  strlen(formatBuffer),
                                                                  targetBuffer,
                                                                  sizeof targetBuffer,
@@ -60,7 +60,7 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             if (ptrace(PTRACE_CONT, childPid, 0 /* ignored */, signalToSend) == -1) {
                 char targetBuffer[128] = { 0 };
                 const char formatBuffer[] = "ptrace(PTRACE_CONT) failed, errno %d (%s).";
-                const size_t bytesWritten = swimps_format_string(formatBuffer,
+                const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                                  strlen(formatBuffer),
                                                                  targetBuffer,
                                                                  sizeof targetBuffer,

@@ -24,18 +24,18 @@ size_t swimps_format_log_message(
     default:                             logLevelString = "SWIMPS: ??? - "; break;
     }
 
-    size_t bytesWritten = swimps_write_to_buffer(logLevelString,
+    size_t bytesWritten = swimps::io::write_to_buffer(logLevelString,
                                                  strlen(logLevelString),
                                                  targetBuffer,
                                                  targetBufferSize);
 
-    bytesWritten += swimps_write_to_buffer(message,
+    bytesWritten += swimps::io::write_to_buffer(message,
                                            messageSize,
                                            targetBuffer + bytesWritten,
                                            targetBufferSize - bytesWritten);
 
     const char newLine[] = { '\n' };
-    bytesWritten += swimps_write_to_buffer(newLine,
+    bytesWritten += swimps::io::write_to_buffer(newLine,
                                            sizeof newLine,
                                            targetBuffer + bytesWritten,
                                            targetBufferSize - bytesWritten);
@@ -71,7 +71,7 @@ size_t swimps::log::write_to_log(
         break;
     }
 
-    return swimps_write_to_file_descriptor(targetBuffer,
+    return swimps::io::write_to_file_descriptor(targetBuffer,
                                            bytesWritten,
                                            targetFileDescriptor);
 }

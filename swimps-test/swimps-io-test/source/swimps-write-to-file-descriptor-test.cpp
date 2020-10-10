@@ -4,9 +4,9 @@
 #include <cstdio>
 #include <unistd.h>
 
-SCENARIO("swimps_write_to_file_descriptor", "[swimps-io]") {
+SCENARIO("swimps::io::write_to_file_descriptor", "[swimps-io]") {
     GIVEN("An empty file and 4 bytes of non-zero data to be written to it.") {
-        char targetFileNameBuffer[] = "/tmp/swimps_write_to_file_descriptor-test-XXXXXX";
+        char targetFileNameBuffer[] = "/tmp/swimps::io::write_to_file_descriptor-test-XXXXXX";
         const int targetFileDescriptor = mkstemp(targetFileNameBuffer);
 
         REQUIRE(targetFileDescriptor != -1);
@@ -14,7 +14,7 @@ SCENARIO("swimps_write_to_file_descriptor", "[swimps-io]") {
         const char sourceBuffer[] = { 1, 2, 3, 4 };
 
         WHEN("The data is written to the file.") {
-            const auto bytesWritten = swimps_write_to_file_descriptor(
+            const auto bytesWritten = swimps::io::write_to_file_descriptor(
                 sourceBuffer,
                 sizeof sourceBuffer,
                 targetFileDescriptor

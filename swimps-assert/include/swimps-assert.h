@@ -11,7 +11,7 @@ do { \
         char message[2048] = { 0 }; \
         const char formatString[] = "Assertion %s failed at " __FILE__ ":%d"; \
 \
-        const size_t bytesWritten = swimps_format_string( \
+        const size_t bytesWritten = swimps::io::format_string( \
             formatString, \
             sizeof formatString, \
             message, \

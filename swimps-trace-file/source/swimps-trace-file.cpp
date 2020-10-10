@@ -71,7 +71,7 @@ int swimps_trace_file_create(const char* const path) {
     }
 
     // Write out the swimps marker to make such files easily recognisable
-    const size_t bytesWritten = swimps_write_to_file_descriptor(
+    const size_t bytesWritten = swimps::io::write_to_file_descriptor(
         swimps_v1_trace_file_marker,
         sizeof swimps_v1_trace_file_marker,
         file
@@ -114,13 +114,13 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
                                            const swimps_stack_frame_count_t entriesCount) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps_write_to_file_descriptor(swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&backtraceID), sizeof backtraceID, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(entriesCount), sizeof entriesCount, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&backtraceID), sizeof backtraceID, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(entriesCount), sizeof entriesCount, targetFileDescriptor);
 
     for(swimps_stack_frame_count_t i = 0; i < entriesCount; ++i) {
         void* const stackFrame = entries[i];
-        bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(stackFrame), sizeof stackFrame, targetFileDescriptor);
+        bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(stackFrame), sizeof stackFrame, targetFileDescriptor);
     }
 
     return bytesWritten;
@@ -129,9 +129,9 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
 size_t swimps_trace_file_add_sample(const int targetFileDescriptor, const swimps_sample_t* const sample) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps_write_to_file_descriptor(swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&sample->backtraceID), sizeof sample->backtraceID, targetFileDescriptor);
-    bytesWritten += swimps_write_to_file_descriptor(reinterpret_cast<const char*>(&sample->timestamp), sizeof sample->timestamp, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&sample->backtraceID), sizeof sample->backtraceID, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&sample->timestamp), sizeof sample->timestamp, targetFileDescriptor);
 
     return bytesWritten;
 }

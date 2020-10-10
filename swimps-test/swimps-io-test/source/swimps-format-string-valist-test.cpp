@@ -17,7 +17,7 @@ namespace {
     }
 }
 
-SCENARIO("swimps_format_string_valist", "[swimps-io]") {
+SCENARIO("swimps::io::format_string_valist", "[swimps-io]") {
     GIVEN("A zero-initialised target buffer of 16 bytes.") {
         char targetBuffer[16] = { };
 
@@ -26,7 +26,7 @@ SCENARIO("swimps_format_string_valist", "[swimps-io]") {
 
             const size_t bytesWritten = call_with_valist(
                 [&formatBuffer, &targetBuffer](va_list varargs) {
-                    return swimps_format_string_valist(
+                    return swimps::io::format_string_valist(
                         formatBuffer,
                         sizeof formatBuffer,
                         targetBuffer,

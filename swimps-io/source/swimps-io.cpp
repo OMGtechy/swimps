@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
+size_t swimps::io::write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
                               char* __restrict__ targetBuffer,
                               size_t targetBufferSize) {
@@ -21,7 +21,7 @@ size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
     return bytesToWrite;
 }
 
-size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
+size_t swimps::io::write_to_file_descriptor(const char* sourceBuffer,
                                        size_t sourceBufferSize,
                                        int fileDescriptor) {
 
@@ -45,7 +45,7 @@ size_t swimps_write_to_file_descriptor(const char* sourceBuffer,
     return bytesWrittenTotal;
 }
 
-size_t swimps_format_string(const char* __restrict__ formatBuffer,
+size_t swimps::io::format_string(const char* __restrict__ formatBuffer,
                             size_t formatBufferSize,
                             char* __restrict__ targetBuffer,
                             size_t targetBufferSize,
@@ -54,7 +54,7 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
     va_list varargs;
     va_start(varargs, targetBufferSize);
 
-    const size_t bytesWritten = swimps_format_string_valist(
+    const size_t bytesWritten = swimps::io::format_string_valist(
         formatBuffer,
         formatBufferSize,
         targetBuffer,
@@ -67,7 +67,7 @@ size_t swimps_format_string(const char* __restrict__ formatBuffer,
     return bytesWritten;
 }
 
-size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
+size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
                                    size_t formatBufferSize,
                                    char* __restrict__ targetBuffer,
                                    size_t targetBufferSize,

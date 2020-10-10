@@ -3,13 +3,13 @@
 
 #include <cstring>
 
-SCENARIO("swimps_format_string", "[swimps-io]") {
+SCENARIO("swimps::io::format_string", "[swimps-io]") {
     GIVEN("A zero-initialised target buffer of 8 bytes.") {
         char targetBuffer[8] = { };
 
         WHEN("A 4 byte string with no format specifiers or null terminator is written into it.") {
             const char formatBuffer[] = { 'a', 'b', 'c', 'd' };
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer);
@@ -39,7 +39,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("An 8 byte string with no format specifiers but with a null terminator is written into it.") {
             const char formatBuffer[] = "1234567"; // 8th is null terminator
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer);
@@ -66,7 +66,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an integer format specifier, a single digit vararg and no null terminator is written into it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer,
@@ -88,7 +88,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a four digit vararg and no null terminator is written into it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              2,
@@ -115,7 +115,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with a string format specifier that has no null terminator and a string vararg is written into it.") {
             const char formatBuffer[] = { '%', 's' };
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer,
@@ -180,7 +180,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("A 41 byte string with two string format specifiers, an integer format specifier, a null terminator and corresponding varargs.") {
             const char formatBuffer[] = "%s, my name is %s and I am %d years old.";
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer,
@@ -215,7 +215,7 @@ SCENARIO("swimps_format_string", "[swimps-io]") {
 
         WHEN("A format specifier of %d is passed alongside errno.") {
             const char formatBuffer[] = "errno %d.";
-            const size_t bytesWritten = swimps_format_string(formatBuffer,
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
                                                              sizeof targetBuffer,
