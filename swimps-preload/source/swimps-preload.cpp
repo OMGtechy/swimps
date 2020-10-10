@@ -159,14 +159,11 @@ namespace {
 
         if (swimps_preload_setup_signal_handler() == -1) {
             const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
-            char targetBuffer[1024] = { 0 };
 
-            swimps::log::format_and_write_to_log(
+            swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
-                targetBuffer,
-                sizeof targetBuffer,
                 errno,
                 strerror(errno)
             );
@@ -176,14 +173,11 @@ namespace {
 
         if (swimps_create_signal_timer(clockID, SIGPROF, &sampleTimer) == -1) {
             const char formatBuffer[] = "Could not create timer, errno %d (%s).";
-            char targetBuffer[1024] = { 0 };
 
-            swimps::log::format_and_write_to_log(
+            swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
-                targetBuffer,
-                sizeof targetBuffer,
                 errno,
                 strerror(errno)
             );
@@ -193,14 +187,11 @@ namespace {
 
         if (swimps_preload_start_timer(sampleTimer) == -1) {
             const char formatBuffer[] = "Could not start timer, errno %d (%s).";
-            char targetBuffer[1024] = { 0 };
 
-            swimps::log::format_and_write_to_log(
+            swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
                 sizeof formatBuffer,
-                targetBuffer,
-                sizeof targetBuffer,
                 errno,
                 strerror(errno)
             );

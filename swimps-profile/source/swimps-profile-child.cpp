@@ -33,14 +33,12 @@ swimps_error_code_t swimps_profile_child(char** args) {
 
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
-        char logMessageBuffer[128] = { 0 };
         const char formatString[] = "ptrace(PTRACE_TRACEME) failed, errno %d (%s).";
-        swimps::log::format_and_write_to_log(
+
+        swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatString,
             sizeof formatString,
-            logMessageBuffer,
-            sizeof logMessageBuffer,
             errno,
             strerror(errno)
         );
@@ -103,15 +101,12 @@ swimps_error_code_t swimps_profile_child(char** args) {
     );
 
     if (swimpsPathBufferBytes == 0) {
-        char logMessageBuffer[128] = { 0 };
         const char formatBuffer[] = "readlink failed, errno %d (%s).";
 
-        swimps::log::format_and_write_to_log(
+        swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
-            logMessageBuffer,
-            sizeof logMessageBuffer,
             errno,
             strerror(errno)
         );
@@ -165,15 +160,12 @@ swimps_error_code_t swimps_profile_child(char** args) {
 
     // we only get here if execve failed
     {
-        char logMessageBuffer[128] = { 0 };
         const char formatBuffer[] = "Failed to execute target program, errno %d (%s).";
 
-        swimps::log::format_and_write_to_log(
+        swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
-            logMessageBuffer,
-            sizeof logMessageBuffer,
             errno,
             strerror(errno)
         );

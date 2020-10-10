@@ -1,6 +1,10 @@
 #pragma once
 
+#include <cassert>
+#include <cstdarg>
 #include <cstddef>
+
+#include "swimps-io.h"
 
 namespace swimps::log {
 
@@ -73,11 +77,34 @@ namespace swimps::log {
     //!
     //! \note  This function is async signal safe.
     //!
+    template <size_t targetBufferSize>
     size_t format_and_write_to_log(
         const swimps::log::LogLevel logLevel,
         const char* const __restrict__ formatBuffer,
         const size_t formatBufferSize,
-        char* __restrict__ targetBuffer,
-        const size_t targetBufferSize,
-        ...);
+        ...) {
+
+        assert(formatBuffer != NULL);
+
+        char targetBuffer[targetBufferSize] = { };
+
+        va_list varargs;
+        va_start(varargs, formatBufferSize);
+
+        const size_t bytesWritten = swimps_format_string_valist(
+            formatBuffer,
+            formatBufferSize,
+            targetBuffer,
+            targetBufferSize,
+            varargs
+        );
+
+        va_end(varargs);
+
+        return swimps::log::write_to_log(
+            logLevel,
+            targetBuffer,
+            bytesWritten
+        );
+        }
 }

@@ -140,14 +140,11 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
     // Go to the start of the file.
     if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
         const char formatBuffer[] = "Could not lseek to start of trace file to begin finalising, errno %d (%s).";
-        char targetBuffer[512] = { 0 };
 
-        swimps::log::format_and_write_to_log(
+        swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
             sizeof formatBuffer,
-            targetBuffer,
-            sizeof targetBuffer,
             errno,
             strerror(errno)
         );
@@ -175,14 +172,11 @@ int swimps_trace_file_finalise(const int fileDescriptor) {
 
         {
             const char formatBuffer[] = "Trace file entry kind: %d.";
-            char targetBuffer[128] = { 0 };
 
-            swimps::log::format_and_write_to_log(
+            swimps::log::format_and_write_to_log<128>(
                 swimps::log::LogLevel::Debug,
                 formatBuffer,
                 sizeof formatBuffer,
-                targetBuffer,
-                sizeof targetBuffer,
                 static_cast<int>(entryKind)
             );
         }
