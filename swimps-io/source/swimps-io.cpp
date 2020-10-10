@@ -1,11 +1,12 @@
 #include "swimps-io.h"
-#include "swimps-math.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
 
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h>
 
 size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
                               size_t sourceBufferSize,
@@ -15,7 +16,7 @@ size_t swimps_write_to_buffer(const char* __restrict__ sourceBuffer,
     assert(sourceBuffer != NULL);
     assert(targetBuffer != NULL);
 
-    const size_t bytesToWrite = swimps_min(sourceBufferSize, targetBufferSize);
+    const size_t bytesToWrite = std::min(sourceBufferSize, targetBufferSize);
     memcpy(targetBuffer, sourceBuffer, bytesToWrite);
     return bytesToWrite;
 }
@@ -78,7 +79,7 @@ size_t swimps_format_string_valist(const char* __restrict__ formatBuffer,
     size_t bytesWritten = 0;
 
     do {
-        const size_t bytesToProcess = swimps_min(formatBufferSize, targetBufferSize);
+        const size_t bytesToProcess = std::min(formatBufferSize, targetBufferSize);
 
         // The return value is either:
         // 1) NULL, meaning the we're done.
