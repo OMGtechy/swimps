@@ -29,4 +29,5 @@ jobs:
         buildDirectory: ${{ github.workspace }}/build
         
     - name: run-tests
-      run: ${{ github.workspace }}/build/swimps-test/unit/swimps-unit-test
+      working-directory: ${{ github.workspace }}/build
+      run: ctest
