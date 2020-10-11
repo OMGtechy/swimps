@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.16)
+project(swimps-unit-test VERSION 0.0.1 LANGUAGES CXX)
+
+include(FetchContent)
+FetchContent_Declare(
+    catch
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v2.12.1
+)
+
+FetchContent_MakeAvailable(catch)
+
+add_executable(
+    swimps-unit-test
+    source/swimps-unit-test.cpp
+    swimps-io-unit-test/source/swimps-write-to-buffer-test.cpp
+    swimps-io-unit-test/source/swimps-write-to-file-descriptor-test.cpp
+    swimps-io-unit-test/source/swimps-format-string-test.cpp
+    swimps-io-unit-test/source/swimps-format-string-valist-test.cpp
+)
+
+target_include_directories(swimps-unit-test PUBLIC include)
+target_link_libraries(swimps-unit-test swimps-io Catch2::Catch2)
