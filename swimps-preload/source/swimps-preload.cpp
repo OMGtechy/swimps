@@ -31,8 +31,8 @@ namespace {
         sample.backtraceID = nextBacktraceID++;
 
         {
-            if (swimps_gettime(clockID, &sample.timestamp) != 0) {
-                const char message[] = "swimps_gettime failed whilst taking sample.";
+            if (swimps::time::now(clockID, sample.timestamp) != 0) {
+                const char message[] = "swimps::time::now failed whilst taking sample.";
                 swimps::log::write_to_log(
                     swimps::log::LogLevel::Error,
                     message,
@@ -60,8 +60,8 @@ namespace {
     }
 
     int swimps_preload_create_trace_file() {
-        swimps_timespec_t time;
-        if (swimps_gettime(clockID, &time) == -1) {
+        swimps::time::TimeSpecification time;
+        if (swimps::time::now(clockID, time) == -1) {
 
             const char message[] = "Could not get time to generate trace file name.";
             swimps::log::write_to_log(
@@ -171,7 +171,7 @@ namespace {
             abort();
         }
 
-        if (swimps_create_signal_timer(clockID, SIGPROF, &sampleTimer) == -1) {
+        if (swimps::time::create_signal_timer(clockID, SIGPROF, sampleTimer) == -1) {
             const char formatBuffer[] = "Could not create timer, errno %d (%s).";
 
             swimps::log::format_and_write_to_log<1024>(
