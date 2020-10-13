@@ -25,7 +25,7 @@ typedef struct swimps_backtrace {
 
 typedef struct swimps_sample {
     swimps_backtrace_id_t backtraceID;
-    swimps_timespec_t timestamp;
+    swimps::time::TimeSpecification timestamp;
 } swimps_sample_t;
 
 typedef struct swimps_trace {

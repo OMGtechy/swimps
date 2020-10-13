@@ -21,3 +21,6 @@ add_executable(
 
 target_include_directories(swimps-unit-test PUBLIC include)
 target_link_libraries(swimps-unit-test swimps-io Catch2::Catch2)
+
+add_test(NAME swimps-unit-test
+         COMMAND $<TARGET_FILE:swimps-unit-test>)

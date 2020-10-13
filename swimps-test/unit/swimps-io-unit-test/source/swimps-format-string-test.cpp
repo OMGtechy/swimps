@@ -302,7 +302,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
     GIVEN("errno is 0 and a zero-iniitalised target buffer of 12 bytes") {
         errno = 0;
-        char targetBuffer[12] = { 0 };
+        char targetBuffer[12];
+        memset(targetBuffer, 42, sizeof targetBuffer);
 
         WHEN("A format specifier of %d is passed alongside errno.") {
             const char formatBuffer[] = "errno %d.";
@@ -313,7 +314,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
                                                              errno);
 
             THEN("The number of bytes claimed to be written is as expected.") {
-                REQUIRE(bytesWritten == 8);
+                REQUIRE(bytesWritten == 9);
             }
 
             THEN("errno's value is unchanged.") {
@@ -329,13 +330,13 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
                 REQUIRE(targetBuffer[5] == ' ');
                 REQUIRE(targetBuffer[6] == '0');
                 REQUIRE(targetBuffer[7] == '.');
+                REQUIRE(targetBuffer[8] == '\0');
             }
 
             THEN("The remaining bytes are unchanged.") {
-                REQUIRE(targetBuffer[8]  == 0);
-                REQUIRE(targetBuffer[9]  == 0);
-                REQUIRE(targetBuffer[10] == 0);
-                REQUIRE(targetBuffer[11] == 0);
+                REQUIRE(targetBuffer[9]  == 42);
+                REQUIRE(targetBuffer[10] == 42);
+                REQUIRE(targetBuffer[11] == 42);
             }
         }
     }

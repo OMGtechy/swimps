@@ -87,7 +87,7 @@ int swimps_trace_file_create(const char* const path) {
 }
 
 size_t swimps_trace_file_generate_name(const char* const programName,
-                                       const swimps_timespec_t* const time,
+                                       const swimps::time::TimeSpecification* const time,
                                        const pid_t pid,
                                        char* const targetBuffer,
                                        const size_t targetBufferSize) {

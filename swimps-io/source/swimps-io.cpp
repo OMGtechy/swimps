@@ -128,6 +128,7 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
                     *targetBuffer = '0';
                     targetBuffer += 1;
                     targetBufferSize -= 1;
+                    bytesWritten += 1;
                     break;
                 }
 
