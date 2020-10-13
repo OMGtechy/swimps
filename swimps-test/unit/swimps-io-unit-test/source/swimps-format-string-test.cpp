@@ -61,15 +61,16 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         }
     }
 
-    GIVEN("An uninitialised target buffer of 2 bytes.") {
-        char targetBuffer[2];
+    GIVEN("A target buffer of 3 bytes, where each byte has been initialised as 120.") {
+        char targetBuffer[3];
+        memset(targetBuffer, 120, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a single digit vararg and no null terminator is written into it.") {
+        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a single digit vararg and no null terminator is given to it.") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
-                                                             sizeof targetBuffer,
+                                                             2,
                                                              7);
 
             THEN("The function returns that it has written 1 byte.") {
@@ -78,6 +79,64 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
             THEN("The formatted character is present in the target buffer.") {
                 REQUIRE(targetBuffer[0] == '7');
+            }
+
+            THEN("The remaining bytes are unchanged (still 120).") {
+                REQUIRE(targetBuffer[1] == 120);
+                REQUIRE(targetBuffer[2] == 120);
+            }
+        }
+    }
+
+    GIVEN("A target buffer of 3 bytes, where each byte has been initialised as 24.") {
+        char targetBuffer[3];
+        memset(targetBuffer, 24, sizeof targetBuffer);
+
+        WHEN("A 2 byte string with an interger format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit vararg is given to it.") {
+            const char formatBuffer[] = { '%', 'd' };
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
+                                                            sizeof formatBuffer,
+                                                            targetBuffer,
+                                                            2,
+                                                            -1);
+
+            THEN("The function returns that it has written 2 bytes.") {
+                REQUIRE(bytesWritten == 2);
+            }
+
+            THEN("The formatted characters are present in the target buffer.") {
+                REQUIRE(targetBuffer[0] == '-');
+                REQUIRE(targetBuffer[1] == '1');
+            }
+
+            THEN("The remaining bytes are unchanged (still 24).") {
+                REQUIRE(targetBuffer[2] == 24);
+            }
+        }
+    }
+
+    GIVEN("A target buffer of 2 bytes where each byte has been initialised as 5.") {
+        char targetBuffer[2];
+        memset(targetBuffer, 5, sizeof targetBuffer);
+
+        WHEN("A 2 byte string with an interger format specifier, a targetBufferSize of 1, a negative single digit vararg and no null terminator is given to it.") {
+            const char formatBuffer[] = { '%', 'd' };
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
+                                                            sizeof formatBuffer,
+                                                            targetBuffer,
+                                                            1,
+                                                            -9);
+
+            THEN("The function returns that it has written one byte.") {
+                REQUIRE(bytesWritten == 1);
+            }
+
+            THEN("The formatted characters are present in the target buffer.") {
+                REQUIRE (targetBuffer[0] == '-');
+            }
+
+            THEN("The remaining byte is unchanged (still 5).") {
+                REQUIRE (targetBuffer[1] == 5);
             }
         }
     }
@@ -106,6 +165,38 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             THEN("The remaining 2 bytes are unchanged (still 8).") {
                 REQUIRE(targetBuffer[2] == 8);
                 REQUIRE(targetBuffer[3] == 8);
+            }
+        }
+    }
+
+    GIVEN("A target buffer of 8 bytes where each byte has been initialised as 96.") {
+        char targetBuffer[8];
+        memset(targetBuffer, 96, sizeof targetBuffer);
+
+        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 4, a four digit vararg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%', 'd' };
+            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
+                                                                sizeof formatBuffer,
+                                                                targetBuffer,
+                                                                4,
+                                                                -1234);
+
+            THEN("The function returns that it has written 4 bytes.") {
+                REQUIRE(bytesWritten == 4);
+            }
+
+            THEN("The provided characters are present in the first 4 bytes of the target buffer.") {
+                REQUIRE(targetBuffer[0] == '-');
+                REQUIRE(targetBuffer[1] == '1');
+                REQUIRE(targetBuffer[2] == '2');
+                REQUIRE(targetBuffer[3] == '3');
+            }
+
+            THEN("The remaining 2 bytes are unchanged (still 96).") {
+                REQUIRE(targetBuffer[4] == 96);
+                REQUIRE(targetBuffer[5] == 96);
+                REQUIRE(targetBuffer[6] == 96);
+                REQUIRE(targetBuffer[7] == 96);
             }
         }
     }
