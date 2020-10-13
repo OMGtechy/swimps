@@ -11,7 +11,9 @@ def main():
     for trace in get_traces():
         os.remove(trace)
 
-    subprocess.run(sys.argv[1:])
+    completed_process = subprocess.run(sys.argv[1:])
+    if completed_process.returncode != 0:
+        return completed_process.returncode
 
     traces = get_traces()
     if len(traces) != 1:

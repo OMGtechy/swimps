@@ -13,11 +13,17 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
         waitpid(childPid, &status, 0);
 
         if (WIFEXITED(status)) {
-            const char message[] = "Child process exited normally.";
-            swimps::log::write_to_log(swimps::log::LogLevel::Debug,
-                                message,
-                                strlen(message));
-            return swimps::error::ErrorCode::None;
+            const auto exitCode = WEXITSTATUS(status);
+            const char message[] = "Child process exited with code %d.";
+
+            swimps::log::format_and_write_to_log<256>(
+                swimps::log::LogLevel::Debug,
+                message,
+                strlen(message),
+                exitCode);
+
+            return exitCode == 0 ? swimps::error::ErrorCode::None
+                                 : swimps::error::ErrorCode::ChildProcessHasNonZeroExitCode;
         }
 
         if (WIFSIGNALED(status)) {
