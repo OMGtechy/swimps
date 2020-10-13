@@ -83,22 +83,28 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
 
         // The return value is either:
         // 1) NULL, meaning the we're done.
-        // 2) A pointer to the character after the %, meaning some formatting needs doing.
+        // 2) A pointer to the character after the % in the target buffer,
+        //    meaning some formatting needs doing.
         const char* const formatCharacterTarget = static_cast<char*>(memccpy(targetBuffer,
                                                                      formatBuffer,
                                                                      '%',
                                                                      bytesToProcess));
 
         {
+            assert(formatCharacterTarget == NULL || *(formatCharacterTarget - 1) == '%');
+            const bool foundAPercentSign =
+                formatCharacterTarget != NULL;
+
             const size_t newBytesWritten =
-                formatCharacterTarget == NULL ? bytesToProcess
-                                              : ((size_t)(formatCharacterTarget - targetBuffer));
+                !foundAPercentSign ? bytesToProcess
+                                   : static_cast<size_t>(formatCharacterTarget - targetBuffer);
 
             formatBuffer += newBytesWritten;
             formatBufferSize -= newBytesWritten;
 
-            targetBuffer += newBytesWritten;
-            targetBufferSize -= newBytesWritten;
+            // Overwrite % sign if present.
+            targetBuffer += newBytesWritten - 1;
+            targetBufferSize -= newBytesWritten - 1;
 
             bytesWritten += newBytesWritten;
         }
@@ -108,13 +114,8 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
             break;
         }
 
-        assert(targetBuffer == formatCharacterTarget);
-
-        // Since we've hit a format string, targetBuffer now contains % as the last character.
-        // We want to overwrite this with the formatted data, hence the - 1.
+        // Overwriting % sign, so one less byte written.
         bytesWritten -= 1;
-        targetBuffer -= 1;
-        targetBufferSize += 1;
 
         switch(*formatBuffer) {
         case 'd':
@@ -129,6 +130,23 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
                     targetBufferSize -= 1;
                     bytesWritten += 1;
                     break;
+                }
+
+                // If the value is a negative, write '-' into the target buffer.
+                if (value < 0) {
+                    assert(targetBufferSize != 0);
+                    *targetBuffer = '-';
+                    bytesWritten += 1;
+
+                    targetBufferSize -= 1;
+                    targetBuffer += 1;
+
+                    value = value * -1;
+
+                    if (targetBufferSize == 0) {
+                        // No room for anything other then the '-' sign.
+                        break;
+                    }
                 }
 
                 const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
