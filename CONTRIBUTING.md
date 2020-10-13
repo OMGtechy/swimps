@@ -16,6 +16,10 @@ Found a problem? Pop onto the [issues page](https://github.com/OMGtechy/swimps/i
 
 Have an idea for how it could be better? Writing it up on the [issues page](https://github.com/OMGtechy/swimps/issues).
 
+## Financially
+
+This project wasn't started for money ... but if it means that much to you, it's much appreciated. Who knows, maybe this could become a full-time job someday. You can contribute via [LiberaPay](https://liberapay.com/OMGtechy/donate) and [Patreon](https://www.patreon.com/bePatron?u=38788556).
+
 ## Spreading the word.
 
 The more people that know about the project, the better. This leads to more people making all the other kinds of contributions and users reaping the project's benefits too!
