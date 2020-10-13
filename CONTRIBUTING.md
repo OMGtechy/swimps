@@ -20,6 +20,8 @@ Have an idea for how it could be better? Writing it up on the [issues page](http
 
 This project wasn't started for money ... but if it means that much to you, it's much appreciated. Who knows, maybe this could become a full-time job someday. You can contribute via [LiberaPay](https://liberapay.com/OMGtechy/donate) and [Patreon](https://www.patreon.com/bePatron?u=38788556).
 
+Financial contributions will be given to the project owner and may be redistributed as they see fit.
+
 ## Spreading the word.
 
 The more people that know about the project, the better. This leads to more people making all the other kinds of contributions and users reaping the project's benefits too!
@@ -34,4 +36,4 @@ No. It would be a legal minefield trying to work out what was derived from it an
 
 # Who is responsible for making sure my contributions are legal?
 
-You are. If you've been reading some copyrighted or copylefted material that isn't yours to contribute, don't contribute it. This project is supposed to be lovely and open source, let's not muddy that up with dubious intellectual property. 
+You are. If you've been reading some copyrighted or copylefted material that isn't yours to contribute, don't contribute it. This project is supposed to be lovely and open source, let's not muddy that up with dubious intellectual property.
