@@ -43,16 +43,18 @@ namespace {
             }
         }
 
-        swimps_trace_file_add_sample(traceFile, &sample);
+        swimps::trace::file::add_sample(traceFile, &sample);
 
         {
             void* backtraceBuffer[2048];
             const int numberOfStackFrames = backtrace(backtraceBuffer, sizeof backtraceBuffer / sizeof backtraceBuffer[0]);
 
-            swimps_trace_file_add_raw_backtrace(traceFile,
-                                                sample.backtraceID,
-                                                backtraceBuffer,
-                                                numberOfStackFrames);
+            swimps::trace::file::add_raw_backtrace(
+                traceFile,
+                sample.backtraceID,
+                backtraceBuffer,
+                numberOfStackFrames
+            );
         }
 
     swimps_preload_sigprof_cleanup:
@@ -75,7 +77,7 @@ namespace {
 
         char traceFileNameBuffer[2048] = { 0 };
 
-        const size_t bytesWritten = swimps_trace_file_generate_name(
+        const size_t bytesWritten = swimps::trace::file::generate_name(
             program_invocation_short_name,
             &time,
             getpid(),
@@ -97,7 +99,7 @@ namespace {
             abort();
         }
 
-        const int file = swimps_trace_file_create(traceFileNameBuffer);
+        const int file = swimps::trace::file::create(traceFileNameBuffer);
         if (file == -1) {
 
             const char message[] = "Could not create trace file.";
@@ -211,7 +213,7 @@ namespace {
 
         // Tidy up the data in the trace file.
         // TODO: What happens if the trace file fails to be created properly?
-        swimps_trace_file_finalise(traceFile);
+        swimps::trace::file::finalise(traceFile);
     }
 
 }
