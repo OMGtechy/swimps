@@ -6,6 +6,8 @@
 #include <cstring>
 #include <cerrno>
 #include <cinttypes>
+#include <vector>
+#include <optional>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -24,7 +26,7 @@ namespace {
         RawBacktrace
     };
 
-    int swimps_trace_file_internal_read_trace_file_marker(const int fileDescriptor) {
+    int read_trace_file_marker(const int fileDescriptor) {
         char buffer[sizeof swimps_v1_trace_file_marker];
         const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
         if (readReturnCode != sizeof swimps_v1_trace_file_marker) {
@@ -34,13 +36,28 @@ namespace {
         return memcmp(buffer, swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
     }
 
-
-    EntryKind swimps_trace_file_internal_read_next_entry_kind(const int fileDescriptor) {
+    EntryKind read_next_entry_kind(const int fileDescriptor) {
         char buffer[swimps_v1_trace_entry_marker_size];
+        memset(buffer, 0, sizeof buffer);
 
         const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+
+        {
+            const char formatBuffer[] = "Entry marker: %s.";
+
+            swimps::log::format_and_write_to_log<64>(
+                swimps::log::LogLevel::Debug,
+                formatBuffer,
+                sizeof formatBuffer,
+                buffer
+            );
+        }
+
+        if (readReturnCode == 0) {
+            return EntryKind::EndOfFile;
+        }
+
         if (readReturnCode != swimps_v1_trace_entry_marker_size) {
-            // TODO: sometimes, this will be due to end of file and should return the appropriate value for that.
             return EntryKind::Unknown;
         }
 
@@ -53,6 +70,66 @@ namespace {
         }
 
         return EntryKind::Unknown;
+    }
+
+    std::optional<swimps::trace::Sample> read_sample(const int fileDescriptor) {
+        swimps::trace::backtrace_id_t backtraceID;
+
+        {
+            const auto readReturnCode = read(fileDescriptor, &backtraceID, sizeof backtraceID);
+            if (readReturnCode != sizeof backtraceID) {
+                return {};
+            }
+        }
+
+        swimps::time::TimeSpecification timestamp;
+
+        {
+            const auto readReturnCode = read(fileDescriptor, &timestamp, sizeof timestamp);
+            if (readReturnCode != sizeof timestamp) {
+                return {};
+            }
+        }
+
+        return {{ backtraceID, timestamp }};
+    }
+
+    struct RawBacktrace {
+        std::vector<void*> addresses;
+        swimps::trace::backtrace_id_t id;
+    };
+
+    std::optional<RawBacktrace> read_raw_backtrace(const int fileDescriptor) {
+        swimps::trace::backtrace_id_t backtraceID;
+
+        {
+            const auto readReturnCode = read(fileDescriptor, &backtraceID, sizeof backtraceID);
+            if (readReturnCode != sizeof backtraceID) {
+                return {};
+            }
+        }
+
+        swimps::trace::stack_frame_count_t stackFrameCount;
+
+        {
+            const auto readReturnCode = read(fileDescriptor, &stackFrameCount, sizeof stackFrameCount);
+            if (readReturnCode != sizeof stackFrameCount) {
+                return {};
+            }
+        }
+
+        std::vector<void*> addresses;
+        addresses.reserve(stackFrameCount);
+
+        {
+            const auto bytesToRead = static_cast<ssize_t>(stackFrameCount * sizeof (void*));
+            const auto readReturnCode = read(fileDescriptor, &addresses[0], bytesToRead);
+            if (readReturnCode != bytesToRead) {
+                return {};
+            }
+        }
+
+        return {{ addresses, backtraceID }};
     }
 }
 
@@ -116,7 +193,7 @@ size_t swimps::trace::file::add_raw_backtrace(const int targetFileDescriptor,
 
     bytesWritten += swimps::io::write_to_file_descriptor(swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker, targetFileDescriptor);
     bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&backtraceID), sizeof backtraceID, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(entriesCount), sizeof entriesCount, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&entriesCount), sizeof entriesCount, targetFileDescriptor);
 
     for(swimps::trace::stack_frame_count_t i = 0; i < entriesCount; ++i) {
         void* const stackFrame = entries[i];
@@ -153,7 +230,7 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
     }
 
     // Make sure this is actually a swimps trace file
-    if (swimps_trace_file_internal_read_trace_file_marker(fileDescriptor) != 0) {
+    if (read_trace_file_marker(fileDescriptor) != 0) {
         const char message[] = "Missing swimps trace file marker.";
 
         swimps::log::write_to_log(
@@ -168,7 +245,7 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
     auto entryKind = EntryKind::Unknown;
 
     do {
-        entryKind = swimps_trace_file_internal_read_next_entry_kind(fileDescriptor);
+        entryKind = read_next_entry_kind(fileDescriptor);
 
         {
             const char formatBuffer[] = "Trace file entry kind: %d.";
@@ -181,16 +258,55 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
             );
         }
 
-        if (entryKind == EntryKind::Unknown) {
-            const char message[] = "Unknown entry kind detected, bailing.";
+        switch(entryKind) {
+        case EntryKind::Sample:
+            {
+                const auto sample = read_sample(fileDescriptor);
+                if (!sample) {
+                    const char message[] = "Reading sample failed.";
 
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Debug,
-                message,
-                sizeof message
-            );
+                    swimps::log::write_to_log(
+                        swimps::log::LogLevel::Fatal,
+                        message,
+                        sizeof message
+                    );
 
-            return -1;
+                    return -1;
+                }
+            }
+            break;
+        case EntryKind::RawBacktrace:
+            {
+                const auto rawBacktrace = read_raw_backtrace(fileDescriptor);
+                if (!rawBacktrace) {
+                    const char message[] = "Reading raw backtrace failed.";
+
+                    swimps::log::write_to_log(
+                        swimps::log::LogLevel::Fatal,
+                        message,
+                        sizeof message
+                    );
+
+                    return -1;
+                }
+            }
+            break;
+        case EntryKind::EndOfFile:
+            // Nothing needs doing.
+            break;
+        case EntryKind::Unknown:
+            {
+                const char message[] = "Unknown entry kind detected, bailing.";
+
+                swimps::log::write_to_log(
+                    swimps::log::LogLevel::Debug,
+                    message,
+                    sizeof message
+                );
+
+                return -1;
+            }
+            break;
         }
 
         // TODO: read entry, gather symbols and eliminate duplicate backtraces.
