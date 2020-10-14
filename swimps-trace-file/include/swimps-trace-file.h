@@ -52,7 +52,7 @@ size_t swimps_trace_file_generate_name(const char* const programName,
 //! \note  This function is async signal safe.
 //!
 size_t swimps_trace_file_add_sample(const int targetFileDescriptor,
-                                    const swimps_sample_t* const sample);
+                                    const swimps::trace::Sample* const sample);
 
 //!
 //! \brief  Adds a raw (i.e. non-symbolic) backtrace to the given file.
@@ -67,9 +67,9 @@ size_t swimps_trace_file_add_sample(const int targetFileDescriptor,
 //! \note  This function is async signal safe.
 //!
 size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
-                                           const swimps_backtrace_id_t backtraceID,
+                                           const swimps::trace::backtrace_id_t backtraceID,
                                            void** entries,
-                                           const swimps_stack_frame_count_t entriesCount);
+                                           const swimps::trace::stack_frame_count_t entriesCount);
 
 //!
 //! \brief  Finalises an opened trace file.

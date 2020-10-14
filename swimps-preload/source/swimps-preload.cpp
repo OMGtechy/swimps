@@ -19,7 +19,7 @@ namespace {
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
     int traceFile = -1;
     timer_t sampleTimer;
-    swimps_backtrace_id_t nextBacktraceID = 1;
+    swimps::trace::backtrace_id_t nextBacktraceID = 1;
 
     void swimps_preload_sigprof_handler(const int) {
         if (sigprofRunningFlag.test_and_set()) {
@@ -27,7 +27,7 @@ namespace {
             return;
         }
 
-        swimps_sample_t sample;
+        swimps::trace::Sample sample;
         sample.backtraceID = nextBacktraceID++;
 
         {

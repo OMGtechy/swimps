@@ -109,16 +109,16 @@ size_t swimps_trace_file_generate_name(const char* const programName,
 }
 
 size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
-                                           const swimps_backtrace_id_t backtraceID,
+                                           const swimps::trace::backtrace_id_t backtraceID,
                                            void** entries,
-                                           const swimps_stack_frame_count_t entriesCount) {
+                                           const swimps::trace::stack_frame_count_t entriesCount) {
     size_t bytesWritten = 0;
 
     bytesWritten += swimps::io::write_to_file_descriptor(swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker, targetFileDescriptor);
     bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&backtraceID), sizeof backtraceID, targetFileDescriptor);
     bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(entriesCount), sizeof entriesCount, targetFileDescriptor);
 
-    for(swimps_stack_frame_count_t i = 0; i < entriesCount; ++i) {
+    for(swimps::trace::stack_frame_count_t i = 0; i < entriesCount; ++i) {
         void* const stackFrame = entries[i];
         bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(stackFrame), sizeof stackFrame, targetFileDescriptor);
     }
@@ -126,7 +126,7 @@ size_t swimps_trace_file_add_raw_backtrace(const int targetFileDescriptor,
     return bytesWritten;
 }
 
-size_t swimps_trace_file_add_sample(const int targetFileDescriptor, const swimps_sample_t* const sample) {
+size_t swimps_trace_file_add_sample(const int targetFileDescriptor, const swimps::trace::Sample* const sample) {
     size_t bytesWritten = 0;
 
     bytesWritten += swimps::io::write_to_file_descriptor(swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker, targetFileDescriptor);
