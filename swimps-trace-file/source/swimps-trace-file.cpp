@@ -8,6 +8,9 @@
 #include <cinttypes>
 #include <vector>
 #include <optional>
+#include <unordered_map>
+#include <unordered_set>
+#include <functional>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -119,7 +122,7 @@ namespace {
         }
 
         std::vector<void*> addresses;
-        addresses.reserve(stackFrameCount);
+        addresses.resize(stackFrameCount);
 
         {
             const auto bytesToRead = static_cast<ssize_t>(stackFrameCount * sizeof (void*));
@@ -128,6 +131,8 @@ namespace {
                 return {};
             }
         }
+
+        swimps_assert(addresses.size() > 0);
 
         return {{ addresses, backtraceID }};
     }
@@ -242,6 +247,30 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
         return -1;
     }
 
+    struct RawBacktraceHash {
+        bool operator() (const RawBacktrace& rawBacktrace) const {
+            swimps_assert(rawBacktrace.addresses.size() > 0);
+            return std::hash<void*>{}((rawBacktrace.addresses[0]));
+        }
+    };
+
+    struct RawBacktraceEqual {
+        bool operator() (
+            const RawBacktrace& lhs,
+            const RawBacktrace& rhs
+        ) const {
+            return lhs.addresses == rhs.addresses;
+        }
+    };
+
+    std::vector<swimps::trace::Sample> samples;
+
+    std::unordered_map<
+        RawBacktrace,
+        std::unordered_set<swimps::trace::backtrace_id_t>,
+        RawBacktraceHash,
+        RawBacktraceEqual> rawBacktraceMap;
+
     auto entryKind = EntryKind::Unknown;
 
     do {
@@ -273,6 +302,8 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
 
                     return -1;
                 }
+
+                samples.push_back(*sample);
             }
             break;
         case EntryKind::RawBacktrace:
@@ -289,6 +320,8 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
 
                     return -1;
                 }
+
+                rawBacktraceMap[*rawBacktrace].insert(rawBacktrace->id);
             }
             break;
         case EntryKind::EndOfFile:
@@ -309,9 +342,27 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
             break;
         }
 
-        // TODO: read entry, gather symbols and eliminate duplicate backtraces.
+        // TODO: gather symbols.
     }
     while (entryKind != EntryKind::EndOfFile);
+
+    std::vector<swimps::trace::Sample> samplesSharingBacktraceID;
+    for(const auto& sample : samples) {
+        const auto matchingRawBacktraceIter = std::find_if(
+            rawBacktraceMap.cbegin(),
+            rawBacktraceMap.cend(),
+            [&sample](const auto& rawBacktracePair){
+                return rawBacktracePair.second.contains(sample.backtraceID);
+            }
+        );
+
+        swimps_assert(matchingRawBacktraceIter != rawBacktraceMap.cend());
+
+        samplesSharingBacktraceID.emplace_back(
+            matchingRawBacktraceIter->first.id,
+            sample.timestamp
+        );
+    }
 
     return 0;
 }
