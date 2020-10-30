@@ -2,6 +2,8 @@
 
 #include "swimps-time.h"
 
+#include <vector>
+
 namespace swimps::trace {
     // Signed integers chosen because it's easier to spot errors when they overflow.
 
@@ -20,8 +22,7 @@ namespace swimps::trace {
 
     struct Backtrace {
         backtrace_id_t id;
-        char** stackFrames;
-        stack_frame_count_t stackFrameCount;
+        std::vector<char*> stackFrames;
     };
 
     struct Sample {
@@ -30,9 +31,7 @@ namespace swimps::trace {
     };
 
     struct Trace {
-        Sample* samples;
-        sample_count_t sampleCount;
-        Backtrace* backtraces;
-        backtrace_count_t backtraceCount;
+        std::vector<Sample> samples;
+        std::vector<Backtrace> backtraces;
     };
 }
