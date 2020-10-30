@@ -9,6 +9,7 @@ namespace swimps::error {
         PtraceFailed,
         ReadlinkFailed,
         ExecveFailed,
-        ChildProcessHasNonZeroExitCode
+        ChildProcessHasNonZeroExitCode,
+        ChildProcessExitedDueToSignal
     };
 }

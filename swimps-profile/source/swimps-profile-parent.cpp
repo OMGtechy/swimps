@@ -31,7 +31,7 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                 message,
                                 strlen(message));
-            return swimps::error::ErrorCode::None;
+            return swimps::error::ErrorCode::ChildProcessExitedDueToSignal;
         }
 
         if (WIFSTOPPED(status)) {
