@@ -21,7 +21,7 @@ jobs:
     steps:
     - name: Setup gcc/g++ 10
       run: sudo apt install gcc-10 g++-10
-           export CC=`which gcc-10)
+           export CC=`which gcc-10`
            export CXX=`which g++-10`
           
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
