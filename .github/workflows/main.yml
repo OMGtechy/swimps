@@ -19,12 +19,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Setup gcc/g++ 10
+    - name: Install gcc/g++ 10
       run: sudo apt install gcc-10 g++-10
-           set(ENV{CC} "`which gcc-10`")
-           set(ENV{CXX} "`which g++-10`")
-      shell: bash
-          
+
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
@@ -33,6 +30,9 @@ jobs:
       with:
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
+      env:
+        CC:   gcc-10
+        CXX:  g++-10
         
     - name: run-tests
       working-directory: ${{ github.workspace }}/build
