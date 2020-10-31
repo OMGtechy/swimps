@@ -9,18 +9,24 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
+  
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+        c-compiler: [gcc-10, clang-10]
+        cxx-compiler: [g++-10, clang++-10]
+        cmake-build-type: [DEBUG, RELEASE]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install gcc/g++ 10
-      run: sudo apt install gcc-10 g++-10
+      run: sudo apt install ${{ matrix.c-compiler }} ${{ matrix.cxx-compiler }}
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
@@ -31,8 +37,9 @@ jobs:
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
       env:
-        CC:   gcc-10
-        CXX:  g++-10
+        CC:   ${{ matrix.c-compiler }}
+        CXX:  ${{ matrix.cxx-compiler }}
+        CMAKE_BUILD_TYPE: ${{ matrix.cmake-build-type }}
         
     - name: run-tests
       working-directory: ${{ github.workspace }}/build
