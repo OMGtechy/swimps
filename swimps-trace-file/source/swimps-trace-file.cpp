@@ -386,10 +386,10 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
         swimps_assert(matchingRawBacktraceIter != rawBacktraceMap.cend());
 
-        samplesSharingBacktraceID.emplace_back(
+        samplesSharingBacktraceID.push_back({
             matchingRawBacktraceIter->first.id,
             sample.timestamp
-        );
+        });
     }
 
     char tempFileNameBuffer[] = "/tmp/swimps_finalise_temp_file_XXXXXX";
