@@ -25,8 +25,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Install gcc/g++ 10
-      run: sudo apt install ${{ matrix.c-compiler }} ${{ matrix.cxx-compiler }}
+    - name: Install compilers
+      run: sudo apt install gcc-10 g++-10 clang
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
