@@ -11,22 +11,27 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <string>
+#include <filesystem>
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <execinfo.h>
 
 namespace {
     constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
 
     constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
     constexpr char swimps_v1_trace_raw_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nrb!\n";
+    constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
 
     enum class EntryKind : int {
         Unknown,
         EndOfFile,
         Sample,
-        RawBacktrace
+        RawBacktrace,
+        SymbolicBacktrace
     };
 
     int read_trace_file_marker(const int fileDescriptor) {
@@ -70,6 +75,10 @@ namespace {
 
         if (memcmp(buffer, swimps_v1_trace_raw_backtrace_marker, sizeof swimps_v1_trace_raw_backtrace_marker) == 0) {
             return EntryKind::RawBacktrace;
+        }
+
+        if (memcmp(buffer, swimps_v1_trace_symbolic_backtrace_marker, sizeof swimps_v1_trace_symbolic_backtrace_marker) == 0) {
+            return EntryKind::SymbolicBacktrace;
         }
 
         return EntryKind::Unknown;
@@ -136,6 +145,22 @@ namespace {
 
         return {{ addresses, backtraceID }};
     }
+
+    int write_trace_file_marker(const int fileDescriptor, const char* const path) {
+        const size_t bytesWritten = swimps::io::write_to_file_descriptor(
+            swimps_v1_trace_file_marker,
+            sizeof swimps_v1_trace_file_marker,
+            fileDescriptor
+        );
+
+        if (bytesWritten != sizeof swimps_v1_trace_file_marker) {
+            close(fileDescriptor);
+            unlink(path);
+            return -1;
+        }
+
+        return 0;
+    }
 }
 
 int swimps::trace::file::create(const char* const path) {
@@ -153,15 +178,7 @@ int swimps::trace::file::create(const char* const path) {
     }
 
     // Write out the swimps marker to make such files easily recognisable
-    const size_t bytesWritten = swimps::io::write_to_file_descriptor(
-        swimps_v1_trace_file_marker,
-        sizeof swimps_v1_trace_file_marker,
-        file
-    );
-
-    if (bytesWritten != sizeof swimps_v1_trace_file_marker) {
-        close(file);
-        unlink(path);
+    if (write_trace_file_marker(file, path) == -1) {
         return -1;
     }
 
@@ -218,7 +235,7 @@ size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swi
     return bytesWritten;
 }
 
-int swimps::trace::file::finalise(const int fileDescriptor) {
+int swimps::trace::file::finalise(const int fileDescriptor, const char* const traceFilePath, const size_t traceFilePathSize) {
     // Go to the start of the file.
     if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
         const char formatBuffer[] = "Could not lseek to start of trace file to begin finalising, errno %d (%s).";
@@ -327,6 +344,18 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
         case EntryKind::EndOfFile:
             // Nothing needs doing.
             break;
+        case EntryKind::SymbolicBacktrace:
+            {
+                const char message[] = "Unexpected symbolic backtrace, bailing.";
+
+                swimps::log::write_to_log(
+                    swimps::log::LogLevel::Debug,
+                    message,
+                    sizeof message
+                );
+
+                return -1;
+            }
         case EntryKind::Unknown:
             {
                 const char message[] = "Unknown entry kind detected, bailing.";
@@ -342,7 +371,6 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
             break;
         }
 
-        // TODO: gather symbols.
     }
     while (entryKind != EntryKind::EndOfFile);
 
@@ -363,6 +391,70 @@ int swimps::trace::file::finalise(const int fileDescriptor) {
             sample.timestamp
         );
     }
+
+    char tempFileNameBuffer[] = "/tmp/swimps_finalise_temp_file_XXXXXX";
+    const auto tempFile = mkstemp(tempFileNameBuffer);
+
+    if (tempFile == -1) {
+        const char formatBuffer[] = "Could not create temp file to write finalised trace into, errno %d (%s).";
+
+        swimps::log::format_and_write_to_log<512>(
+            swimps::log::LogLevel::Fatal,
+            formatBuffer,
+            sizeof formatBuffer,
+            errno,
+            strerror(errno)
+        );
+
+        return -1;
+    }
+
+    if (write_trace_file_marker(tempFile, tempFileNameBuffer) == -1) {
+        const char formatBuffer[] = "Could not write trace file marker to finalisation temp file, errno %d (%s).";
+
+        swimps::log::format_and_write_to_log<512>(
+            swimps::log::LogLevel::Fatal,
+            formatBuffer,
+            sizeof formatBuffer,
+            errno,
+            strerror(errno)
+        );
+
+        return -1;
+    }
+
+    for(const auto& sample : samplesSharingBacktraceID) {
+        add_sample(tempFile, &sample);
+    }
+
+    for(const auto& rawBacktrace : rawBacktraceMap) {
+        {
+            const auto bytesWritten = swimps::io::write_to_file_descriptor(
+                swimps_v1_trace_symbolic_backtrace_marker,
+                sizeof swimps_v1_trace_symbolic_backtrace_marker,
+                tempFile
+            );
+
+            if (bytesWritten != sizeof swimps_v1_trace_symbolic_backtrace_marker) {
+                const char formatBuffer[] = "Could not symbolic backtrace marker, errno %d (%s).";
+
+                swimps::log::format_and_write_to_log<512>(
+                    swimps::log::LogLevel::Fatal,
+                    formatBuffer,
+                    sizeof formatBuffer,
+                    errno,
+                    strerror(errno)
+                );
+
+                return -1;
+            }
+        }
+
+        backtrace_symbols_fd(rawBacktrace.first.addresses.data(), rawBacktrace.first.addresses.size(), tempFile);
+    }
+
+    const std::string traceFilePathString(traceFilePath, traceFilePathSize);
+    std::filesystem::copy(tempFileNameBuffer, traceFilePathString, std::filesystem::copy_options::overwrite_existing); 
 
     return 0;
 }

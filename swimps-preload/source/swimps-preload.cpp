@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <limits.h>
 
 namespace {
 
@@ -18,6 +19,7 @@ namespace {
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
     int traceFile = -1;
+    char traceFilePath[PATH_MAX] = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
 
@@ -61,7 +63,7 @@ namespace {
         sigprofRunningFlag.clear();
     }
 
-    int swimps_preload_create_trace_file() {
+    int swimps_preload_create_trace_file(char* traceFilePath, size_t traceFilePathSize) {
         swimps::time::TimeSpecification time;
         if (swimps::time::now(clockID, time) == -1) {
 
@@ -75,19 +77,38 @@ namespace {
             abort();
         }
 
-        char traceFileNameBuffer[2048] = { 0 };
+        getcwd(traceFilePath, traceFilePathSize);
+        size_t bytesWritten = strnlen(traceFilePath, traceFilePathSize);
+        traceFilePath += bytesWritten;
+        traceFilePathSize -= bytesWritten;
 
-        const size_t bytesWritten = swimps::trace::file::generate_name(
+        if (traceFilePathSize == 0) {
+            const char message[] = "Ran out of space when generating trace file name.";
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
+                message,
+                sizeof message
+            );
+
+            abort();
+        }
+
+        // replace null terminator with /
+        *traceFilePath = '/';
+        traceFilePath += 1;
+        bytesWritten += 1;
+
+        bytesWritten += swimps::trace::file::generate_name(
             program_invocation_short_name,
             &time,
             getpid(),
-            traceFileNameBuffer,
-            sizeof traceFileNameBuffer
+            traceFilePath,
+            traceFilePathSize
         );
 
         // Whilst it could be *exactly* the right size,
         // chances are there's just not enough room.
-        if (bytesWritten == sizeof traceFileNameBuffer) {
+        if (bytesWritten == traceFilePathSize) {
 
             const char message[] = "Could not generate trace file name.";
             swimps::log::write_to_log(
@@ -99,7 +120,7 @@ namespace {
             abort();
         }
 
-        const int file = swimps::trace::file::create(traceFileNameBuffer);
+        const int file = swimps::trace::file::create(traceFilePath);
         if (file == -1) {
 
             const char message[] = "Could not create trace file.";
@@ -157,7 +178,7 @@ namespace {
             backtrace(dummy, 1);
         }
 
-        traceFile = swimps_preload_create_trace_file();
+        traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
 
         if (swimps_preload_setup_signal_handler() == -1) {
             const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
@@ -213,7 +234,8 @@ namespace {
 
         // Tidy up the data in the trace file.
         // TODO: What happens if the trace file fails to be created properly?
-        swimps::trace::file::finalise(traceFile);
+        if (swimps::trace::file::finalise(traceFile, traceFilePath, strnlen(traceFilePath, sizeof traceFilePath)) != 0) {
+            abort();
+        }
     }
-
 }

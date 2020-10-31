@@ -75,7 +75,9 @@ namespace swimps::trace::file {
     //!
     //! \brief  Finalises an opened trace file.
     //!
-    //! \param[in]  fileDescriptor  The file to finalise.
+    //! \param[in]  fileDescriptor     The file to finalise.
+    //! \param[in]  traceFilePath      The path to the trace file.
+    //! \param[in]  traceFilePathSize  The size of the trace file path.
     //!
     //! \returns  0 if successful, -1 otherwise (errno may be set).
     //!
@@ -83,5 +85,5 @@ namespace swimps::trace::file {
     //!
     //! \note  This function is *not* async signal safe.
     //!
-    int finalise(const int fileDescriptor);
+    int finalise(const int fileDescriptor, const char* traceFilePath, const size_t traceFilePathSize);
 }
