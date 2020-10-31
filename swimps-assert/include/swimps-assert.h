@@ -8,22 +8,14 @@
 #define swimps_assert(assertion) \
 do { \
     if (!(assertion)) { \
-        char message[2048] = { 0 }; \
         const char formatString[] = "Assertion %s failed at " __FILE__ ":%d"; \
 \
-        const size_t bytesWritten = swimps::io::format_string( \
+        swimps::log::format_and_write_to_log<2048>( \
+            swimps::log::LogLevel::Fatal, \
             formatString, \
             sizeof formatString, \
-            message, \
-            sizeof message, \
             (#assertion), \
             __LINE__ \
-        ); \
-\
-        swimps::log::write_to_log( \
-            swimps::log::LogLevel::Fatal, \
-            message, \
-            bytesWritten \
         ); \
 \
         abort(); \
