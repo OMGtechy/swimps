@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(catch)
 add_executable(
     swimps-unit-test
     source/swimps-unit-test.cpp
+    swimps-container-unit-test/source/span-test.cpp
     swimps-io-unit-test/source/swimps-write-to-buffer-test.cpp
     swimps-io-unit-test/source/swimps-write-to-file-descriptor-test.cpp
     swimps-io-unit-test/source/swimps-format-string-test.cpp
@@ -20,7 +21,7 @@ add_executable(
 )
 
 target_include_directories(swimps-unit-test PUBLIC include)
-target_link_libraries(swimps-unit-test swimps-io Catch2::Catch2)
+target_link_libraries(swimps-unit-test swimps-io swimps-container Catch2::Catch2)
 
 add_test(NAME swimps-unit-test
          COMMAND $<TARGET_FILE:swimps-unit-test>)
