@@ -11,6 +11,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined")
 
 add_subdirectory(swimps-test)
+add_subdirectory(swimps-container)
 add_subdirectory(swimps-preload)
 add_subdirectory(swimps-log)
 add_subdirectory(swimps-io)
