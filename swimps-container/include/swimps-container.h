@@ -21,7 +21,7 @@ namespace swimps::container {
         //!
         template <size_t N>
         explicit constexpr Span(T (&buffer)[N]) noexcept
-            : Span(&buffer, N) { }
+            : Span(&buffer[0], N) { }
 
         //!
         //! \brief  Creates a span starting at the buffer provided, with the number of elements specified.
