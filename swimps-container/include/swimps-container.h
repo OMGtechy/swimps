@@ -198,6 +198,8 @@ namespace swimps::container {
     //!
     //! \brief  Equality operator for spans. 
     //!
+    //! \tparam  T  The type of the buffer covered by the span.
+    //!
     //! \param[in]  lhs  The left operand.
     //! \param[in]  rhs  The right operand.
     //!
