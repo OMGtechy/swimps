@@ -232,4 +232,382 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
             }
         }
     }
+
+    GIVEN("A target buffer of 8 zero-initialised bytes.") {
+        char targetBuffer[8] = { 0 };
+
+        WHEN("A span is created over it.") {
+            swimps::container::Span span(targetBuffer);
+
+            THEN("All bytes read back as 0.") {
+                REQUIRE(span[0] == 0);
+                REQUIRE(span[1] == 0);
+                REQUIRE(span[2] == 0);
+                REQUIRE(span[3] == 0);
+                REQUIRE(span[4] == 0);
+                REQUIRE(span[5] == 0);
+                REQUIRE(span[6] == 0);
+                REQUIRE(span[7] == 0);
+            }
+
+            AND_WHEN("Each byte has its respective index written to it.") {
+                span[0] = 0;
+                span[1] = 1;
+                span[2] = 2;
+                span[3] = 3;
+                span[4] = 4;
+                span[5] = 5;
+                span[6] = 6;
+                span[7] = 7;
+
+                THEN("The original size of the span is correct.") {
+                    REQUIRE(span.remaining_size() == 8);
+                }
+
+                THEN("The remaining size of the span is correct.") {
+                    REQUIRE(span.remaining_size() == 8);
+                }
+
+                THEN("Each byte reads back correctly.") {
+                    REQUIRE(span[0] == 0);
+                    REQUIRE(span[1] == 1);
+                    REQUIRE(span[2] == 2);
+                    REQUIRE(span[3] == 3);
+                    REQUIRE(span[4] == 4);
+                    REQUIRE(span[5] == 5);
+                    REQUIRE(span[6] == 6);
+                    REQUIRE(span[7] == 7);
+                }
+
+                AND_WHEN("operator+ is called with an offset of 1.") {
+                    const auto addedSpan = span + 1;
+
+                    THEN("The added span is not equivalent to the original.") {
+                        REQUIRE(addedSpan != span);
+                        REQUIRE(span != addedSpan);
+                        REQUIRE(!(addedSpan == span));
+                        REQUIRE(!(span == addedSpan));
+                    }
+
+                    THEN("The original span hasn't changed.") {
+                        REQUIRE(span[0] == 0);
+                        REQUIRE(span[1] == 1);
+                        REQUIRE(span[2] == 2);
+                        REQUIRE(span[3] == 3);
+                        REQUIRE(span[4] == 4);
+                        REQUIRE(span[5] == 5);
+                        REQUIRE(span[6] == 6);
+                        REQUIRE(span[7] == 7);
+                        REQUIRE(span.remaining_size() == 8);
+                        REQUIRE(span.original_size() == 8);
+                    }
+
+                    THEN("The added span is at the correct offset.") {
+                        REQUIRE(addedSpan[0] == 1);
+                        REQUIRE(addedSpan[1] == 2);
+                        REQUIRE(addedSpan[2] == 3);
+                        REQUIRE(addedSpan[3] == 4);
+                        REQUIRE(addedSpan[4] == 5);
+                        REQUIRE(addedSpan[5] == 6);
+                        REQUIRE(addedSpan[6] == 7);
+                    }
+
+                    THEN("The remaining size of the added span is correct.") {
+                        REQUIRE(addedSpan.remaining_size() == 7);
+                    }
+
+                    THEN("The original size of the added span is correct.") {
+                        REQUIRE(span.original_size() == 8);
+                    }
+
+                    AND_WHEN("operator- is called on the added span with an offset of 1.") {
+                        const auto subtractedSpan = addedSpan - 1;
+
+                        THEN("The subtracted span is equivalent to the original.") {
+                            REQUIRE(subtractedSpan == span);
+                            REQUIRE(span == subtractedSpan);
+                            REQUIRE(!(subtractedSpan != span));
+                            REQUIRE(!(span != subtractedSpan));
+                        }
+
+                        THEN("The added span is not equivalent to the subtracted span.") {
+                            REQUIRE(subtractedSpan != addedSpan);
+                            REQUIRE(addedSpan != subtractedSpan);
+                            REQUIRE(!(subtractedSpan == addedSpan));
+                            REQUIRE(!(addedSpan == subtractedSpan));
+                        }
+
+                        THEN("The original span hasn't changed.") {
+                            REQUIRE(span[0] == 0);
+                            REQUIRE(span[1] == 1);
+                            REQUIRE(span[2] == 2);
+                            REQUIRE(span[3] == 3);
+                            REQUIRE(span[4] == 4);
+                            REQUIRE(span[5] == 5);
+                            REQUIRE(span[6] == 6);
+                            REQUIRE(span[7] == 7);
+                            REQUIRE(span.remaining_size() == 8);
+                            REQUIRE(span.original_size() == 8);
+                        }
+
+                        THEN("The added span hasn't changed.") {
+                            REQUIRE(addedSpan[0] == 1);
+                            REQUIRE(addedSpan[1] == 2);
+                            REQUIRE(addedSpan[2] == 3);
+                            REQUIRE(addedSpan[3] == 4);
+                            REQUIRE(addedSpan[4] == 5);
+                            REQUIRE(addedSpan[5] == 6);
+                            REQUIRE(addedSpan[6] == 7);
+                            REQUIRE(addedSpan.remaining_size() == 7);
+                            REQUIRE(span.original_size() == 8);
+                        }
+
+                        THEN("The subtracted span is at an offset of 0.") {
+                            REQUIRE(subtractedSpan[0] == 0);
+                            REQUIRE(subtractedSpan[1] == 1);
+                            REQUIRE(subtractedSpan[2] == 2);
+                            REQUIRE(subtractedSpan[3] == 3);
+                            REQUIRE(subtractedSpan[4] == 4);
+                            REQUIRE(subtractedSpan[5] == 5);
+                            REQUIRE(subtractedSpan[6] == 6);
+                            REQUIRE(subtractedSpan[7] == 7);
+                        }
+
+                        THEN("The remaining size of the subtracted span is correct.") {
+                            REQUIRE(subtractedSpan.remaining_size() == 8);
+                        }
+
+                        THEN("The original size of the subtracted span is correct.") {
+                            REQUIRE(span.original_size() == 8);
+                        }
+                    }
+                }
+
+                AND_WHEN("operator+ is called with an offset of 3.") {
+                    const auto addedSpan = span + 3;
+
+                    THEN("The added span is not equivalent to the original.") {
+                        REQUIRE(addedSpan != span);
+                        REQUIRE(span != addedSpan);
+                        REQUIRE(!(addedSpan == span));
+                        REQUIRE(!(span == addedSpan));
+                    }
+
+                    THEN("The original span hasn't changed.") {
+                        REQUIRE(span[0] == 0);
+                        REQUIRE(span[1] == 1);
+                        REQUIRE(span[2] == 2);
+                        REQUIRE(span[3] == 3);
+                        REQUIRE(span[4] == 4);
+                        REQUIRE(span[5] == 5);
+                        REQUIRE(span[6] == 6);
+                        REQUIRE(span[7] == 7);
+                        REQUIRE(span.remaining_size() == 8);
+                        REQUIRE(span.original_size() == 8);
+                    }
+
+                    THEN("The added span is the correct offset.") {
+                        REQUIRE(addedSpan[0] == 3);
+                        REQUIRE(addedSpan[1] == 4);
+                        REQUIRE(addedSpan[2] == 5);
+                        REQUIRE(addedSpan[3] == 6);
+                        REQUIRE(addedSpan[4] == 7);
+                    }
+
+                    THEN("The remaining size of the added span is correct.") {
+                        REQUIRE(addedSpan.remaining_size() == 5);
+                    }
+
+                    THEN("The original size of the added span is correct.") {
+                        REQUIRE(span.original_size() == 8);
+                    }
+
+                    AND_WHEN("operator- is called on the added span with an offset of 2.") {
+                        const auto subtractedSpan = addedSpan - 2;
+
+                        THEN("The added span is not equivalent to the original.") {
+                            REQUIRE(subtractedSpan != span);
+                            REQUIRE(span != subtractedSpan);
+                            REQUIRE(!(subtractedSpan == span));
+                            REQUIRE(!(span == subtractedSpan));
+                        }
+
+                        THEN("The original span hasn't changed.") {
+                            REQUIRE(span[0] == 0);
+                            REQUIRE(span[1] == 1);
+                            REQUIRE(span[2] == 2);
+                            REQUIRE(span[3] == 3);
+                            REQUIRE(span[4] == 4);
+                            REQUIRE(span[5] == 5);
+                            REQUIRE(span[6] == 6);
+                            REQUIRE(span[7] == 7);
+                            REQUIRE(span.remaining_size() == 8);
+                            REQUIRE(span.original_size() == 8);
+                        }
+
+                        THEN("The added span hasn't changed.") {
+                            REQUIRE(addedSpan[0] == 3);
+                            REQUIRE(addedSpan[1] == 4);
+                            REQUIRE(addedSpan[2] == 5);
+                            REQUIRE(addedSpan[3] == 6);
+                            REQUIRE(addedSpan[4] == 7);
+                            REQUIRE(addedSpan.remaining_size() == 5);
+                            REQUIRE(span.original_size() == 8);
+                        }
+
+                        THEN("The subtracted span is at the correct offset.") {
+                            REQUIRE(subtractedSpan[0] == 1);
+                            REQUIRE(subtractedSpan[1] == 2);
+                            REQUIRE(subtractedSpan[2] == 3);
+                            REQUIRE(subtractedSpan[3] == 4);
+                            REQUIRE(subtractedSpan[4] == 5);
+                            REQUIRE(subtractedSpan[5] == 6);
+                            REQUIRE(subtractedSpan[6] == 7);
+                        }
+
+                        THEN("The remaining size of the subtracted span is correct.") {
+                            REQUIRE(subtractedSpan.remaining_size() == 7);
+                        }
+
+                        THEN("The original size of the subtracted span is correct.") {
+                            REQUIRE(span.original_size() == 8);
+                        }
+                    }
+                }
+
+                AND_WHEN("A copy of the original span is made.") {
+                    auto movingSpan = span;
+
+                    THEN("It is equivalent to the original.") {
+                        REQUIRE(movingSpan == span);
+                        REQUIRE(span == movingSpan);
+                        REQUIRE(!(movingSpan != span));
+                        REQUIRE(!(span != movingSpan));
+                    }
+
+                    AND_WHEN("operator+= is used to offset it by 6.") {
+                        movingSpan += 6;
+
+                        THEN("The span is not equivalent to the original.") {
+                            REQUIRE(movingSpan != span);
+                            REQUIRE(span != movingSpan);
+                            REQUIRE(!(movingSpan == span));
+                            REQUIRE(!(span == movingSpan));
+                        }
+
+                        THEN("The span is offset by accordingly.") {
+                            REQUIRE(movingSpan[0] == 6);
+                            REQUIRE(movingSpan[1] == 7);
+                        }
+
+                        THEN("The remaining size is correct.") {
+                            REQUIRE(movingSpan.remaining_size() == 2);
+                        }
+
+                        THEN("The original size is correct.") {
+                            REQUIRE(movingSpan.original_size() == 8);
+                        }
+
+                        THEN("The original span is unchanged.") {
+                            REQUIRE(span[0] == 0);
+                            REQUIRE(span[1] == 1);
+                            REQUIRE(span[2] == 2);
+                            REQUIRE(span[3] == 3);
+                            REQUIRE(span[4] == 4);
+                            REQUIRE(span[5] == 5);
+                            REQUIRE(span[6] == 6);
+                            REQUIRE(span[7] == 7);
+                            REQUIRE(span.remaining_size() == 8);
+                            REQUIRE(span.original_size() == 8);
+                        }
+
+                        AND_WHEN("operator-= is used to decrease the offset by 1.") {
+                            movingSpan -= 1;
+
+                            THEN("The span is not equivalent to the original.") {
+                                REQUIRE(movingSpan != span);
+                                REQUIRE(span != movingSpan);
+                                REQUIRE(!(movingSpan == span));
+                                REQUIRE(!(span == movingSpan));
+                            }
+
+                            THEN("The span is offset by 1 less than before.") {
+                                REQUIRE(movingSpan[0] == 5);
+                                REQUIRE(movingSpan[1] == 6);
+                                REQUIRE(movingSpan[2] == 7);
+                            }
+
+                            THEN("The remaining size is correct.") {
+                                REQUIRE(movingSpan.remaining_size() == 3);
+                            }
+
+                            THEN("The original size is correct.") {
+                                REQUIRE(movingSpan.original_size() == 8);
+                            }
+
+                            THEN("The original span is unchanged.") {
+                                REQUIRE(span[0] == 0);
+                                REQUIRE(span[1] == 1);
+                                REQUIRE(span[2] == 2);
+                                REQUIRE(span[3] == 3);
+                                REQUIRE(span[4] == 4);
+                                REQUIRE(span[5] == 5);
+                                REQUIRE(span[6] == 6);
+                                REQUIRE(span[7] == 7);
+                                REQUIRE(span.remaining_size() == 8);
+                                REQUIRE(span.original_size() == 8);
+                            }
+
+                            AND_WHEN("operator-= is used to decrease the offset by 5.") {
+                                movingSpan -= 5;
+
+                                THEN("The span is now equivalent to the original again.") {
+                                    REQUIRE(!(movingSpan != span));
+                                    REQUIRE(!(span != movingSpan));
+                                    REQUIRE(movingSpan == span);
+                                    REQUIRE(span == movingSpan);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            WHEN("Zero is added to the span.") {
+                const auto newSpan = span + 0;
+
+                THEN("It is equivalent to the previous span.") {
+                    REQUIRE(newSpan == span);
+                }
+            }
+
+            WHEN("Zero is subtracted from the span.") {
+                const auto newSpan = span - 0;
+
+                THEN("It is equivalent to the previous span.") {
+                    REQUIRE(newSpan == span);
+                }
+            }
+
+            WHEN("A copy of the span is made.") {
+                auto newSpan = span;
+
+                AND_WHEN("operator += is used to increase its offset by 0.") {
+                    newSpan += 0;
+
+                    THEN("It is equivalent to the original span.") {
+                        REQUIRE(newSpan == span);
+                    }
+                }
+
+                AND_WHEN("operator -= is used to decrease its offset by 0.") {
+                    newSpan -= 0;
+
+                    THEN("It is equivalent to the original span.") {
+                        REQUIRE(newSpan == span);
+                    }
+                }
+            }
+        }
+    }
 }

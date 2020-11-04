@@ -141,6 +141,34 @@ namespace swimps::container {
         }
 
         //!
+        //! \brief  Addition-assignment operator for spans.
+        //!
+        //! \param[in]  offset  What to add to the this span.
+        //!
+        //! \returns  The modified span with the offset increased by the requested amount.
+        //!
+        constexpr Span& operator+= (const size_t offset) noexcept {
+            assert(m_remainingElements >= offset);
+            m_remainingElements -= offset;
+            m_bufferCurrent += offset;
+            return *this;
+        }
+
+        //!
+        //! \brief  Subtraction-assignment operator for spans.
+        //!
+        //! \param[in]  offset  What to subtract from this span.
+        //!
+        //! \returns  The modified span with the offset decreased by the requested amount.
+        //!
+        constexpr Span& operator-= (const size_t offset) noexcept {
+            m_remainingElements += offset;
+            m_bufferCurrent -= offset;
+            assert(m_bufferCurrent >= m_bufferStart);
+            return *this;
+        }
+
+        //!
         //! \brief  Non-const index operator.
         //!
         //! \param[in]  index  Which index to access.
@@ -213,5 +241,35 @@ namespace swimps::container {
         return &lhs[0] == &rhs[0]
             && lhs.original_size() == rhs.original_size()
             && lhs.remaining_size() == rhs.remaining_size();
+    }
+
+    //!
+    //! \brief  Addition operator for spans.
+    //!
+    //! \tparam  T  The type of the buffer covered by the span.
+    //!
+    //! \param[in]  span    The span to add to.
+    //! \param[in]  offset  What to add to the span.
+    //!
+    //! \returns  A new span with the offset increased by the requested amount.
+    //!
+    template <typename T>
+    constexpr Span<T> operator+ (Span<T> span, const size_t offset) noexcept {
+        return span += offset;
+    }
+
+    //!
+    //! \brief  Subtraction operator for spans.
+    //!
+    //! \tparam  T  The type of the buffer covered by the span.
+    //!
+    //! \param[in]  span    The span to subtract from.
+    //! \param[in]  offset  What to subtract from the span.
+    //!
+    //! \returns  A new span with the offset decreased by the requested amount.
+    //!
+    template <typename T>
+    constexpr Span<T> operator- (Span<T> span, const size_t offset) noexcept {
+        return span -= offset;
     }
 }
