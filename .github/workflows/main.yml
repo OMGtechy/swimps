@@ -22,9 +22,9 @@ jobs:
         c-compiler: [gcc-10, clang]
         cxx-compiler: [g++-10, clang++]
         cmake-build-type: [DEBUG, RELEASE]
-        include:
-          - { c-compiler: gcc-10, cxx-compiler: g++10, cmake-build-type: ..., os: ... }
-          - { c-compiler: clang, cxx-compiler: clang++, cmake-build-type: ..., os: ... }
+        exclude:
+          - { c-compiler: clang, cxx-compiler: g++-10 }
+          - { c-compiler: gcc-10, cxx-compiler: clang++ }
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
