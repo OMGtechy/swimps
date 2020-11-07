@@ -73,7 +73,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                         }
                     }
 
-                    THEN("The remaining size goes down by 1.") {
+                    THEN("The remaining size of the original span goes down by 1.") {
                         REQUIRE(span.remaining_size() == 4);
                     }
 
@@ -103,7 +103,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                             }
                         }
 
-                        THEN("The remaining size goes down by 1.") {
+                        THEN("The remaining size of the original span goes down by 1.") {
                             REQUIRE(span.remaining_size() == 3);
                         }
 
@@ -143,7 +143,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                                     }
                                 }
 
-                                THEN("The remaining size increases by 1.") {
+                                THEN("The remaining size of the original span increases by 1.") {
                                     REQUIRE(span.remaining_size() == 4);
                                 }
 
@@ -174,7 +174,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                                         }
                                     }
 
-                                    THEN("The remaining size increases by 1.") {
+                                    THEN("The remaining size of the original span increases by 1.") {
                                         REQUIRE(span.remaining_size() == 5);
                                     }
 
@@ -261,7 +261,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                 span[7] = 7;
 
                 THEN("The original size of the span is correct.") {
-                    REQUIRE(span.remaining_size() == 8);
+                    REQUIRE(span.original_size() == 8);
                 }
 
                 THEN("The remaining size of the span is correct.") {
@@ -359,7 +359,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                             REQUIRE(addedSpan[5] == 6);
                             REQUIRE(addedSpan[6] == 7);
                             REQUIRE(addedSpan.remaining_size() == 7);
-                            REQUIRE(span.original_size() == 8);
+                            REQUIRE(addedSpan.original_size() == 8);
                         }
 
                         THEN("The subtracted span is at an offset of 0.") {
@@ -378,7 +378,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                         }
 
                         THEN("The original size of the subtracted span is correct.") {
-                            REQUIRE(span.original_size() == 8);
+                            REQUIRE(subtractedSpan.original_size() == 8);
                         }
                     }
                 }
@@ -419,13 +419,13 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                     }
 
                     THEN("The original size of the added span is correct.") {
-                        REQUIRE(span.original_size() == 8);
+                        REQUIRE(addedSpan.original_size() == 8);
                     }
 
                     AND_WHEN("operator- is called on the added span with an offset of 2.") {
                         const auto subtractedSpan = addedSpan - 2;
 
-                        THEN("The added span is not equivalent to the original.") {
+                        THEN("The substracted span is not equivalent to the original.") {
                             REQUIRE(subtractedSpan != span);
                             REQUIRE(span != subtractedSpan);
                             REQUIRE(!(subtractedSpan == span));
@@ -452,7 +452,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                             REQUIRE(addedSpan[3] == 6);
                             REQUIRE(addedSpan[4] == 7);
                             REQUIRE(addedSpan.remaining_size() == 5);
-                            REQUIRE(span.original_size() == 8);
+                            REQUIRE(addedSpan.original_size() == 8);
                         }
 
                         THEN("The subtracted span is at the correct offset.") {
@@ -470,7 +470,7 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
                         }
 
                         THEN("The original size of the subtracted span is correct.") {
-                            REQUIRE(span.original_size() == 8);
+                            REQUIRE(subtractedSpan.original_size() == 8);
                         }
                     }
                 }
