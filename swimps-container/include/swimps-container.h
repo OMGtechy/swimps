@@ -7,7 +7,7 @@ namespace swimps::container {
     //!
     //! \brief  Encapsulates a buffer + its size.
     //!         Much like std::span, except it lets you "consume" some of the buffer.
-    //!         Owns none of the memory give to it via pointers.
+    //!         Owns none of the memory given to it via pointers.
     //!
     //! \tparam  T  The type of the buffer (so for a char array or pointer, T should be char).
     //!
@@ -143,7 +143,7 @@ namespace swimps::container {
         //!
         //! \brief  Addition-assignment operator for spans.
         //!
-        //! \param[in]  offset  What to add to the this span.
+        //! \param[in]  offset  What to add to this span.
         //!
         //! \returns  The modified span with the offset increased by the requested amount.
         //!
