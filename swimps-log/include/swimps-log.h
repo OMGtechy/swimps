@@ -95,7 +95,6 @@ namespace swimps::log {
             formatBuffer,
             formatBufferSize,
             targetBuffer,
-            targetBufferSize,
             varargs
         );
 

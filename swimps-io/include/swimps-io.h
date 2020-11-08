@@ -3,6 +3,8 @@
 #include <cstdarg>
 #include <cstddef>
 
+#include "swimps-container.h"
+
 namespace swimps::io {
 
     //!
@@ -51,7 +53,6 @@ namespace swimps::io {
     //! \param[in]   formatBuffer      The buffer containing the format string. Does not need to be null terminated.
     //! \param[in]   formatBufferSize  The size of the format buffer, in bytes.
     //! \param[out]  targetBuffer      Where to write the formatted string.
-    //! \param[in]   targetBufferSize  The size of the target buffer, in bytes.
     //! \param[in]   ...               The values to use when formatting the string.
     //!
     //! \returns  The number of bytes written to the target buffer.
@@ -71,8 +72,7 @@ namespace swimps::io {
     //!
     size_t format_string(const char* __restrict__ formatbuffer,
                          size_t formatbuffersize,
-                         char* __restrict__ targetbuffer,
-                         size_t targetbuffersize,
+                         swimps::container::Span<char> targetbuffer,
                          ...);
 
     //!
@@ -82,7 +82,6 @@ namespace swimps::io {
     //!
     size_t format_string_valist(const char* __restrict__ formatbuffer,
                                 size_t formatbuffersize,
-                                char* __restrict__ targetbuffer,
-                                size_t targetbuffersize,
+                                swimps::container::Span<char> targetbuffer,
                                 va_list varargs);
 }

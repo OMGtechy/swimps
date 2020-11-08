@@ -30,7 +30,6 @@ SCENARIO("swimps::io::format_string_valist", "[swimps-io]") {
                         formatBuffer,
                         sizeof formatBuffer,
                         targetBuffer,
-                        sizeof targetBuffer,
                         varargs
                     );
                 },
