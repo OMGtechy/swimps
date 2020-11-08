@@ -20,7 +20,7 @@ namespace swimps::container {
         //! \tparam  N  The size of the buffer (intended to be inferred).
         //!
         template <size_t N>
-        explicit constexpr Span(T (&buffer)[N]) noexcept
+        constexpr Span(T (&buffer)[N]) noexcept
             : Span(&buffer[0], N) { }
 
         //!
@@ -148,6 +148,7 @@ namespace swimps::container {
         //! \returns  The modified span with the offset increased by the requested amount.
         //!
         constexpr Span& operator+= (const size_t offset) noexcept {
+            // Make sure remaining elements isn't going to go below 0.
             assert(m_remainingElements >= offset);
             m_remainingElements -= offset;
             m_bufferCurrent += offset;
@@ -196,7 +197,9 @@ namespace swimps::container {
         //!
         //! \returns  The number of elements left in the span.
         //!
-        constexpr size_t remaining_size() const noexcept {
+        //! \note  This includes the current element.
+        //!
+        constexpr size_t current_size() const noexcept {
             return m_remainingElements;
         }
 
@@ -240,7 +243,7 @@ namespace swimps::container {
     constexpr bool operator== (const Span<T>& lhs, const Span<T>& rhs) noexcept {
         return &lhs[0] == &rhs[0]
             && lhs.original_size() == rhs.original_size()
-            && lhs.remaining_size() == rhs.remaining_size();
+            && lhs.current_size() == rhs.current_size();
     }
 
     //!
