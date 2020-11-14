@@ -2,6 +2,7 @@
 #include "swimps-log.h"
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
+#include "swimps-preload.h"
 
 #include <atomic>
 #include <cerrno>
@@ -10,7 +11,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <execinfo.h>
 #include <limits.h>
 
 namespace {
@@ -48,14 +48,11 @@ namespace {
         swimps::trace::file::add_sample(traceFile, &sample);
 
         {
-            void* backtraceBuffer[2048];
-            const int numberOfStackFrames = backtrace(backtraceBuffer, sizeof backtraceBuffer / sizeof backtraceBuffer[0]);
-
-            swimps::trace::file::add_raw_backtrace(
+            auto backtrace = swimps::preload::get_backtrace();
+            backtrace.id = sample.backtraceID;
+            swimps::trace::file::add_backtrace(
                 traceFile,
-                sample.backtraceID,
-                backtraceBuffer,
-                numberOfStackFrames
+                backtrace
             );
         }
 
@@ -163,21 +160,6 @@ namespace {
 
     __attribute__((constructor))
     void swimps_preload_constructor() {
-        // From https://man7.org/linux/man-pages/man3/backtrace.3.html:
-        //
-        // "backtrace() and backtrace_symbols_fd() don't call malloc()
-        //  explicitly, but they are part of libgcc, which gets loaded
-        //  dynamically when first used.  Dynamic loading usually triggers a
-        //  call to malloc(3).  If you need certain calls to these two
-        //  functions to not allocate memory (in signal handlers, for
-        //  example), you need to make sure libgcc is loaded beforehand."
-        //
-        // TL;DR: Force libgcc to load so backtrace and backtrace_symbols_fd functions are signal safe.
-        {
-            void* dummy[1];
-            backtrace(dummy, 1);
-        }
-
         traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
 
         if (swimps_preload_setup_signal_handler() == -1) {
