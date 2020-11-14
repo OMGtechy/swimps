@@ -34,10 +34,9 @@ namespace {
 
         {
             if (swimps::time::now(clockID, sample.timestamp) != 0) {
-                const char message[] = "swimps::time::now failed whilst taking sample.";
                 swimps::log::write_to_log(
                     swimps::log::LogLevel::Error,
-                    message
+                    "swimps::time::now failed whilst taking sample."
                 );
 
                 goto swimps_preload_sigprof_cleanup;
@@ -62,11 +61,9 @@ namespace {
     int swimps_preload_create_trace_file(char* traceFilePath, size_t traceFilePathSize) {
         swimps::time::TimeSpecification time;
         if (swimps::time::now(clockID, time) == -1) {
-
-            const char message[] = "Could not get time to generate trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message
+                "Could not get time to generate trace file name."
             );
 
             abort();
@@ -78,10 +75,9 @@ namespace {
         traceFilePathSize -= bytesWritten;
 
         if (traceFilePathSize == 0) {
-            const char message[] = "Ran out of space when generating trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message
+                "Ran out of space when generating trace file name."
             );
 
             abort();
@@ -103,11 +99,9 @@ namespace {
         // Whilst it could be *exactly* the right size,
         // chances are there's just not enough room.
         if (bytesWritten == traceFilePathSize) {
-
-            const char message[] = "Could not generate trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message
+                "Could not generate trace file name."
             );
 
             abort();
@@ -115,11 +109,9 @@ namespace {
 
         const int file = swimps::trace::file::create(traceFilePath);
         if (file == -1) {
-
-            const char message[] = "Could not create trace file.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message
+                "Could not create trace file."
             );
 
             abort();
@@ -158,11 +150,9 @@ namespace {
         traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
 
         if (swimps_preload_setup_signal_handler() == -1) {
-            const char formatBuffer[] = "Could not setup signal handler, errno %d (%s).";
-
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                formatBuffer,
+                "Could not setup signal handler, errno %d (%s).",
                 errno,
                 strerror(errno)
             );
@@ -171,11 +161,9 @@ namespace {
         }
 
         if (swimps::time::create_signal_timer(clockID, SIGPROF, sampleTimer) == -1) {
-            const char formatBuffer[] = "Could not create timer, errno %d (%s).";
-
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                formatBuffer,
+                "Could not create timer, errno %d (%s).",
                 errno,
                 strerror(errno)
             );
@@ -184,11 +172,9 @@ namespace {
         }
 
         if (swimps_preload_start_timer(sampleTimer) == -1) {
-            const char formatBuffer[] = "Could not start timer, errno %d (%s).";
-
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                formatBuffer,
+                "Could not start timer, errno %d (%s).",
                 errno,
                 strerror(errno)
             );
