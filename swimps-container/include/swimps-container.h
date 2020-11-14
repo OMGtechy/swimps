@@ -29,7 +29,7 @@ namespace swimps::container {
         //! \param[in]  buffer          The starting address of the span.
         //! \param[in]  sizeInElements  The number of elements in the span.
         //!
-        explicit constexpr Span(
+        constexpr Span(
             T* const buffer,
             const size_t sizeInElements) noexcept
             : m_bufferStart(buffer),

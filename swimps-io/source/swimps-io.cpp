@@ -8,16 +8,12 @@
 #include <string.h>
 #include <unistd.h>
 
-size_t swimps::io::write_to_buffer(const char* __restrict__ sourceBuffer,
-                              size_t sourceBufferSize,
-                              char* __restrict__ targetBuffer,
-                              size_t targetBufferSize) {
+size_t swimps::io::write_to_buffer(
+    swimps::container::Span<const char> source,
+    swimps::container::Span<char> target) {
 
-    assert(sourceBuffer != NULL);
-    assert(targetBuffer != NULL);
-
-    const size_t bytesToWrite = std::min(sourceBufferSize, targetBufferSize);
-    memcpy(targetBuffer, sourceBuffer, bytesToWrite);
+    const size_t bytesToWrite = std::min(source.current_size(), target.current_size());
+    memcpy(&target[0], &source[0], bytesToWrite);
     return bytesToWrite;
 }
 
