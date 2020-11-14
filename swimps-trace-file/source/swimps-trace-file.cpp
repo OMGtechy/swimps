@@ -84,8 +84,15 @@ namespace {
         swimps::time::TimeSpecification timestamp;
 
         {
-            const auto readReturnCode = read(fileDescriptor, &timestamp, sizeof timestamp);
-            if (readReturnCode != sizeof timestamp) {
+            const auto readReturnCode = read(fileDescriptor, &timestamp.seconds, sizeof(timestamp.seconds));
+            if (readReturnCode != sizeof(timestamp.seconds)) {
+                return {};
+            }
+        }
+
+        {
+            const auto readReturnCode = read(fileDescriptor, &timestamp.nanoseconds, sizeof(timestamp.nanoseconds));
+            if (readReturnCode != sizeof(timestamp.nanoseconds)) {
                 return {};
             }
         }
@@ -96,7 +103,6 @@ namespace {
     int write_trace_file_marker(const int fileDescriptor, const char* const path) {
         const size_t bytesWritten = swimps::io::write_to_file_descriptor(
             swimps::trace::file::swimps_v1_trace_file_marker,
-            sizeof swimps::trace::file::swimps_v1_trace_file_marker,
             fileDescriptor
         );
 
@@ -158,9 +164,9 @@ size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
                                           const swimps::trace::Backtrace& backtrace) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker, sizeof swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&backtrace.id), sizeof backtrace.id, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&backtrace.stackFrameCount), sizeof backtrace.stackFrameCount, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.id, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameCount, targetFileDescriptor);
 
     for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
         const auto& stackFrame = backtrace.stackFrames[i];
@@ -169,21 +175,20 @@ size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
 
         const auto& offset = stackFrame.offset;
 
-        bytesWritten += swimps::io::write_to_file_descriptor(
-            reinterpret_cast<const char*>(&mangledFunctionNameLength),
-            sizeof mangledFunctionNameLength,
-            targetFileDescriptor
-        );
+        swimps_assert(mangledFunctionNameLength >= 0);
 
         bytesWritten += swimps::io::write_to_file_descriptor(
-            reinterpret_cast<const char*>(&mangledFunctionName[0]),
             mangledFunctionNameLength,
             targetFileDescriptor
         );
 
         bytesWritten += swimps::io::write_to_file_descriptor(
-            reinterpret_cast<const char*>(&offset),
-            sizeof offset,
+            { &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) },
+            targetFileDescriptor
+        );
+
+        bytesWritten += swimps::io::write_to_file_descriptor(
+            offset,
             targetFileDescriptor
         );
     }
@@ -268,9 +273,10 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
 size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swimps::trace::Sample* const sample) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_sample_marker, sizeof swimps::trace::file::swimps_v1_trace_sample_marker, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&sample->backtraceID), sizeof sample->backtraceID, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(reinterpret_cast<const char*>(&sample->timestamp), sizeof sample->timestamp, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_sample_marker, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample->backtraceID, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample->timestamp.seconds, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample->timestamp.nanoseconds, targetFileDescriptor);
 
     return bytesWritten;
 }

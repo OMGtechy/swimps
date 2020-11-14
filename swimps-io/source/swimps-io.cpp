@@ -17,16 +17,14 @@ size_t swimps::io::write_to_buffer(
     return bytesToWrite;
 }
 
-size_t swimps::io::write_to_file_descriptor(const char* sourceBuffer,
-                                       size_t sourceBufferSize,
-                                       int fileDescriptor) {
-
-    assert(sourceBuffer != NULL);
+size_t swimps::io::write_to_file_descriptor(
+    swimps::container::Span<const char> source,
+    int fileDescriptor) {
 
     size_t bytesWrittenTotal = 0;
 
-    while(sourceBufferSize > 0) {
-        const ssize_t bytesWritten = write(fileDescriptor, sourceBuffer, sourceBufferSize);
+    while(source.current_size() > 0) {
+        const ssize_t bytesWritten = write(fileDescriptor, &source[0], source.current_size());
 
         // i.e. if an error occured
         if (bytesWritten < 0) {
@@ -34,8 +32,7 @@ size_t swimps::io::write_to_file_descriptor(const char* sourceBuffer,
         }
 
         bytesWrittenTotal += (size_t) bytesWritten;
-        sourceBuffer += bytesWritten;
-        sourceBufferSize -= bytesWritten;
+        source += bytesWritten;
     }
 
     return bytesWrittenTotal;
