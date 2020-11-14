@@ -13,17 +13,11 @@ swimps::error::ErrorCode swimps_profile(char** args) {
     switch(pid) {
     case -1: {
         // Fork failed.
-        char logMessageBuffer[128] = { 0 };
-
-        const size_t bytesWritten = snprintf(logMessageBuffer,
-                                             sizeof logMessageBuffer,
-                                             "fork failed, errno %d (%s).",
-                                             errno,
-                                             strerror(errno));
-
-        swimps::log::write_to_log(
+        swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            { logMessageBuffer, bytesWritten }
+            "fork failed, errno %d (%s).",
+            errno,
+            strerror(errno)
         );
 
         return swimps::error::ErrorCode::ForkFailed;

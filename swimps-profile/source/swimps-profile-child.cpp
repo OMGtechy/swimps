@@ -14,20 +14,18 @@ extern char** environ;
 
 swimps::error::ErrorCode swimps_profile_child(char** args) {
     if (args == NULL) {
-        char message[] = "swimps_profile_child given NULL args";
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
-            message
+            "swimps_profile_child given NULL args"
         );
 
         return swimps::error::ErrorCode::NullParameter;
     }
 
     if (args[0] == NULL) {
-        char message[] = "No program specified.";
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
-            message
+            "No program specified."
         );
 
         return swimps::error::ErrorCode::InvalidParameter;
@@ -35,11 +33,9 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
 
     // Enable tracing of the program we're about to exec into
     if (ptrace(PTRACE_TRACEME) == -1) {
-        const char formatString[] = "ptrace(PTRACE_TRACEME) failed, errno %d (%s).";
-
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            formatString,
+            "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
             errno,
             strerror(errno)
         );
@@ -102,11 +98,10 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
     );
 
     if (swimpsPathBufferBytes == 0) {
-        const char formatBuffer[] = "readlink failed, errno %d (%s).";
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            formatBuffer,
+            "readlink failed, errno %d (%s).",
             errno,
             strerror(errno)
         );
@@ -162,11 +157,10 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
 
     // we only get here if execve failed
     {
-        const char formatBuffer[] = "Failed to execute target program, errno %d (%s).";
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            formatBuffer,
+            "Failed to execute target program, errno %d (%s).",
             errno,
             strerror(errno)
         );

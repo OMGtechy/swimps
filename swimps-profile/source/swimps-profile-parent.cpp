@@ -15,11 +15,10 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
 
         if (WIFEXITED(status)) {
             const auto exitCode = WEXITSTATUS(status);
-            const char message[] = "Child process exited with code %d.";
 
             swimps::log::format_and_write_to_log<256>(
                 swimps::log::LogLevel::Debug,
-                { message, strlen(message) },
+                "Child process exited with code %d.",
                 exitCode
             );
 
@@ -28,10 +27,9 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
         }
 
         if (WIFSIGNALED(status)) {
-            const char message[] = "Child process exited due to a signal.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Debug,
-                { message, strlen(message) }
+                "Child process exited due to a signal."
             );
 
             return swimps::error::ErrorCode::ChildProcessExitedDueToSignal;
@@ -40,22 +38,12 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
         if (WIFSTOPPED(status)) {
             const int signalNumber = WSTOPSIG(status);
 
-            {
-                char targetBuffer[128] = { 0 };
-                const char formatBuffer[] = "Child process stopped due to signal %d (%s).";
-                const size_t bytesWritten = swimps::io::format_string(
-                    formatBuffer,
-                    targetBuffer,
-                    signalNumber,
-                    strsignal(signalNumber)
-                );
-
-                swimps::log::write_to_log(
-                    swimps::log::LogLevel::Debug,
-                    { targetBuffer, bytesWritten }
-                );
-            }
-
+            swimps::log::format_and_write_to_log<128>(
+                swimps::log::LogLevel::Debug,
+                "Child process stopped due to signal %d (%s).",
+                signalNumber,
+                strsignal(signalNumber)
+            );
 
             int signalToSend = 0;
 
@@ -68,18 +56,11 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             }
 
             if (ptrace(PTRACE_CONT, childPid, 0 /* ignored */, signalToSend) == -1) {
-                char targetBuffer[128] = { 0 };
-                const char formatBuffer[] = "ptrace(PTRACE_CONT) failed, errno %d (%s).";
-                const size_t bytesWritten = swimps::io::format_string(
-                    formatBuffer,
-                    targetBuffer,
+                swimps::log::format_and_write_to_log<128>(
+                    swimps::log::LogLevel::Debug,
+                    "ptrace(PTRACE_CONT) failed, errno %d (%s).",
                     errno,
                     strerror(errno)
-                );
-
-                swimps::log::write_to_log(
-                    swimps::log::LogLevel::Debug,
-                    { targetBuffer, bytesWritten }
                 );
 
                 return swimps::error::ErrorCode::PtraceFailed;
