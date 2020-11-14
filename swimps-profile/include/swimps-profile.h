@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "swimps-error.h"
 
 #include <unistd.h>
@@ -38,8 +34,4 @@ swimps::error::ErrorCode swimps_profile_child(char** args);
 //! \returns An error code, if there was an error.
 //!
 swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid);
-
-#ifdef __cplusplus
-}
-#endif
 
