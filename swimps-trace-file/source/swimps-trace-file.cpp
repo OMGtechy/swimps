@@ -47,7 +47,6 @@ namespace {
             swimps::log::format_and_write_to_log<64>(
                 swimps::log::LogLevel::Debug,
                 formatBuffer,
-                sizeof formatBuffer,
                 buffer
             );
         }
@@ -289,7 +288,6 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
-            sizeof formatBuffer,
             errno,
             strerror(errno)
         );
@@ -303,8 +301,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
-            message,
-            sizeof message
+            message
         );
 
         return -1;
@@ -355,7 +352,6 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             swimps::log::format_and_write_to_log<128>(
                 swimps::log::LogLevel::Debug,
                 formatBuffer,
-                sizeof formatBuffer,
                 static_cast<int>(entryKind)
             );
         }
@@ -369,8 +365,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
-                        message,
-                        sizeof message
+                        message
                     );
 
                     return -1;
@@ -387,8 +382,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
-                        message,
-                        sizeof message
+                        message
                     );
 
                     return -1;
@@ -406,8 +400,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
                 swimps::log::write_to_log(
                     swimps::log::LogLevel::Debug,
-                    message,
-                    sizeof message
+                    message
                 );
 
                 return -1;
@@ -445,7 +438,6 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
-            sizeof formatBuffer,
             errno,
             strerror(errno)
         );
@@ -459,7 +451,6 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
-            sizeof formatBuffer,
             errno,
             strerror(errno)
         );

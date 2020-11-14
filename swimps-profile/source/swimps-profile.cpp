@@ -21,9 +21,10 @@ swimps::error::ErrorCode swimps_profile(char** args) {
                                              errno,
                                              strerror(errno));
 
-        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
-                            logMessageBuffer,
-                            bytesWritten);
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Fatal,
+            { logMessageBuffer, bytesWritten }
+        );
 
         return swimps::error::ErrorCode::ForkFailed;
     }

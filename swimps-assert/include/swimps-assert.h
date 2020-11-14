@@ -13,7 +13,6 @@ do { \
         swimps::log::format_and_write_to_log<2048>( \
             swimps::log::LogLevel::Fatal, \
             formatString, \
-            sizeof formatString, \
             (#assertion), \
             __LINE__ \
         ); \

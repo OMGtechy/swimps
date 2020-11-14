@@ -19,31 +19,27 @@ namespace swimps::log {
     //!
     //! \brief  Formats a message so that it's ready to be written to a log.
     //!
-    //! \param[in]   logLevel          The kind of log message (error, info, etc).
-    //! \param[in]   message           The message to be written.
-    //! \param[in]   messageSize       The size of the message, in bytes.
-    //! \param[out]  targetBuffer      Where to write the formatted message.
-    //! \param[in]   targetBufferSize  The size of the target buffer, in bytes.
+    //! \param[in]   logLevel  The kind of log message (error, info, etc).
+    //! \param[in]   message   The message to be written.
+    //! \param[out]  target    Where to write the formatted message.
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
-    //! \note  If the target buffer isn't big enough to fit the whole message,
+    //! \note  If the target isn't big enough to fit the whole message,
     //!        it will be truncated.
     //!
     //! \note  The formatted message does not need to be null terminated.
     //!
-    //! \note  The formatted message is not null terminated.
+    //! \note  The resulting message is not null terminated.
     //!
-    //! \note  Message and target buffers must not overlap.
+    //! \note  Message and target must not overlap.
     //!
     //! \note  This function is async signal safe.
     //!
     size_t log_message(
         const swimps::log::LogLevel logLevel,
-        const char* const __restrict__ message,
-        const size_t messageSize,
-        char* __restrict__ targetBuffer,
-        const size_t targetBufferSize);
+        swimps::container::Span<const char> message,
+        swimps::container::Span<char> target);
 
     //!
     //! \brief  Writes a message to all log targets, with the correct formatting.
@@ -60,8 +56,7 @@ namespace swimps::log {
     //!
     size_t write_to_log(
         const swimps::log::LogLevel logLevel,
-        const char* const message,
-        const size_t messageSize);
+        swimps::container::Span<const char> message);
 
     //!
     //! \brief  Formats a message and writes to all log targets
@@ -80,19 +75,16 @@ namespace swimps::log {
     template <size_t targetBufferSize>
     size_t format_and_write_to_log(
         const swimps::log::LogLevel logLevel,
-        const char* const __restrict__ formatBuffer,
-        const size_t formatBufferSize,
+        swimps::container::Span<const char> format,
         ...) {
-
-        assert(formatBuffer != NULL);
 
         char targetBuffer[targetBufferSize] = { };
 
         va_list varargs;
-        va_start(varargs, formatBufferSize);
+        va_start(varargs, format);
 
         const size_t bytesWritten = swimps::io::format_string_valist(
-            { formatBuffer, formatBufferSize },
+            format,
             targetBuffer,
             varargs
         );
@@ -101,8 +93,7 @@ namespace swimps::log {
 
         return swimps::log::write_to_log(
             logLevel,
-            targetBuffer,
-            bytesWritten
+            { targetBuffer, bytesWritten }
         );
     }
 }
