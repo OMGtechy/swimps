@@ -6,3 +6,6 @@ A prior project, [wimps (why is my program slow)](https://github.com/OMGtechy/wi
 Looking to contribute (code, testing, money or otherwise)? Head on over to [CONTRIBUTING.md](https://github.com/OMGtechy/swimps/blob/master/CONTRIBUTING.md).
 
 ![CI](https://github.com/OMGtechy/swimps/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/OMGtechy/swimps/branch/master/graph/badge.svg)](https://codecov.io/gh/OMGtechy/swimps)
+
+
