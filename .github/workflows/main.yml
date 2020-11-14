@@ -53,3 +53,4 @@ jobs:
 
     - name: Codecov
       uses: codecov/codecov-action@v1.0.14
+      if: ${{ matrix.cxx-compiler }} == g++-10
