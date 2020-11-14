@@ -14,6 +14,7 @@ option(SWIMPS_ENABLE_COVERAGE "Enable code coverage flags." OFF)
 if(SWIMPS_ENABLE_COVERAGE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+    link_libraries(gcov)
 endif()
 
 add_subdirectory(swimps-test)
