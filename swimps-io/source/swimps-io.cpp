@@ -4,8 +4,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 
-#include <string.h>
 #include <unistd.h>
 
 size_t swimps::io::write_to_buffer(
