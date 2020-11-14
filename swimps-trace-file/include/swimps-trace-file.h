@@ -4,10 +4,16 @@
 #include "swimps-trace.h"
 
 #include <cstddef>
+#include <optional>
 
 #include <unistd.h>
 
 namespace swimps::trace::file {
+    constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
+    constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
+    constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
+    constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
+
     //!
     //! \brief  Creates a file with the necessary headers to store a swimps_trace.
     //!
@@ -34,7 +40,7 @@ namespace swimps::trace::file {
     //!        TODO: should it be? Would need to implement format specifiers for int64 for that...
     //!
     size_t generate_name(
-        const char* const programName,
+         const char* const programName,
          const swimps::time::TimeSpecification* const time,
          const pid_t pid,
          char* const targetBuffer,
@@ -55,22 +61,33 @@ namespace swimps::trace::file {
         const swimps::trace::Sample* const sample);
 
     //!
-    //! \brief  Adds a raw (i.e. non-symbolic) backtrace to the given file.
+    //! \brief  Adds a backtrace to the given file.
     //!
     //! \param[in]  targetFileDescriptor  The file to add to.
-    //! \param[in]  backtraceID           The backtrace ID to assocaited with the backtrace.
-    //! \param[in]  entries               An array of stack frame addresses.
-    //! \param[in]  entriesCount          How many entries are in the array.
+    //! \param[in]  backtrace             The backtrace to add.
     //!
     //! \returns  The number of bytes written to the file.
     //!
     //! \note  This function is async signal safe.
     //!
-    size_t add_raw_backtrace(
+    size_t add_backtrace(
         const int targetFileDescriptor,
-        const swimps::trace::backtrace_id_t backtraceID,
-        void** entries,
-        const swimps::trace::stack_frame_count_t entriesCount);
+        const Backtrace& backtrace);
+
+    //!
+    //! \brief  Reads a backtrace from a given file.
+    //!
+    //! \param[in]  fileDescriptor  The file to read from.
+    //!
+    //! \returns  The backtrace if all went well, an empty optional otherwise.
+    //!
+    //! \note  No marker is expected, since the normal use case is to read to marker
+    //!        to determine that it's a backtrace first.
+    //!
+    //! \note  The file descriptor shall be pointing at the data after the backtrace
+    //         if the read was successful. If it was not, its state is undefined.
+    //!
+    std::optional<swimps::trace::Backtrace> read_backtrace(const int fileDescriptor);
 
     //!
     //! \brief  Finalises an opened trace file.
