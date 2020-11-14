@@ -41,15 +41,11 @@ namespace {
 
         const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
 
-        {
-            const char formatBuffer[] = "Entry marker: %s.";
-
-            swimps::log::format_and_write_to_log<64>(
-                swimps::log::LogLevel::Debug,
-                formatBuffer,
-                buffer
-            );
-        }
+        swimps::log::format_and_write_to_log<64>(
+            swimps::log::LogLevel::Debug,
+            "Entry marker: %s.",
+            buffer
+        );
 
         if (readReturnCode == 0) {
             return EntryKind::EndOfFile;
@@ -282,11 +278,9 @@ size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swi
 int swimps::trace::file::finalise(const int fileDescriptor, const char* const traceFilePath, const size_t traceFilePathSize) {
     // Go to the start of the file.
     if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
-        const char formatBuffer[] = "Could not lseek to start of trace file to begin finalising, errno %d (%s).";
-
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
-            formatBuffer,
+            "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
             errno,
             strerror(errno)
         );
@@ -296,11 +290,9 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
     // Make sure this is actually a swimps trace file
     if (read_trace_file_marker(fileDescriptor) != 0) {
-        const char message[] = "Missing swimps trace file marker.";
-
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
-            message
+            "Missing swimps trace file marker."
         );
 
         return -1;
@@ -345,26 +337,21 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     do {
         entryKind = read_next_entry_kind(fileDescriptor);
 
-        {
-            const char formatBuffer[] = "Trace file entry kind: %d.";
-
-            swimps::log::format_and_write_to_log<128>(
-                swimps::log::LogLevel::Debug,
-                formatBuffer,
-                static_cast<int>(entryKind)
-            );
-        }
+        swimps::log::format_and_write_to_log<128>(
+            swimps::log::LogLevel::Debug,
+            "Trace file entry kind: %d.",
+            static_cast<int>(entryKind)
+        );
 
         switch(entryKind) {
         case EntryKind::Sample:
             {
                 const auto sample = read_sample(fileDescriptor);
                 if (!sample) {
-                    const char message[] = "Reading sample failed.";
 
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
-                        message
+                        "Reading sample failed."
                     );
 
                     return -1;
@@ -377,11 +364,9 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             {
                 const auto backtrace = read_backtrace(fileDescriptor);
                 if (!backtrace) {
-                    const char message[] = "Reading backtrace failed.";
-
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
-                        message
+                        "Reading backtrace failed."
                     );
 
                     return -1;
@@ -395,11 +380,9 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             break;
         case EntryKind::Unknown:
             {
-                const char message[] = "Unknown entry kind detected, bailing.";
-
                 swimps::log::write_to_log(
                     swimps::log::LogLevel::Debug,
-                    message
+                    "Unknown entry kind detected, bailing."
                 );
 
                 return -1;
@@ -432,11 +415,10 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     const auto tempFile = mkstemp(tempFileNameBuffer);
 
     if (tempFile == -1) {
-        const char formatBuffer[] = "Could not create temp file to write finalised trace into, errno %d (%s).";
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
-            formatBuffer,
+            "Could not create temp file to write finalised trace into, errno %d (%s).",
             errno,
             strerror(errno)
         );
@@ -445,11 +427,10 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     }
 
     if (write_trace_file_marker(tempFile, tempFileNameBuffer) == -1) {
-        const char formatBuffer[] = "Could not write trace file marker to finalisation temp file, errno %d (%s).";
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
-            formatBuffer,
+            "Could not write trace file marker to finalisation temp file, errno %d (%s).",
             errno,
             strerror(errno)
         );
