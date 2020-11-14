@@ -33,7 +33,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install compilers
-      run: sudo apt install gcc-10 g++-10 clang libunwind-dev
+      run: sudo apt install gcc-10 g++-10 clang libunwind-dev lcov
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
@@ -54,6 +54,12 @@ jobs:
       working-directory: ${{ github.workspace }}/build
       run: ctest -VV
 
+    - name: run-lcov
+      if: ${{ matrix.coverage }} == "ON"
+      run: lcov --directory . --capture --output-file coverage.info
+
     - name: Codecov
       uses: codecov/codecov-action@v1.0.14
       if: ${{ matrix.coverage }} == "ON"
+      with:
+        file: coverage.info
