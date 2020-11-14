@@ -24,21 +24,21 @@ size_t swimps_format_log_message(
     default:                             logLevelString = "SWIMPS: ??? - "; break;
     }
 
-    size_t bytesWritten = swimps::io::write_to_buffer(logLevelString,
-                                                 strlen(logLevelString),
-                                                 targetBuffer,
-                                                 targetBufferSize);
+    size_t bytesWritten = swimps::io::write_to_buffer(
+        { logLevelString, strlen(logLevelString) },
+        { targetBuffer, targetBufferSize }
+    );
 
-    bytesWritten += swimps::io::write_to_buffer(message,
-                                           messageSize,
-                                           targetBuffer + bytesWritten,
-                                           targetBufferSize - bytesWritten);
+    bytesWritten += swimps::io::write_to_buffer(
+        { message, messageSize },
+        { targetBuffer + bytesWritten, targetBufferSize - bytesWritten }
+    );
 
     const char newLine[] = { '\n' };
-    bytesWritten += swimps::io::write_to_buffer(newLine,
-                                           sizeof newLine,
-                                           targetBuffer + bytesWritten,
-                                           targetBufferSize - bytesWritten);
+    bytesWritten += swimps::io::write_to_buffer(
+        newLine,
+        { targetBuffer + bytesWritten, targetBufferSize - bytesWritten }
+    );
 
     return bytesWritten;
 }
