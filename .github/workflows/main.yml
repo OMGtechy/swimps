@@ -40,11 +40,11 @@ jobs:
       with:
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
+        cmakeAppendedArgs: '-DSWIMPS_ENABLE_COVERAGE=ON'
       env:
         CC:   ${{ matrix.c-compiler }}
         CXX:  ${{ matrix.cxx-compiler }}
         CMAKE_BUILD_TYPE: ${{ matrix.cmake-build-type }}
-        SWIMPS_ENABLE_COVERAGE: ON
         
     - name: run-tests
       working-directory: ${{ github.workspace }}/build
