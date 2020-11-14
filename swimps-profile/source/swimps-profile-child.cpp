@@ -1,14 +1,14 @@
 #include "swimps-profile.h"
 #include "swimps-log.h"
 
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cerrno>
+
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <sys/ptrace.h>
-#include <errno.h>
 #include <linux/limits.h>
-#include <stdio.h>
-#include <string.h>
 
 extern char** environ;
 
