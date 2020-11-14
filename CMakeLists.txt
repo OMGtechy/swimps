@@ -10,6 +10,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -g3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined -g3")
 
+option(SWIMPS_ENABLE_COVERAGE "Enable code coverage flags." OFF)
+if(SWIMPS_ENABLE_COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+endif()
+
 add_subdirectory(swimps-test)
 add_subdirectory(swimps-container)
 add_subdirectory(swimps-preload)
