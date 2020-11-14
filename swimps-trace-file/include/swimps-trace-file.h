@@ -40,7 +40,7 @@ namespace swimps::trace::file {
     //!        TODO: should it be? Would need to implement format specifiers for int64 for that...
     //!
     size_t generate_name(
-        const char* const programName,
+         const char* const programName,
          const swimps::time::TimeSpecification* const time,
          const pid_t pid,
          char* const targetBuffer,
