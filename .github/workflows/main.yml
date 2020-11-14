@@ -18,6 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        fail-fast: false
         os: [ubuntu-20.04]
         c-compiler: [gcc-10, clang]
         cxx-compiler: [g++-10, clang++]
