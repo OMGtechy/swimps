@@ -17,8 +17,8 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         os: [ubuntu-20.04]
         c-compiler: [gcc-10, clang]
         cxx-compiler: [g++-10, clang++]
