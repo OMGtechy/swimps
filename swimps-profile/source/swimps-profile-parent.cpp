@@ -40,11 +40,12 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             {
                 char targetBuffer[128] = { 0 };
                 const char formatBuffer[] = "Child process stopped due to signal %d (%s).";
-                const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                                 strlen(formatBuffer),
-                                                                 targetBuffer,
-                                                                 signalNumber,
-                                                                 strsignal(signalNumber));
+                const size_t bytesWritten = swimps::io::format_string(
+                    formatBuffer,
+                    targetBuffer,
+                    signalNumber,
+                    strsignal(signalNumber)
+                );
 
                 swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                     targetBuffer,
@@ -65,11 +66,12 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
             if (ptrace(PTRACE_CONT, childPid, 0 /* ignored */, signalToSend) == -1) {
                 char targetBuffer[128] = { 0 };
                 const char formatBuffer[] = "ptrace(PTRACE_CONT) failed, errno %d (%s).";
-                const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                                 strlen(formatBuffer),
-                                                                 targetBuffer,
-                                                                 errno,
-                                                                 strerror(errno));
+                const size_t bytesWritten = swimps::io::format_string(
+                    formatBuffer,
+                    targetBuffer,
+                    errno,
+                    strerror(errno)
+                );
 
                 swimps::log::write_to_log(swimps::log::LogLevel::Debug,
                                     targetBuffer,

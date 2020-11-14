@@ -62,12 +62,11 @@ namespace swimps::io {
     }
 
     //!
-    //! \brief  Formats the string, as per printf rules (see supported list), into the target buffer.
+    //! \brief  Formats the string, as per printf rules (see supported list), into the target.
     //!
-    //! \param[in]   formatBuffer      The buffer containing the format string. Does not need to be null terminated.
-    //! \param[in]   formatBufferSize  The size of the format buffer, in bytes.
-    //! \param[out]  targetBuffer      Where to write the formatted string.
-    //! \param[in]   ...               The values to use when formatting the string.
+    //! \param[in]   format  The format string. Does not need to be null terminated.
+    //! \param[out]  target  Where to write the formatted string.
+    //! \param[in]   ...     The values to use when formatting the string.
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
@@ -84,18 +83,17 @@ namespace swimps::io {
     //!        - %d: int
     //!        - %s: a null terminated string as a const char*
     //!
-    size_t format_string(const char* __restrict__ formatbuffer,
-                         size_t formatbuffersize,
-                         swimps::container::Span<char> targetbuffer,
-                         ...);
+    size_t format_string(
+        swimps::container::Span<const char> format,
+        swimps::container::Span<char> target,
+        ...);
 
     //!
     //! \brief  A variant of swimps::io::format_string that takes a va_list.
     //!
     //! \see swimps::io::format_string.
     //!
-    size_t format_string_valist(const char* __restrict__ formatbuffer,
-                                size_t formatbuffersize,
-                                swimps::container::Span<char> targetbuffer,
+    size_t format_string_valist(swimps::container::Span<const char> format,
+                                swimps::container::Span<char> target,
                                 va_list varargs);
 }

@@ -38,16 +38,16 @@ size_t swimps::io::write_to_file_descriptor(
     return bytesWrittenTotal;
 }
 
-size_t swimps::io::format_string(const char* __restrict__ formatBuffer,
-                            size_t formatBufferSize,
-                            swimps::container::Span<char> targetBuffer,
-                            ...) {
+size_t swimps::io::format_string(
+    swimps::container::Span<const char> format,
+    swimps::container::Span<char> targetBuffer,
+    ...) {
+
     va_list varargs;
     va_start(varargs, targetBuffer);
 
     const size_t bytesWritten = swimps::io::format_string_valist(
-        formatBuffer,
-        formatBufferSize,
+        format,
         targetBuffer,
         varargs
     );
@@ -57,26 +57,28 @@ size_t swimps::io::format_string(const char* __restrict__ formatBuffer,
     return bytesWritten;
 }
 
-size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
-                                   size_t formatBufferSize,
-                                   swimps::container::Span<char> targetBuffer,
-                                   va_list varargs) {
-
-    assert(formatBuffer != NULL);
+size_t swimps::io::format_string_valist(
+    swimps::container::Span<const char> format,
+    swimps::container::Span<char> targetBuffer,
+    va_list varargs) {
 
     size_t bytesWritten = 0;
 
     do {
-        const size_t bytesToProcess = std::min(formatBufferSize, targetBuffer.current_size());
+        const size_t bytesToProcess = std::min(format.current_size(), targetBuffer.current_size());
 
         // The return value is either:
         // 1) NULL, meaning the we're done.
         // 2) A pointer to the character after the % in the target buffer,
         //    meaning some formatting needs doing.
-        const char* const formatCharacterTarget = static_cast<char*>(memccpy(&targetBuffer[0],
-                                                                     formatBuffer,
-                                                                     '%',
-                                                                     bytesToProcess));
+        const char* const formatCharacterTarget = static_cast<char*>(
+            memccpy(
+                &targetBuffer[0],
+                &format[0],
+                '%',
+                bytesToProcess
+            )
+        );
 
         {
             assert(formatCharacterTarget == NULL || *(formatCharacterTarget - 1) == '%');
@@ -87,8 +89,7 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
                 !foundAPercentSign ? bytesToProcess
                                    : static_cast<size_t>(formatCharacterTarget - &targetBuffer[0]);
 
-            formatBuffer += newBytesWritten;
-            formatBufferSize -= newBytesWritten;
+            format += newBytesWritten;
 
             // Overwrite % sign if present.
             targetBuffer += newBytesWritten - 1;
@@ -96,7 +97,7 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
             bytesWritten += newBytesWritten;
         }
 
-        if (formatCharacterTarget == NULL || formatBufferSize == 0 || targetBuffer.current_size() == 0) {
+        if (formatCharacterTarget == NULL || format.current_size() == 0 || targetBuffer.current_size() == 0) {
             // end of string!
             break;
         }
@@ -104,11 +105,11 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
         // Overwriting % sign, so one less byte written.
         bytesWritten -= 1;
 
-        switch(*formatBuffer) {
+        switch(format[0]) {
         case 'd':
             {
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                format += 1;
+
                 int value = va_arg(varargs, int);
 
                 if (value == 0) {
@@ -161,8 +162,8 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
             }
         case 's':
             {
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                format += 1;
+
                 const char* const value = va_arg(varargs, const char*);
                 for (size_t index = 0; value[index] != '\0' || targetBuffer.current_size() == 0; ++index)
                 {
@@ -176,14 +177,13 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
             {
                 targetBuffer[0] = '?';
                 targetBuffer += 1;
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                format += 1;
                 bytesWritten += 1;
                 break;
             }
         }
 
-    } while(formatBufferSize > 0 && targetBuffer.current_size() > 0);
+    } while(format.current_size() > 0 && targetBuffer.current_size() > 0);
 
     return bytesWritten;
 }

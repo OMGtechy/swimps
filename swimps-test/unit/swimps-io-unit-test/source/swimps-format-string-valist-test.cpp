@@ -28,7 +28,6 @@ SCENARIO("swimps::io::format_string_valist", "[swimps-io]") {
                 [&formatBuffer, &targetBuffer](va_list varargs) {
                     return swimps::io::format_string_valist(
                         formatBuffer,
-                        sizeof formatBuffer,
                         targetBuffer,
                         varargs
                     );
