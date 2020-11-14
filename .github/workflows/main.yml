@@ -22,10 +22,11 @@ jobs:
         os: [ubuntu-20.04]
         c-compiler: [gcc-10, clang]
         cxx-compiler: [g++-10, clang++]
+        coverage: [ON, OFF]
         cmake-build-type: [DEBUG, RELEASE]
         exclude:
-          - { c-compiler: clang, cxx-compiler: g++-10 }
-          - { c-compiler: gcc-10, cxx-compiler: clang++ }
+          - { c-compiler: clang, cxx-compiler: g++-10, coverage: ON }
+          - { c-compiler: gcc-10, cxx-compiler: clang++, coverage: OFF }
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -41,7 +42,7 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs: "-DSWIMPS_ENABLE_COVERAGE=ON"
+        cmakeAppendedArgs: -DSWIMPS_ENABLE_COVERAGE=${{ matrix.coverage }}
       env:
         CC:   ${{ matrix.c-compiler }}
         CXX:  ${{ matrix.cxx-compiler }}
@@ -53,4 +54,4 @@ jobs:
 
     - name: Codecov
       uses: codecov/codecov-action@v1.0.14
-      if: ${{ matrix.cxx-compiler }} == g++-10
+      if: ${{ matrix.coverage }} == ON
