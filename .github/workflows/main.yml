@@ -51,8 +51,8 @@ jobs:
       run: ctest -VV
 
     - name: Gather coverage data
-      run: |
-        find -name "*.gcda" | xargs gcov
+      run: find -name "*.gcda" | xargs gcov
+      working-directory: ${{ github.workspace }}/build
 
     - name: Codecov
       uses: codecov/codecov-action@v1.0.14
