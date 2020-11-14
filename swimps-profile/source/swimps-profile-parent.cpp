@@ -43,7 +43,6 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
                 const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                                  strlen(formatBuffer),
                                                                  targetBuffer,
-                                                                 sizeof targetBuffer,
                                                                  signalNumber,
                                                                  strsignal(signalNumber));
 
@@ -69,7 +68,6 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
                 const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                                  strlen(formatBuffer),
                                                                  targetBuffer,
-                                                                 sizeof targetBuffer,
                                                                  errno,
                                                                  strerror(errno));
 

@@ -11,8 +11,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { 'a', 'b', 'c', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             sizeof targetBuffer);
+                                                             targetBuffer);
 
             THEN("The function returns that it has written 4 bytes.") {
                 REQUIRE(bytesWritten == 4);
@@ -41,8 +40,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = "1234567"; // 8th is null terminator
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             sizeof targetBuffer);
+                                                             targetBuffer);
 
             THEN("The function returns that it has written 8 bytes.") {
                 REQUIRE(bytesWritten == 8);
@@ -69,8 +67,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             2,
+                                                             swimps::container::Span<char>(targetBuffer, 2),
                                                              7);
 
             THEN("The function returns that it has written 1 byte.") {
@@ -96,8 +93,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                             sizeof formatBuffer,
-                                                            targetBuffer,
-                                                            2,
+                                                            swimps::container::Span<char>(targetBuffer, 2),
                                                             -1);
 
             THEN("The function returns that it has written 2 bytes.") {
@@ -123,8 +119,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                             sizeof formatBuffer,
-                                                            targetBuffer,
-                                                            1,
+                                                            swimps::container::Span<char>(targetBuffer, 1),
                                                             -9);
 
             THEN("The function returns that it has written one byte.") {
@@ -149,8 +144,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             2,
+                                                             swimps::container::Span<char>(targetBuffer, 2),
                                                              1234);
 
             THEN("The function returns that it has written 2 bytes.") {
@@ -177,8 +171,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%', 'd' };
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                                 sizeof formatBuffer,
-                                                                targetBuffer,
-                                                                4,
+                                                                swimps::container::Span<char>(targetBuffer, 4),
                                                                 -1234);
 
             THEN("The function returns that it has written 4 bytes.") {
@@ -209,7 +202,6 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
-                                                             sizeof targetBuffer,
                                                              "The quick fox jumps over the lazy brown dog.");
 
             THEN("The function returns that it has written 44 bytes.") {
@@ -274,7 +266,6 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
-                                                             sizeof targetBuffer,
                                                              "Greetings",
                                                              "Dave",
                                                              30);
@@ -310,7 +301,6 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const size_t bytesWritten = swimps::io::format_string(formatBuffer,
                                                              sizeof formatBuffer,
                                                              targetBuffer,
-                                                             sizeof targetBuffer,
                                                              errno);
 
             THEN("The number of bytes claimed to be written is as expected.") {
