@@ -18,8 +18,7 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
         const int targetFileDescriptor = mkstemp(targetFileNameBuffer);
 
         std::array<char, 2048> data = { };
-        // TODO: add overload that'll infer the size of an std::array.
-        auto dataSpan = swimps::container::Span<char>(data.data(), data.size());
+        auto dataSpan = swimps::container::Span<char>(data);
 
         // 1) Backtrace ID (8 bytes)
         static_assert(sizeof(backtrace_id_t) == 8);
@@ -62,7 +61,7 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
 
         WHEN("A valid backtrace is written to it.") {
             REQUIRE(swimps::io::write_to_file_descriptor(
-                { data.data(), data.size() },
+                data,
                 targetFileDescriptor
             ) == data.size());
 
