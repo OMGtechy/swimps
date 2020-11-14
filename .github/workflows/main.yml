@@ -38,6 +38,7 @@ jobs:
     - name: run-cmake
       uses: lukka/run-cmake@v2.5
       with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
         cmakeAppendedArgs: "-DSWIMPS_ENABLE_COVERAGE=ON"
