@@ -5,13 +5,8 @@
 
 size_t swimps_format_log_message(
     const swimps::log::LogLevel logLevel,
-    const char* const __restrict__ message,
-    const size_t messageSize,
-    char* __restrict__ targetBuffer,
-    const size_t targetBufferSize) {
-
-    assert(message != NULL);
-    assert(targetBuffer != NULL);
+    swimps::container::Span<const char> message,
+    swimps::container::Span<char> target) {
 
     const char* logLevelString = NULL;
 
@@ -26,18 +21,22 @@ size_t swimps_format_log_message(
 
     size_t bytesWritten = swimps::io::write_to_buffer(
         { logLevelString, strlen(logLevelString) },
-        { targetBuffer, targetBufferSize }
+        target
     );
 
+    target += bytesWritten;
+
     bytesWritten += swimps::io::write_to_buffer(
-        { message, messageSize },
-        { targetBuffer + bytesWritten, targetBufferSize - bytesWritten }
+        message,
+        target
     );
+
+    target += bytesWritten;
 
     const char newLine[] = { '\n' };
     bytesWritten += swimps::io::write_to_buffer(
         newLine,
-        { targetBuffer + bytesWritten, targetBufferSize - bytesWritten }
+        target
     );
 
     return bytesWritten;
@@ -45,18 +44,15 @@ size_t swimps_format_log_message(
 
 size_t swimps::log::write_to_log(
     const swimps::log::LogLevel logLevel,
-    const char* const message,
-    const size_t messageSize) {
-
-    assert(message != NULL);
+    swimps::container::Span<const char> message) {
 
     char targetBuffer[2048] = { 0 };
 
-    const size_t bytesWritten = swimps_format_log_message(logLevel,
-                                                          message,
-                                                          messageSize,
-                                                          targetBuffer,
-                                                          sizeof targetBuffer);
+    const size_t bytesWritten = swimps_format_log_message(
+        logLevel,
+        message,
+        targetBuffer
+    );
 
     int targetFileDescriptor;
 

@@ -15,18 +15,20 @@ extern char** environ;
 swimps::error::ErrorCode swimps_profile_child(char** args) {
     if (args == NULL) {
         char message[] = "swimps_profile_child given NULL args";
-        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
-                            message,
-                            sizeof message);
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Fatal,
+            message
+        );
 
         return swimps::error::ErrorCode::NullParameter;
     }
 
     if (args[0] == NULL) {
         char message[] = "No program specified.";
-        swimps::log::write_to_log(swimps::log::LogLevel::Fatal,
-                            message,
-                            sizeof message);
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Fatal,
+            message
+        );
 
         return swimps::error::ErrorCode::InvalidParameter;
     }
@@ -38,7 +40,6 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatString,
-            sizeof formatString,
             errno,
             strerror(errno)
         );
@@ -106,7 +107,6 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
-            sizeof formatBuffer,
             errno,
             strerror(errno)
         );
@@ -145,15 +145,17 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
             totalBytesWritten += bytesWritten;
         }
 
-        swimps::log::write_to_log(swimps::log::LogLevel::Info,
-                            logMessageBuffer,
-                            totalBytesWritten);
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Info,
+            { logMessageBuffer, totalBytesWritten }
+        );
     }
 
     for(char** envIter = environment; *envIter != NULL; ++envIter) {
-        swimps::log::write_to_log(swimps::log::LogLevel::Debug,
-                            *envIter,
-                            strlen(*envIter));
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Debug,
+            { *envIter, strlen(*envIter) }
+        );
     }
 
     execve(*args, args, environment);
@@ -165,7 +167,6 @@ swimps::error::ErrorCode swimps_profile_child(char** args) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             formatBuffer,
-            sizeof formatBuffer,
             errno,
             strerror(errno)
         );

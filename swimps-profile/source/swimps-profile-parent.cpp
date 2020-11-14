@@ -18,9 +18,9 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
 
             swimps::log::format_and_write_to_log<256>(
                 swimps::log::LogLevel::Debug,
-                message,
-                strlen(message),
-                exitCode);
+                { message, strlen(message) },
+                exitCode
+            );
 
             return exitCode == 0 ? swimps::error::ErrorCode::None
                                  : swimps::error::ErrorCode::ChildProcessHasNonZeroExitCode;
@@ -28,9 +28,11 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
 
         if (WIFSIGNALED(status)) {
             const char message[] = "Child process exited due to a signal.";
-            swimps::log::write_to_log(swimps::log::LogLevel::Debug,
-                                message,
-                                strlen(message));
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Debug,
+                { message, strlen(message) }
+            );
+
             return swimps::error::ErrorCode::ChildProcessExitedDueToSignal;
         }
 
@@ -47,9 +49,10 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
                     strsignal(signalNumber)
                 );
 
-                swimps::log::write_to_log(swimps::log::LogLevel::Debug,
-                                    targetBuffer,
-                                    bytesWritten);
+                swimps::log::write_to_log(
+                    swimps::log::LogLevel::Debug,
+                    { targetBuffer, bytesWritten }
+                );
             }
 
 
@@ -73,9 +76,10 @@ swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
                     strerror(errno)
                 );
 
-                swimps::log::write_to_log(swimps::log::LogLevel::Debug,
-                                    targetBuffer,
-                                    bytesWritten);
+                swimps::log::write_to_log(
+                    swimps::log::LogLevel::Debug,
+                    { targetBuffer, bytesWritten }
+                );
 
                 return swimps::error::ErrorCode::PtraceFailed;
             }

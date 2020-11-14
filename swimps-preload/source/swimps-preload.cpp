@@ -37,8 +37,7 @@ namespace {
                 const char message[] = "swimps::time::now failed whilst taking sample.";
                 swimps::log::write_to_log(
                     swimps::log::LogLevel::Error,
-                    message,
-                    sizeof message
+                    message
                 );
 
                 goto swimps_preload_sigprof_cleanup;
@@ -67,8 +66,7 @@ namespace {
             const char message[] = "Could not get time to generate trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message,
-                sizeof message
+                message
             );
 
             abort();
@@ -83,8 +81,7 @@ namespace {
             const char message[] = "Ran out of space when generating trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message,
-                sizeof message
+                message
             );
 
             abort();
@@ -110,8 +107,7 @@ namespace {
             const char message[] = "Could not generate trace file name.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message,
-                sizeof message
+                message
             );
 
             abort();
@@ -123,8 +119,7 @@ namespace {
             const char message[] = "Could not create trace file.";
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
-                message,
-                sizeof message
+                message
             );
 
             abort();
@@ -168,7 +163,6 @@ namespace {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
-                sizeof formatBuffer,
                 errno,
                 strerror(errno)
             );
@@ -182,7 +176,6 @@ namespace {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
-                sizeof formatBuffer,
                 errno,
                 strerror(errno)
             );
@@ -196,7 +189,6 @@ namespace {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 formatBuffer,
-                sizeof formatBuffer,
                 errno,
                 strerror(errno)
             );
