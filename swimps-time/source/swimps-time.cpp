@@ -1,5 +1,4 @@
 #include "swimps-time.h"
-#include "swimps-assert.h"
 
 #include <signal.h>
 
