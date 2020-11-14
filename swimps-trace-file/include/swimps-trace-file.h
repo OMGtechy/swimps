@@ -41,7 +41,7 @@ namespace swimps::trace::file {
     //!
     size_t generate_name(
          const char* const programName,
-         const swimps::time::TimeSpecification* const time,
+         const swimps::time::TimeSpecification& time,
          const pid_t pid,
          char* const targetBuffer,
          const size_t targetBufferSize);
@@ -58,7 +58,7 @@ namespace swimps::trace::file {
     //!
     size_t add_sample(
         const int targetFileDescriptor,
-        const swimps::trace::Sample* const sample);
+        const swimps::trace::Sample& sample);
 
     //!
     //! \brief  Adds a backtrace to the given file.

@@ -138,13 +138,12 @@ int swimps::trace::file::create(const char* const path) {
 }
 
 size_t swimps::trace::file::generate_name(const char* const programName,
-                                          const swimps::time::TimeSpecification* const time,
+                                          const swimps::time::TimeSpecification& time,
                                           const pid_t pid,
                                           char* const targetBuffer,
                                           const size_t targetBufferSize) {
 
     swimps_assert(programName != NULL);
-    swimps_assert(time != NULL);
     swimps_assert(targetBuffer != NULL);
 
     return snprintf(
@@ -152,8 +151,8 @@ size_t swimps::trace::file::generate_name(const char* const programName,
         targetBufferSize,
         "swimps_trace_%s_%" PRId64 "_%" PRId64 "_%" PRId64,
         programName,
-        time->seconds,
-        time->nanoseconds,
+        time.seconds,
+        time.nanoseconds,
         (int64_t) pid // There isn't a format specifier for pid_t,
                       // so casting to a large signed type felt like the safest option
     );
@@ -269,13 +268,13 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
     return backtrace;
 }
 
-size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swimps::trace::Sample* const sample) {
+size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swimps::trace::Sample& sample) {
     size_t bytesWritten = 0;
 
     bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_sample_marker, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample->backtraceID, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample->timestamp.seconds, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample->timestamp.nanoseconds, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample.backtraceID, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample.timestamp.seconds, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(sample.timestamp.nanoseconds, targetFileDescriptor);
 
     return bytesWritten;
 }
@@ -459,7 +458,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     }
 
     for(const auto& sample : samplesSharingBacktraceID) {
-        add_sample(tempFile, &sample);
+        add_sample(tempFile, sample);
     }
 
     for(const auto& backtrace : backtraceMap) {

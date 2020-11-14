@@ -44,7 +44,7 @@ namespace {
             }
         }
 
-        swimps::trace::file::add_sample(traceFile, &sample);
+        swimps::trace::file::add_sample(traceFile, sample);
 
         {
             auto backtrace = swimps::preload::get_backtrace();
@@ -94,7 +94,7 @@ namespace {
 
         bytesWritten += swimps::trace::file::generate_name(
             program_invocation_short_name,
-            &time,
+            time,
             getpid(),
             traceFilePath,
             traceFilePathSize
