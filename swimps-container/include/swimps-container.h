@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <cassert>
+#include <array>
+#include <type_traits>
 
 namespace swimps::container {
     //!
@@ -19,9 +21,22 @@ namespace swimps::container {
         //!
         //! \tparam  N  The size of the buffer (intended to be inferred).
         //!
+        //! \param[in]  buffer  The array to cover the contents over.
+        //!
         template <size_t N>
         constexpr Span(T (&buffer)[N]) noexcept
             : Span(&buffer[0], N) { }
+
+        //!
+        //! \brief  Creates a span convering the contents of an std::array.
+        //!
+        //! \tparam  The size parameter of the std::array.
+        //!
+        //! \param[in]  array  The std::array.
+        //!
+        template <size_t N>
+        constexpr Span(std::array<std::remove_const_t<T>, N>& array) noexcept
+            : Span(array.data(), array.size()) { }
 
         //!
         //! \brief  Creates a span starting at the buffer provided, with the number of elements specified.
