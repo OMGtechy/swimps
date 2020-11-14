@@ -71,7 +71,8 @@ size_t swimps::log::write_to_log(
         break;
     }
 
-    return swimps::io::write_to_file_descriptor(targetBuffer,
-                                           bytesWritten,
-                                           targetFileDescriptor);
+    return swimps::io::write_to_file_descriptor(
+        { targetBuffer, bytesWritten },
+        targetFileDescriptor
+    );
 }

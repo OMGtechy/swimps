@@ -2,6 +2,7 @@
 
 #include <cstdarg>
 #include <cstddef>
+#include <concepts>
 
 #include "swimps-container.h"
 
@@ -30,17 +31,35 @@ namespace swimps::io {
     //!
     //! \brief  Writes the provided data to the file specified.
     //!
-    //! \param[in]  sourceBuffer      The data to be written to the file. Does not need to be null terminated.
-    //! \param[in]  sourceBufferSize  The number of bytes to read from the source buffer.
-    //! \param[in]  fileDescriptor    The file to write the data to.
+    //! \param[in]  source          The data to be written to the file. Does not need to be null terminated.
+    //! \param[in]  fileDescriptor  The file to write the data to.
     //!
     //! \returns  The number of bytes written to the file.
     //!
     //! \note  This function is async signal safe.
     //!
-    size_t write_to_file_descriptor(const char* sourceBuffer,
-                                    size_t sourceBufferSize,
-                                    int fileDescriptor);
+    size_t write_to_file_descriptor(
+        swimps::container::Span<const char> source,
+        int fileDescriptor);
+
+    //!
+    //! \brief  Provides a wrapper around write_to_file_descriptor that makes writing integral types easier.
+    //!
+    //! \tparam  T  An integral type to write.
+    //!
+    //! \see  write_to_file_descriptor
+    //!
+    template <typename T>
+        requires std::integral<T>
+    size_t write_to_file_descriptor(
+        const T source,
+        int fileDescriptor) {
+
+        return write_to_file_descriptor(
+            { reinterpret_cast<const char*>(&source), sizeof(T) },
+            fileDescriptor
+        );
+    }
 
     //!
     //! \brief  Formats the string, as per printf rules (see supported list), into the target buffer.

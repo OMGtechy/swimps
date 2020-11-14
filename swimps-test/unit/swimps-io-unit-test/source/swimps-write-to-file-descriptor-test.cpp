@@ -16,7 +16,6 @@ SCENARIO("swimps::io::write_to_file_descriptor", "[swimps-io]") {
         WHEN("The data is written to the file.") {
             const auto bytesWritten = swimps::io::write_to_file_descriptor(
                 sourceBuffer,
-                sizeof sourceBuffer,
                 targetFileDescriptor
             );
 

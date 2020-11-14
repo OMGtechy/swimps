@@ -62,8 +62,7 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
 
         WHEN("A valid backtrace is written to it.") {
             REQUIRE(swimps::io::write_to_file_descriptor(
-                data.data(),
-                data.size(),
+                { data.data(), data.size() },
                 targetFileDescriptor
             ) == data.size());
 
