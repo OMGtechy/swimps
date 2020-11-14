@@ -9,9 +9,10 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 4 byte string with no format specifiers or null terminator is written into it.") {
             const char formatBuffer[] = { 'a', 'b', 'c', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             targetBuffer);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                targetBuffer
+            );
 
             THEN("The function returns that it has written 4 bytes.") {
                 REQUIRE(bytesWritten == 4);
@@ -38,9 +39,10 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("An 8 byte string with no format specifiers but with a null terminator is written into it.") {
             const char formatBuffer[] = "1234567"; // 8th is null terminator
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             targetBuffer);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                targetBuffer
+            );
 
             THEN("The function returns that it has written 8 bytes.") {
                 REQUIRE(bytesWritten == 8);
@@ -65,10 +67,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a single digit vararg and no null terminator is given to it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             swimps::container::Span<char>(targetBuffer, 2),
-                                                             7);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                swimps::container::Span<char>(targetBuffer, 2),
+                7)
+            ;
 
             THEN("The function returns that it has written 1 byte.") {
                 REQUIRE(bytesWritten == 1);
@@ -91,10 +94,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an interger format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit vararg is given to it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                            sizeof formatBuffer,
-                                                            swimps::container::Span<char>(targetBuffer, 2),
-                                                            -1);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                swimps::container::Span<char>(targetBuffer, 2),
+                -1
+            );
 
             THEN("The function returns that it has written 2 bytes.") {
                 REQUIRE(bytesWritten == 2);
@@ -117,10 +121,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an interger format specifier, a targetBufferSize of 1, a negative single digit vararg and no null terminator is given to it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                            sizeof formatBuffer,
-                                                            swimps::container::Span<char>(targetBuffer, 1),
-                                                            -9);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                swimps::container::Span<char>(targetBuffer, 1),
+                -9
+            );
 
             THEN("The function returns that it has written one byte.") {
                 REQUIRE(bytesWritten == 1);
@@ -142,10 +147,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a four digit vararg and no null terminator is written into it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             swimps::container::Span<char>(targetBuffer, 2),
-                                                             1234);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                swimps::container::Span<char>(targetBuffer, 2),
+                1234
+            );
 
             THEN("The function returns that it has written 2 bytes.") {
                 REQUIRE(bytesWritten == 2);
@@ -169,10 +175,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 4, a four digit vararg and no null terminator is written into it.") {
             const char formatBuffer[] = { '%', 'd' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                                sizeof formatBuffer,
-                                                                swimps::container::Span<char>(targetBuffer, 4),
-                                                                -1234);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                swimps::container::Span<char>(targetBuffer, 4),
+                -1234
+            );
 
             THEN("The function returns that it has written 4 bytes.") {
                 REQUIRE(bytesWritten == 4);
@@ -199,10 +206,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 2 byte string with a string format specifier that has no null terminator and a string vararg is written into it.") {
             const char formatBuffer[] = { '%', 's' };
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             "The quick fox jumps over the lazy brown dog.");
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                targetBuffer,
+                "The quick fox jumps over the lazy brown dog."
+            );
 
             THEN("The function returns that it has written 44 bytes.") {
                 REQUIRE(bytesWritten == 44);
@@ -263,12 +271,13 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A 41 byte string with two string format specifiers, an integer format specifier, a null terminator and corresponding varargs.") {
             const char formatBuffer[] = "%s, my name is %s and I am %d years old.";
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             "Greetings",
-                                                             "Dave",
-                                                             30);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                targetBuffer,
+                "Greetings",
+                "Dave",
+                30
+            );
 
             THEN("The function returns that it has written 50 bytes.") {
                 REQUIRE(bytesWritten == 50);
@@ -298,10 +307,11 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
         WHEN("A format specifier of %d is passed alongside errno.") {
             const char formatBuffer[] = "errno %d.";
-            const size_t bytesWritten = swimps::io::format_string(formatBuffer,
-                                                             sizeof formatBuffer,
-                                                             targetBuffer,
-                                                             errno);
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                targetBuffer,
+                errno
+            );
 
             THEN("The number of bytes claimed to be written is as expected.") {
                 REQUIRE(bytesWritten == 9);

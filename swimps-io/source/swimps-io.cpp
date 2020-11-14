@@ -38,17 +38,17 @@ size_t swimps::io::write_to_file_descriptor(
     return bytesWrittenTotal;
 }
 
-size_t swimps::io::format_string(const char* __restrict__ formatBuffer,
-                            size_t formatBufferSize,
-                            swimps::container::Span<char> targetBuffer,
-                            ...) {
+size_t swimps::io::format_string(
+    swimps::container::Span<const char> format,
+    swimps::container::Span<char> target,
+    ...) {
+
     va_list varargs;
-    va_start(varargs, targetBuffer);
+    va_start(varargs, target);
 
     const size_t bytesWritten = swimps::io::format_string_valist(
-        formatBuffer,
-        formatBufferSize,
-        targetBuffer,
+        format,
+        target,
         varargs
     );
 
@@ -57,26 +57,28 @@ size_t swimps::io::format_string(const char* __restrict__ formatBuffer,
     return bytesWritten;
 }
 
-size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
-                                   size_t formatBufferSize,
-                                   swimps::container::Span<char> targetBuffer,
-                                   va_list varargs) {
-
-    assert(formatBuffer != NULL);
+size_t swimps::io::format_string_valist(
+    swimps::container::Span<const char> format,
+    swimps::container::Span<char> target,
+    va_list varargs) {
 
     size_t bytesWritten = 0;
 
     do {
-        const size_t bytesToProcess = std::min(formatBufferSize, targetBuffer.current_size());
+        const size_t bytesToProcess = std::min(format.current_size(), target.current_size());
 
         // The return value is either:
         // 1) NULL, meaning the we're done.
         // 2) A pointer to the character after the % in the target buffer,
         //    meaning some formatting needs doing.
-        const char* const formatCharacterTarget = static_cast<char*>(memccpy(&targetBuffer[0],
-                                                                     formatBuffer,
-                                                                     '%',
-                                                                     bytesToProcess));
+        const char* const formatCharacterTarget = static_cast<char*>(
+            memccpy(
+                &target[0],
+                &format[0],
+                '%',
+                bytesToProcess
+            )
+        );
 
         {
             assert(formatCharacterTarget == NULL || *(formatCharacterTarget - 1) == '%');
@@ -85,18 +87,17 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
 
             const size_t newBytesWritten =
                 !foundAPercentSign ? bytesToProcess
-                                   : static_cast<size_t>(formatCharacterTarget - &targetBuffer[0]);
+                                   : static_cast<size_t>(formatCharacterTarget - &target[0]);
 
-            formatBuffer += newBytesWritten;
-            formatBufferSize -= newBytesWritten;
+            format += newBytesWritten;
 
             // Overwrite % sign if present.
-            targetBuffer += newBytesWritten - 1;
+            target += newBytesWritten - 1;
 
             bytesWritten += newBytesWritten;
         }
 
-        if (formatCharacterTarget == NULL || formatBufferSize == 0 || targetBuffer.current_size() == 0) {
+        if (formatCharacterTarget == NULL || format.current_size() == 0 || target.current_size() == 0) {
             // end of string!
             break;
         }
@@ -104,31 +105,31 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
         // Overwriting % sign, so one less byte written.
         bytesWritten -= 1;
 
-        switch(*formatBuffer) {
+        switch(format[0]) {
         case 'd':
             {
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                format += 1;
+
                 int value = va_arg(varargs, int);
 
                 if (value == 0) {
-                    targetBuffer[0] = '0';
-                    targetBuffer += 1;
+                    target[0] = '0';
+                    target += 1;
                     bytesWritten += 1;
                     break;
                 }
 
                 // If the value is a negative, write '-' into the target buffer.
                 if (value < 0) {
-                    assert(targetBuffer.current_size() != 0);
-                    targetBuffer[0] = '-';
+                    assert(target.current_size() != 0);
+                    target[0] = '-';
                     bytesWritten += 1;
 
-                    targetBuffer += 1;
+                    target += 1;
 
                     value = value * -1;
 
-                    if (targetBuffer.current_size() == 0) {
+                    if (target.current_size() == 0) {
                         // No room for anything other then the '-' sign.
                         break;
                     }
@@ -137,53 +138,52 @@ size_t swimps::io::format_string_valist(const char* __restrict__ formatBuffer,
                 const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
                 unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
 
-                assert(targetBuffer.current_size() != 0);
+                assert(target.current_size() != 0);
 
                 // Ensure that we do not write to memory we do not own.
-                while (targetBuffer.current_size() <= numberOfDigitsInValueLeft - 1)
+                while (target.current_size() <= numberOfDigitsInValueLeft - 1)
                 {
                     numberOfDigitsInValueLeft -= 1;
                     value /= 10;
                 }
 
                 unsigned int numberOfDigitsWritten = 0;
-                while (targetBuffer.current_size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
+                while (target.current_size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
                 {
-                    targetBuffer[numberOfDigitsInValueLeft - 1] = '0' + (value % 10);
+                    target[numberOfDigitsInValueLeft - 1] = '0' + (value % 10);
                     bytesWritten += 1;
                     numberOfDigitsInValueLeft -= 1;
                     numberOfDigitsWritten += 1;
                     value /= 10;
                 }
 
-                targetBuffer += numberOfDigitsWritten;
+                target += numberOfDigitsWritten;
                 break;
             }
         case 's':
             {
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                format += 1;
+
                 const char* const value = va_arg(varargs, const char*);
-                for (size_t index = 0; value[index] != '\0' || targetBuffer.current_size() == 0; ++index)
+                for (size_t index = 0; value[index] != '\0' || target.current_size() == 0; ++index)
                 {
-                    targetBuffer[0] = value[index];
-                    targetBuffer += 1;
+                    target[0] = value[index];
+                    target += 1;
                     bytesWritten += 1;
                 }
                 break;
             }
         default:
             {
-                targetBuffer[0] = '?';
-                targetBuffer += 1;
-                formatBuffer += 1;
-                formatBufferSize -=1;
+                target[0] = '?';
+                target += 1;
+                format += 1;
                 bytesWritten += 1;
                 break;
             }
         }
 
-    } while(formatBufferSize > 0 && targetBuffer.current_size() > 0);
+    } while(format.current_size() > 0 && target.current_size() > 0);
 
     return bytesWritten;
 }
