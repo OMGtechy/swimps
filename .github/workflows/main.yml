@@ -40,7 +40,7 @@ jobs:
       with:
         cmakeBuildType: Debug
         buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs: -DSWIMPS_ENABLE_COVERAGE=ON
+        cmakeAppendedArgs: "-DSWIMPS_ENABLE_COVERAGE=ON"
       env:
         CC:   ${{ matrix.c-compiler }}
         CXX:  ${{ matrix.cxx-compiler }}
