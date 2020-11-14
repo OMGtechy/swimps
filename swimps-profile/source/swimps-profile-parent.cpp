@@ -2,9 +2,10 @@
 #include "swimps-io.h"
 #include "swimps-log.h"
 
+#include <cerrno>
+#include <cstring>
+
 #include <sys/wait.h>
-#include <string.h>
-#include <errno.h>
 #include <sys/ptrace.h>
 
 swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
