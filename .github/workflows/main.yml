@@ -39,12 +39,11 @@ jobs:
       uses: lukka/run-cmake@v2.5
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-        cmakeBuildType: Debug
+        cmakeBuildType: ${{ matrix.cmake-build.type }}
         buildDirectory: ${{ github.workspace }}/build
       env:
         CC:   ${{ matrix.c-compiler }}
         CXX:  ${{ matrix.cxx-compiler }}
-        CMAKE_BUILD_TYPE: ${{ matrix.cmake-build-type }}
         
     - name: run-tests
       working-directory: ${{ github.workspace }}/build
