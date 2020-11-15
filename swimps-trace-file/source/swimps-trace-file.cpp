@@ -27,8 +27,7 @@ namespace {
 
     int read_trace_file_marker(const int fileDescriptor) {
         char buffer[sizeof swimps::trace::file::swimps_v1_trace_file_marker];
-        const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
-        if (readReturnCode != sizeof swimps::trace::file::swimps_v1_trace_file_marker) {
+        if (! swimps::io::read_from_file_descriptor(fileDescriptor, buffer)) {
             return -1;
         }
 
@@ -69,27 +68,18 @@ namespace {
     std::optional<swimps::trace::Sample> read_sample(const int fileDescriptor) {
         swimps::trace::backtrace_id_t backtraceID;
 
-        {
-            const auto readReturnCode = read(fileDescriptor, &backtraceID, sizeof backtraceID);
-            if (readReturnCode != sizeof backtraceID) {
-                return {};
-            }
+        if (! swimps::io::read_from_file_descriptor(fileDescriptor, backtraceID)) {
+            return {};
         }
 
         swimps::time::TimeSpecification timestamp;
 
-        {
-            const auto readReturnCode = read(fileDescriptor, &timestamp.seconds, sizeof(timestamp.seconds));
-            if (readReturnCode != sizeof(timestamp.seconds)) {
-                return {};
-            }
+        if (! swimps::io::read_from_file_descriptor(fileDescriptor, timestamp.seconds)) {
+            return {};
         }
 
-        {
-            const auto readReturnCode = read(fileDescriptor, &timestamp.nanoseconds, sizeof(timestamp.nanoseconds));
-            if (readReturnCode != sizeof(timestamp.nanoseconds)) {
-                return {};
-            }
+        if (! swimps::io::read_from_file_descriptor(fileDescriptor, timestamp.nanoseconds)) {
+            return {};
         }
 
         return {{ backtraceID, timestamp }};
@@ -193,67 +183,46 @@ size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
 std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(const int fileDescriptor) {
     swimps::trace::Backtrace backtrace;
 
-    {
-        const auto readReturnCode = read(fileDescriptor, &backtrace.id, sizeof backtrace.id);
-        if (readReturnCode != sizeof backtrace.id) {
-            return {};
-        }
+    if (! swimps::io::read_from_file_descriptor(
+            fileDescriptor,
+            backtrace.id)) {
+        return {};
     }
 
-    {
-        const auto readReturnCode = read(
+    if (! swimps::io::read_from_file_descriptor(
             fileDescriptor,
-            &backtrace.stackFrameCount,
-            sizeof backtrace.stackFrameCount
-        );
-
-        if (readReturnCode != sizeof backtrace.stackFrameCount) {
-            return {};
-        }
+            backtrace.stackFrameCount)) {
+        return {};
     }
 
     swimps_assert(backtrace.stackFrameCount > 0);
 
     for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
 
-        {
-            if (! swimps::io::read_from_file_descriptor(fileDescriptor,
-                                                        backtrace.stackFrames[i].mangledFunctionNameLength)) {
-                return {};
-            }
+        if (! swimps::io::read_from_file_descriptor(
+                fileDescriptor,
+                backtrace.stackFrames[i].mangledFunctionNameLength)) {
+            return {};
         }
 
-        {
-            const auto bytesToRead = std::min(
-                static_cast<ssize_t>(backtrace.stackFrames[i].mangledFunctionNameLength),
-                static_cast<ssize_t>(sizeof swimps::trace::StackFrame::mangledFunctionName)
-            );
-
-            const auto readReturnCode = read(
+        if (! swimps::io::read_from_file_descriptor(
                 fileDescriptor,
-                &backtrace.stackFrames[i].mangledFunctionName[0],
-                bytesToRead
-            );
-
-            if (readReturnCode != bytesToRead) {
-                return {};
-            }
+                {
+                    backtrace.stackFrames[i].mangledFunctionName,
+                    std::min(
+                        static_cast<size_t>(backtrace.stackFrames[i].mangledFunctionNameLength),
+                        sizeof swimps::trace::StackFrame::mangledFunctionName
+                    )
+                })) {
+            return {};
         }
 
-        {
-            const auto bytesToRead = sizeof swimps::trace::StackFrame::offset;
-            const auto readReturnCode = read(
+        if (! swimps::io::read_from_file_descriptor(
                 fileDescriptor,
-                &backtrace.stackFrames[i].offset,
-                bytesToRead
-            );
-
-            if (readReturnCode != bytesToRead) {
-                return {};
-            }
+                backtrace.stackFrames[i].offset)) {
+            return {};
         }
     }
-
 
     return backtrace;
 }
