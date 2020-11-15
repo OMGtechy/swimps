@@ -1,20 +1,13 @@
-# This is a basic workflow to help you get started with Actions
+name: Build and test
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
   
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -27,25 +20,22 @@ jobs:
           - { c-compiler: clang, cxx-compiler: g++-10 }
           - { c-compiler: gcc-10, cxx-compiler: clang++  }
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Install compilers
+    - name: Install packages
       run: sudo apt install gcc-10 g++-10 clang libunwind-dev
 
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    - name: run-cmake
+    - name: build
       uses: lukka/run-cmake@v2.5
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-        cmakeBuildType: Debug
+        cmakeBuildType: ${{ matrix.cmake-build.type }}
         buildDirectory: ${{ github.workspace }}/build
       env:
         CC:   ${{ matrix.c-compiler }}
         CXX:  ${{ matrix.cxx-compiler }}
-        CMAKE_BUILD_TYPE: ${{ matrix.cmake-build-type }}
         
-    - name: run-tests
+    - name: test
       working-directory: ${{ github.workspace }}/build
       run: ctest -VV
