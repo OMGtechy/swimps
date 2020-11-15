@@ -9,8 +9,4 @@ Looking to contribute (code, testing, money or otherwise)? Head on over to [CONT
 [![codecov](https://codecov.io/gh/OMGtechy/swimps/branch/master/graph/badge.svg)](https://codecov.io/gh/OMGtechy/swimps)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOMGtechy%2Fswimps.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FOMGtechy%2Fswimps?ref=badge_shield)
 
-
-
-
-## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOMGtechy%2Fswimps.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOMGtechy%2Fswimps?ref=badge_large)
