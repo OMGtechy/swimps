@@ -1,4 +1,4 @@
-name: CodeCov
+name: coverage-and-fossa
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  coverage:
+  coverage-and-fossa:
     runs-on: ubuntu-20.04
 
     steps:
@@ -40,3 +40,8 @@ jobs:
       with:
         fail_ci_if_error: true
         file: ${{ github.workspace }}/build/coverage.info
+
+    - name: fossa
+      run: |
+        curl https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+        fossa analyze
