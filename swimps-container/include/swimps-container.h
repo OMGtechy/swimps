@@ -32,6 +32,8 @@ namespace swimps::container {
         //!
         //! \tparam  Integral  The type to create a span over.
         //!
+        //! \param[in]  data  The data to create a span over.
+        //!
         //! \note  Only enabled when T is char because of strict aliasing.
         //!
         template <typename Integral>
