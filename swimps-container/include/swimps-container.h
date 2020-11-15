@@ -28,6 +28,19 @@ namespace swimps::container {
             : Span(&buffer[0], N) { }
 
         //!
+        //! \brief  Creates a span over an integral.
+        //!
+        //! \tparam  Integral  The type to create a span over.
+        //!
+        //! \note  Only enabled when T is char because of strict aliasing.
+        //!
+        template <typename Integral>
+        constexpr Span(Integral& data) noexcept
+            requires std::integral<Integral>
+                  && std::same_as<char, std::remove_const_t<T>>
+            : Span(reinterpret_cast<T*>(&data), sizeof(Integral) / sizeof(T)) { }
+
+        //!
         //! \brief  Creates a span convering the contents of an std::array.
         //!
         //! \tparam  The size parameter of the std::array.

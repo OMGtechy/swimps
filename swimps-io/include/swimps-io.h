@@ -9,6 +9,18 @@
 namespace swimps::io {
 
     //!
+    //! \brief  Reads data from a file to fill the target.
+    //!
+    //! \param[in]   sourceFileDescriptor  Where to read the data from.
+    //! \param[out]  target                Where to write the data to.
+    //!
+    //! \return  Whether the read was successful or not.
+    //!
+    bool read_from_file_descriptor(
+        const int sourceFileDescriptor,
+        swimps::container::Span<char> target);
+
+    //!
     //! \brief  Writes the provided data to the spans specified.
     //!         This is much the same as memcpy_s on Windows: it's a memcpy that checks the size of the target.
     //!
@@ -41,25 +53,6 @@ namespace swimps::io {
     size_t write_to_file_descriptor(
         swimps::container::Span<const char> source,
         int fileDescriptor);
-
-    //!
-    //! \brief  Provides a wrapper around write_to_file_descriptor that makes writing integral types easier.
-    //!
-    //! \tparam  T  An integral type to write.
-    //!
-    //! \see  write_to_file_descriptor
-    //!
-    template <typename T>
-        requires std::integral<T>
-    size_t write_to_file_descriptor(
-        const T source,
-        int fileDescriptor) {
-
-        return write_to_file_descriptor(
-            { reinterpret_cast<const char*>(&source), sizeof(T) },
-            fileDescriptor
-        );
-    }
 
     //!
     //! \brief  Formats the string, as per printf rules (see supported list), into the target.
