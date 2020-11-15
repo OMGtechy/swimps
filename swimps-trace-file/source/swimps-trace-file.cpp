@@ -217,14 +217,8 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
     for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
 
         {
-            const auto bytesToRead = static_cast<ssize_t>(sizeof backtrace.stackFrames[i].mangledFunctionNameLength);
-            const auto readReturnCode = read(
-                fileDescriptor,
-                &backtrace.stackFrames[i].mangledFunctionNameLength,
-                bytesToRead
-            );
-
-            if (readReturnCode != bytesToRead) {
+            if (! swimps::io::read_from_file_descriptor(fileDescriptor,
+                                                        backtrace.stackFrames[i].mangledFunctionNameLength)) {
                 return {};
             }
         }

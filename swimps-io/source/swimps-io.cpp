@@ -8,6 +8,18 @@
 
 #include <unistd.h>
 
+bool swimps::io::read_from_file_descriptor(
+    const int sourceFileDescriptor,
+    swimps::container::Span<char> target) {
+
+    const auto bytesToRead = static_cast<ssize_t>(target.current_size());
+    return bytesToRead == read(
+        sourceFileDescriptor,
+        &target[0],
+        bytesToRead
+    );
+}
+
 size_t swimps::io::write_to_buffer(
     swimps::container::Span<const char> source,
     swimps::container::Span<char> target) {
