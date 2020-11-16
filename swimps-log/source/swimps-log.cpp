@@ -24,7 +24,7 @@ size_t swimps_format_log_message(
     assert(logLevelString != nullptr);
 
     size_t bytesWritten = swimps::io::write_to_buffer(
-        *logLevelString,
+        { *logLevelString, sizeof(*logLevelString) - 1 },
         target
     );
 
