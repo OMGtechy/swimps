@@ -45,13 +45,13 @@ swimps::error::ErrorCode swimps::profile::child(char** args) {
 
     // Work out how big the environment is
     // and where the existing LD_PRELOAD is (if there is one)
-    const char* const ldPreloadStr = "LD_PRELOAD=";
+    const char ldPreloadStr[] = "LD_PRELOAD=";
     const char* existingLDPreload = NULL;
     size_t existingLDPreloadIndex = 0;
 
     size_t environmentSize = 0;
     while(environ[environmentSize] != NULL) {
-        if (strncmp(environ[environmentSize], ldPreloadStr, strlen(ldPreloadStr)) == 0) {
+        if (strncmp(environ[environmentSize], ldPreloadStr, sizeof ldPreloadStr) == 0) {
             existingLDPreload = environ[environmentSize];
             existingLDPreloadIndex = environmentSize;
         }

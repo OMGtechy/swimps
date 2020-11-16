@@ -21,10 +21,12 @@ swimps::trace::Backtrace swimps::preload::get_backtrace() {
 
         unw_word_t offset = 0;
 
+        constexpr auto maxMangledFunctionNameLength = sizeof stackFrame.mangledFunctionName - 1;
+
         const auto getProcNameResult = unw_get_proc_name(
             &unwindCursor,
             &stackFrame.mangledFunctionName[0],
-            sizeof stackFrame.mangledFunctionName - 1,
+            maxMangledFunctionNameLength,
             &offset
         );
 
@@ -34,7 +36,7 @@ swimps::trace::Backtrace swimps::preload::get_backtrace() {
 
         result.stackFrameCount += 1;
         stackFrame.offset = getProcNameResult == 0 ? static_cast<int64_t>(offset) : 0;
-        stackFrame.mangledFunctionNameLength = getProcNameResult == 0 ? strlen(stackFrame.mangledFunctionName) : 0;
+        stackFrame.mangledFunctionNameLength = getProcNameResult == 0 ? strnlen(stackFrame.mangledFunctionName, maxMangledFunctionNameLength) : 0;
 
         thereIsAnotherStackFrame = unw_step(&unwindCursor) == 1;
     }
