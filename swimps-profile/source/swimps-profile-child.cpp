@@ -93,8 +93,8 @@ swimps::error::ErrorCode swimps::profile::child(char** args) {
 
     const ssize_t swimpsPathBufferBytes = readlink(
         "/proc/self/exe",
-        absolutePathToLDPreload + strlen(absolutePathToLDPreload),
-        (sizeof absolutePathToLDPreload) - strlen(absolutePathToLDPreload)
+        absolutePathToLDPreload + strnlen(absolutePathToLDPreload, sizeof absolutePathToLDPreload),
+        (sizeof absolutePathToLDPreload) - strnlen(absolutePathToLDPreload, sizeof absolutePathToLDPreload)
     );
 
     if (swimpsPathBufferBytes == 0) {
