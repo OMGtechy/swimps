@@ -1,6 +1,7 @@
 #include "swimps-log.h"
 
-#include <string.h>
+#include <cstring>
+
 #include <unistd.h>
 
 size_t swimps_format_log_message(
@@ -8,19 +9,22 @@ size_t swimps_format_log_message(
     swimps::container::Span<const char> message,
     swimps::container::Span<char> target) {
 
-    const char* logLevelString = NULL;
+    constexpr size_t logLevelStringSize = 15;
+    const char (*logLevelString)[logLevelStringSize] = nullptr;
 
     switch(logLevel) {
-    case swimps::log::LogLevel::Fatal:   logLevelString = "SWIMPS: FTL - "; break;
-    case swimps::log::LogLevel::Error:   logLevelString = "SWIMPS: ERR - "; break;
-    case swimps::log::LogLevel::Warning: logLevelString = "SWIMPS: WRN - "; break;
-    case swimps::log::LogLevel::Info:    logLevelString = "SWIMPS: INF - "; break;
-    case swimps::log::LogLevel::Debug:   logLevelString = "SWIMPS: DBG - "; break;
-    default:                             logLevelString = "SWIMPS: ??? - "; break;
+    case swimps::log::LogLevel::Fatal:   logLevelString = &"SWIMPS: FTL - "; break;
+    case swimps::log::LogLevel::Error:   logLevelString = &"SWIMPS: ERR - "; break;
+    case swimps::log::LogLevel::Warning: logLevelString = &"SWIMPS: WRN - "; break;
+    case swimps::log::LogLevel::Info:    logLevelString = &"SWIMPS: INF - "; break;
+    case swimps::log::LogLevel::Debug:   logLevelString = &"SWIMPS: DBG - "; break;
+    default:                             logLevelString = &"SWIMPS: ??? - "; break;
     }
 
+    assert(logLevelString != nullptr);
+
     size_t bytesWritten = swimps::io::write_to_buffer(
-        { logLevelString, strlen(logLevelString) },
+        *logLevelString,
         target
     );
 
