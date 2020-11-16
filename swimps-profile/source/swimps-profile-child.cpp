@@ -12,7 +12,7 @@
 
 extern char** environ;
 
-swimps::error::ErrorCode swimps_profile_child(char** args) {
+swimps::error::ErrorCode swimps::profile::child(char** args) {
     if (args == NULL) {
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,

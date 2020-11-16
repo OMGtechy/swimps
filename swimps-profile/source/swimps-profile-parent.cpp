@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 
-swimps::error::ErrorCode swimps_profile_parent(const pid_t childPid) {
+swimps::error::ErrorCode swimps::profile::parent(const pid_t childPid) {
     while(1) {
         int status = 0;
         waitpid(childPid, &status, 0);
