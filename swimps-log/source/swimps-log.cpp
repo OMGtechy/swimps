@@ -4,6 +4,14 @@
 
 #include <unistd.h>
 
+namespace {
+    static swimps::log::LogLevel logLevelFilter = swimps::log::LogLevel::Debug;
+}
+
+void swimps::log::setLevelToLog(LogLevel logLevel) noexcept {
+    logLevelFilter = logLevel;
+}
+
 size_t swimps_format_log_message(
     const swimps::log::LogLevel logLevel,
     swimps::container::Span<const char> message,
@@ -49,6 +57,11 @@ size_t swimps_format_log_message(
 size_t swimps::log::write_to_log(
     const swimps::log::LogLevel logLevel,
     swimps::container::Span<const char> message) {
+
+    //! Log levels are in decenting order of severity
+    if (static_cast<int8_t>(logLevel) > static_cast<int8_t>(logLevelFilter)) {
+        return 0;
+    }
 
     char targetBuffer[2048] = { 0 };
 
