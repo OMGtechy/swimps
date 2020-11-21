@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cerrno>
+#include <vector>
 
 #include <unistd.h>
 #include <sys/ptrace.h>
@@ -25,7 +26,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     }
 
     // Enable tracing of the program we're about to exec into
-    if (ptrace(PTRACE_TRACEME) == -1) {
+    if (false && ptrace(PTRACE_TRACEME) == -1) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
@@ -113,11 +114,28 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
     environment[i] = NULL;
 
-    swimps::log::format_and_write_to_log<1024>(
-        swimps::log::LogLevel::Info,
-        "Executing program: %s",
-        options.targetProgram.c_str()
-    );
+    {
+        char targetBuffer[2048] = { };
+        swimps::container::Span<char> targetSpan(targetBuffer);
+
+        targetSpan += swimps::io::write_to_buffer(
+            { options.targetProgram.c_str(), options.targetProgram.length() },
+            targetSpan
+        );
+
+        for (auto& arg : options.targetProgramArgs) {
+            targetSpan += swimps::io::format_string(
+                " %s",
+                targetSpan,
+                arg.c_str()
+            );
+        }
+
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Info,
+            { targetBuffer, targetSpan.original_size() - targetSpan.current_size() }
+        );
+    }
 
     for(char** envIter = environment; *envIter != NULL; ++envIter) {
         swimps::log::write_to_log(
@@ -126,12 +144,16 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         );
     }
 
-    char* argv[] = {
-        strdup(options.targetProgram.c_str()),
-        nullptr
-    };
+    std::vector<char*> argv;
+    argv.push_back(strdup(options.targetProgram.c_str()));
 
-    execve(argv[0], argv, environment);
+    for (auto& arg : options.targetProgramArgs) {
+        argv.push_back(strdup(arg.c_str()));
+    }
+
+    argv.push_back(nullptr);
+
+    execve(argv[0], &argv[0], environment);
 
     // we only get here if execve failed
     {

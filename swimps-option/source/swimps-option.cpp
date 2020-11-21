@@ -2,71 +2,118 @@
 
 #include <iostream>
 
+#include "swimps-assert.h"
 #include "swimps-error.h"
 
 using namespace swimps::option;
+using swimps::log::LogLevel;
+using swimps::error::ErrorCode;
+
+namespace {
+    constexpr char helpOptionName[] = "--help";
+
+    constexpr char logLevelOptionName[] = "--log-level";
+    LogLevel parseLogLevel(const std::string& currentArg, int& argc, const char**& argv) {
+        swimps_assert(argv != nullptr);
+        swimps_assert(currentArg == logLevelOptionName);
+        swimps_assert(currentArg == std::string(*argv));
+
+        if (argc < 2) {
+            // We need one for the parameter name and one for the parameter value.
+            throw ParseException(
+                std::string("Missing value after ") + logLevelOptionName
+            );
+        }
+
+        --argc;
+        ++argv;
+
+        swimps_assert(argc >= 1);
+        swimps_assert(*argv != nullptr);
+
+        const auto logLevelString = std::string(*argv);
+
+        --argc;
+        ++argv;
+
+        if (logLevelString == "debug")        { return LogLevel::Debug; }
+        else if (logLevelString == "info")    { return LogLevel::Info; }
+        else if (logLevelString == "warning") { return LogLevel::Warning; }
+        else if (logLevelString == "error")   { return LogLevel::Error; }
+        else if (logLevelString == "fatal")   { return LogLevel::Fatal; }
+
+        throw InvalidOptionValueException(
+            logLevelOptionName,
+            logLevelString,
+            "debug, info, warning, error, fatal"
+        );
+    }
+}
 
 Options swimps::option::parse_command_line(
     int argc,
-    char* argv[]) {
+    const char* argv[]) {
 
-    cxxopts::Options options(
-        "swimps",
-        "swimps: an open-source performance analysis tool."
-    );
+    swimps_assert(argv != nullptr);
 
-    constexpr char helpOptionName[] = "help";
-    constexpr char targetProgramOptionName[] = "target-program";
-    constexpr char logLevelOptionName[] = "log-level";
+    // Skip the first, which should be the path to the swimps binary.
+    --argc;
+    ++argv;
 
-    options.add_options()
-        (helpOptionName, "Prints swimps command line help.")
-        (targetProgramOptionName, "The program to profile.", cxxopts::value<std::string>())
-        (logLevelOptionName, "Set how much information is logged [debug, info, warning, error, fatal].", cxxopts::value<std::string>()->default_value("info"));
+    swimps::option::Options options;
 
-    using swimps::log::LogLevel;
+    while(argc > 0) {
+        swimps_assert(argv != nullptr);
+        const auto currentArg = std::string(*argv);
 
-    const auto printHelp = [&options](){
-        std::cout << options.help() << std::endl;
-    };
-
-    try {
-        const auto parseResult = options.parse(argc, argv);
-
-        if (parseResult[helpOptionName].as<bool>()) {
-            printHelp();
-            exit(static_cast<int>(swimps::error::ErrorCode::None));
+        if (currentArg == logLevelOptionName) {
+            options.logLevel = parseLogLevel(currentArg, argc, argv);
+            continue;
         }
 
-        swimps::option::Options result;
-
-        result.targetProgram = parseResult[targetProgramOptionName].as<std::string>();
-
-        const auto logLevelString = parseResult[logLevelOptionName].as<std::string>();
-        if (logLevelString == "debug") { result.logLevel = LogLevel::Debug; }
-        else if (logLevelString == "info") { result.logLevel = LogLevel::Info; }
-        else if (logLevelString == "warning") { result.logLevel = LogLevel::Warning; }
-        else if (logLevelString == "error") { result.logLevel = LogLevel::Error; }
-        else if (logLevelString == "fatal") { result.logLevel = LogLevel::Fatal; }
-        else {
-            swimps::log::format_and_write_to_log<1024>(
-                LogLevel::Fatal,
-                "Unknown log level: %s",
-                logLevelString.c_str()
-            );
-
-            exit(static_cast<int>(swimps::error::ErrorCode::CommandLineParseFailed));
+        if (currentArg == helpOptionName) {
+            options.help = true;
+            --argc;
+            ++argv;
+            continue;
         }
 
-        return result;
-    } catch (const std::exception& exception) {
-        swimps::log::format_and_write_to_log<1024>(
-            LogLevel::Fatal,
-            "Failed to parse command line: %s",
-            exception.what()
-        );
+        if (currentArg.compare(0, 1, "-") == 0) {
+            // This helps catch trailing args that haven't been processed.
+            throw ParseException(std::string("Invalid option: ") + currentArg);
+        }
 
-        printHelp();
-        exit(static_cast<int>(swimps::error::ErrorCode::CommandLineParseFailed));
+        // Assume anything that's left is the program to be profiled, plus its args.
+
+        swimps_assert(*argv != nullptr);
+        options.targetProgram = currentArg;
+        --argc;
+        ++argv;
+
+        while(argc > 0) {
+            options.targetProgramArgs.push_back(*argv);
+            --argc;
+            ++argv;
+        }
     }
+
+    return options;
+}
+
+void swimps::option::print_help() {
+    std::cout << "swimps: an open-source performance analysis tool.\n"
+              << "\n"
+              << "  Usage:   swimps [options]          [program]   [program arguments]\n"
+              << "  Example: swimps --log--level debug ./myprogram --program-specific-argument\n"
+              << "\n"
+              << "  Options:\n"
+              << "\n"
+              << "    --log-level [debug,   The minimum severity required to show a low message.\n"
+              << "                 info,\n"
+              << "                 warning,\n"
+              << "                 error,\n"
+              << "                 fatal]\n"
+              << "\n"
+              << "    --help                Shows this help message.\n"
+              << std::endl;
 }
