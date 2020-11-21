@@ -26,7 +26,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     }
 
     // Enable tracing of the program we're about to exec into
-    if (false && ptrace(PTRACE_TRACEME) == -1) {
+    if (ptrace(PTRACE_TRACEME) == -1) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
             "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
