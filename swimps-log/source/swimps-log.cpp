@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 
-size_t swimps_format_log_message(
+size_t swimps::log::format_message(
     const swimps::log::LogLevel logLevel,
     swimps::container::Span<const char> message,
     swimps::container::Span<char> target) {
@@ -23,27 +23,35 @@ size_t swimps_format_log_message(
 
     assert(logLevelString != nullptr);
 
-    size_t bytesWritten = swimps::io::write_to_buffer(
+    size_t totalBytesWritten = 0;
+    size_t newBytesWritten = 0;
+
+    newBytesWritten = swimps::io::write_to_buffer(
         { *logLevelString, sizeof(*logLevelString) - 1 },
         target
     );
 
-    target += bytesWritten;
+    totalBytesWritten += newBytesWritten;
+    target += newBytesWritten;
 
-    bytesWritten += swimps::io::write_to_buffer(
+    newBytesWritten = swimps::io::write_to_buffer(
         message,
         target
     );
 
-    target += bytesWritten;
+    totalBytesWritten += newBytesWritten;
+    target += newBytesWritten;
 
     const char newLine[] = { '\n' };
-    bytesWritten += swimps::io::write_to_buffer(
+    newBytesWritten = swimps::io::write_to_buffer(
         newLine,
         target
     );
 
-    return bytesWritten;
+    totalBytesWritten += newBytesWritten;
+    target += newBytesWritten;
+
+    return totalBytesWritten;
 }
 
 size_t swimps::log::write_to_log(
@@ -52,7 +60,7 @@ size_t swimps::log::write_to_log(
 
     char targetBuffer[2048] = { 0 };
 
-    const size_t bytesWritten = swimps_format_log_message(
+    const size_t bytesWritten = swimps::log::format_message(
         logLevel,
         message,
         targetBuffer

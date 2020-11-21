@@ -96,4 +96,20 @@ namespace swimps::log {
             { targetBuffer, bytesWritten }
         );
     }
+
+    //!
+    //! \brief  Formats a message ready for logging.
+    //!
+    //! \param[in]   logLevel  The level to log at.
+    //! \param[in]   message   The message to format.
+    //! \param[out]  target    Where to write the formatted message.
+    //!
+    //! \returns  The number of bytes written to the target.
+    //!
+    //! \note  You do *not* need to call this before logging a message, that is done automatically.
+    //!
+    size_t format_message(
+        const swimps::log::LogLevel logLevel,
+        swimps::container::Span<const char> message,
+        swimps::container::Span<char> target);
 }
