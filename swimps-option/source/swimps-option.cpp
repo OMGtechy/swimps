@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include "swimps-assert.h"
 #include "swimps-error.h"
@@ -12,6 +13,44 @@ using swimps::error::ErrorCode;
 
 namespace {
     constexpr char helpOptionName[] = "--help";
+
+    constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
+    double parseSamplesPerSecond(const std::string& currentArg, int& argc, const char**& argv) {
+        // TODO: this has a lot in common with parseLogLevel ... DRY?
+        swimps_assert(argv != nullptr);
+        swimps_assert(currentArg == samplesPerSecondOptionName);
+        swimps_assert(currentArg == std::string(*argv));
+
+        if (argc < 2) {
+            // We need one for the parameter name and one for the parameter value.
+            throw ParseException(
+                std::string("Missing value after ") + samplesPerSecondOptionName
+            );
+        }
+
+        --argc;
+        ++argv;
+
+        swimps_assert(argc >= 1);
+        swimps_assert(*argv != nullptr);
+
+        const auto samplesPerSecondString = std::string(*argv);
+
+        --argc;
+        ++argv;
+
+        const auto samplesPerSecond = std::stod(samplesPerSecondString);
+
+        if (samplesPerSecond < 0 || samplesPerSecond > 1'000'000'000 /* every nanosecond */) {
+            throw InvalidOptionValueException(
+                samplesPerSecondOptionName,
+                samplesPerSecondString,
+                "between 0 and 1,000,000,000, inclusive"
+            );
+        }
+
+        return samplesPerSecond;
+    }
 
     constexpr char logLevelOptionName[] = "--log-level";
     LogLevel parseLogLevel(const std::string& currentArg, int& argc, const char**& argv) {
@@ -56,6 +95,7 @@ namespace {
 namespace {
     const std::string stringOptionsHelpLabel = "help ";
     const std::string stringOptionsLogLevelLabel = "log-level ";
+    const std::string stringOptionsSamplesPerSecondLabel = "samples-per-second ";
     const std::string stringOptionsTargetProgramLabel = "target-program ";
     const std::string stringOptionsTargetProgramArgsLabel = "target-program-args ";
 
@@ -88,6 +128,14 @@ Options swimps::option::Options::fromString(std::string string) {
     }
 
     string = chompPrefix(string.substr(1), "|");
+
+    // samples per second
+    string = chompPrefix(string, stringOptionsSamplesPerSecondLabel);
+    {
+        const auto end = string.find("|");
+        result.samplesPerSecond = std::stod(string.substr(0, end));
+        string = string.substr(end + 1);
+    }
 
     // target program
     string = chompPrefix(string, stringOptionsTargetProgramLabel);
@@ -133,6 +181,9 @@ std::string swimps::option::Options::toString() const {
 
     stringStream << "|";
 
+    // samples per second
+    stringStream << stringOptionsSamplesPerSecondLabel << samplesPerSecond << "|";
+
     // target program
     stringStream << stringOptionsTargetProgramLabel << targetProgram << "|";
 
@@ -164,6 +215,11 @@ Options swimps::option::parse_command_line(
 
         if (currentArg == logLevelOptionName) {
             options.logLevel = parseLogLevel(currentArg, argc, argv);
+            continue;
+        }
+
+        if (currentArg == samplesPerSecondOptionName) {
+            options.samplesPerSecond = parseSamplesPerSecond(currentArg, argc, argv);
             continue;
         }
 
@@ -209,6 +265,8 @@ void swimps::option::print_help() {
               << "                 warning,\n"
               << "                 error,\n"
               << "                 fatal]\n"
+              << "\n"
+              << "    --samples-per-second  How many samples to take per second when profiling.\n"
               << "\n"
               << "    --help                Shows this help message.\n"
               << std::endl;

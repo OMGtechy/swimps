@@ -22,6 +22,7 @@ SCENARIO("swimps::option::Options::toString, swimps::option::Options::fromString
         const Options original {
             true,
             swimps::log::LogLevel::Debug,
+            42,
             "programName",
             { "arg1", "arg2", "arg3" }
         };

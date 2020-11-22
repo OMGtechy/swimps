@@ -9,6 +9,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 
 #include <unistd.h>
 #include <signal.h>
@@ -130,11 +131,17 @@ namespace {
         return sigaction(SIGPROF, &action, NULL);
     }
 
-    int swimps_preload_start_timer(timer_t timer) {
+    int swimps_preload_start_timer(timer_t timer, const double samplesPerSecond) {
         struct itimerspec timerSpec;
-        timerSpec.it_interval.tv_sec = 1;
-        timerSpec.it_interval.tv_nsec = 0;
+
+        const double rate = 1.0 / samplesPerSecond;
+        double wholeComponent = 0.0;
+        const double fractionalComponent = std::modf(rate, &wholeComponent);
+
+        timerSpec.it_interval.tv_sec = std::llrint(wholeComponent);
+        timerSpec.it_interval.tv_nsec = std::llrint(fractionalComponent * 1'000'000'000.0);
         timerSpec.it_value = timerSpec.it_interval;
+
         return timer_settime(timer, 0, &timerSpec, NULL);
     }
 
@@ -146,14 +153,14 @@ namespace {
         return timer_settime(timer, 0, &timerSpec, NULL);
     }
 
-    void load_options() {
-        const auto options = swimps::option::Options::fromString(std::getenv("SWIMPS_OPTIONS"));
-        swimps::log::setLevelToLog(options.logLevel);
+    swimps::option::Options load_options() {
+        return swimps::option::Options::fromString(std::getenv("SWIMPS_OPTIONS"));
     }
 
     __attribute__((constructor))
     void swimps_preload_constructor() {
-        load_options();
+        const auto options = load_options();
+        swimps::log::setLevelToLog(options.logLevel);
 
         traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
 
@@ -181,7 +188,7 @@ namespace {
 
         // Everything from here onwards must be signal safe.
 
-        if (swimps_preload_start_timer(sampleTimer) == -1) {
+        if (swimps_preload_start_timer(sampleTimer, options.samplesPerSecond) == -1) {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
                 "Could not start timer, errno %d (%s).",
