@@ -1,28 +1,22 @@
 #include "swimps-profile.h"
-#include "swimps-log.h"
 
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <cerrno>
+#include <vector>
 
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <linux/limits.h>
 
+#include "swimps-log.h"
+#include "swimps-option.h"
+
 extern char** environ;
 
-swimps::error::ErrorCode swimps::profile::child(char** args) {
-    if (args == NULL) {
-        swimps::log::write_to_log(
-            swimps::log::LogLevel::Fatal,
-            "swimps_profile_child given NULL args"
-        );
-
-        return swimps::error::ErrorCode::NullParameter;
-    }
-
-    if (args[0] == NULL) {
+swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& options) {
+    if (options.targetProgram.empty()) {
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
             "No program specified."
@@ -63,6 +57,9 @@ swimps::error::ErrorCode swimps::profile::child(char** args) {
     if (existingLDPreload == NULL) {
         environmentSize += 1;
     }
+
+    // Add one for SWIMPS_OPTIONS
+    environmentSize += 1;
 
     // Add one for the NULL at the end
     environmentSize += 1;
@@ -118,31 +115,31 @@ swimps::error::ErrorCode swimps::profile::child(char** args) {
         environment[i++] = absolutePathToLDPreload;
     }
 
+    // Add SWIMPS_OPTIONS
+    environment[i++] = strdup((std::string("SWIMPS_OPTIONS=") + options.toString()).c_str());
+
     environment[i] = NULL;
 
     {
-        char logMessageBuffer[1024] = { 0 };
-        char* logMessageBufferPtr = logMessageBuffer;
-        char* const logMessageBufferPtrEnd = logMessageBuffer + (sizeof logMessageBuffer);
-        size_t totalBytesWritten = snprintf(logMessageBufferPtr,
-                                            logMessageBufferPtrEnd - logMessageBufferPtr,
-                                            "Executing program:");
+        char targetBuffer[2048] = { };
+        swimps::container::Span<char> targetSpan(targetBuffer);
 
-        logMessageBufferPtr += totalBytesWritten;
+        targetSpan += swimps::io::write_to_buffer(
+            { options.targetProgram.c_str(), options.targetProgram.length() },
+            targetSpan
+        );
 
-        for(char** argToPrint = args; *argToPrint != NULL && logMessageBufferPtr < logMessageBufferPtrEnd; ++argToPrint) {
-            const size_t bytesWritten = snprintf(logMessageBufferPtr,
-                                                 logMessageBufferPtrEnd - logMessageBufferPtr,
-                                                 " %s",
-                                                 *argToPrint);
-
-            logMessageBufferPtr += bytesWritten;
-            totalBytesWritten += bytesWritten;
+        for (auto& arg : options.targetProgramArgs) {
+            targetSpan += swimps::io::format_string(
+                " %s",
+                targetSpan,
+                arg.c_str()
+            );
         }
 
         swimps::log::write_to_log(
             swimps::log::LogLevel::Info,
-            { logMessageBuffer, totalBytesWritten }
+            { targetBuffer, targetSpan.original_size() - targetSpan.current_size() }
         );
     }
 
@@ -153,7 +150,16 @@ swimps::error::ErrorCode swimps::profile::child(char** args) {
         );
     }
 
-    execve(*args, args, environment);
+    std::vector<char*> argv;
+    argv.push_back(strdup(options.targetProgram.c_str()));
+
+    for (auto& arg : options.targetProgramArgs) {
+        argv.push_back(strdup(arg.c_str()));
+    }
+
+    argv.push_back(nullptr);
+
+    execve(argv[0], &argv[0], environment);
 
     // we only get here if execve failed
     {

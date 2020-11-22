@@ -1,4 +1,4 @@
-#include "swimps-test.h"
+#include "swimps-unit-test.h"
 #include "swimps-container.h"
 
 SCENARIO("swimps::container::span", "[swimps-container]") {

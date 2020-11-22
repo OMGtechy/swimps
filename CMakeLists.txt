@@ -24,6 +24,7 @@ if(SWIMPS_ENABLE_COVERAGE)
 endif()
 
 add_subdirectory(swimps-test)
+add_subdirectory(swimps-option)
 add_subdirectory(swimps-container)
 add_subdirectory(swimps-preload)
 add_subdirectory(swimps-log)
@@ -36,4 +37,4 @@ add_subdirectory(swimps-trace-file)
 add_subdirectory(swimps-assert)
 
 add_executable(swimps source/swimps.cpp)
-target_link_libraries(swimps PRIVATE swimps-profile)
+target_link_libraries(swimps PRIVATE swimps-profile swimps-option)

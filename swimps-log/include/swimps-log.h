@@ -3,18 +3,26 @@
 #include <cassert>
 #include <cstdarg>
 #include <cstddef>
+#include <cstdint>
 
 #include "swimps-io.h"
 
 namespace swimps::log {
 
-    enum class LogLevel {
+    enum class LogLevel : int8_t {
         Fatal,   //! something bad *is* happening and it cannot be recovered from
         Error,   //! something bad *is* happening
         Warning, //! something bad *might* be happening
         Info,    //! something the user might want to know about is happening
         Debug    //! something the developer might want to know about is happening
     };
+
+    //!
+    //! \brief  Sets the minimum severity that a log message should have to be printed.
+    //!
+    //! \param[in] logLevel  The minimum severity that should be printed (inclusive).
+    //!
+    void setLevelToLog(LogLevel logLevel) noexcept;
 
     //!
     //! \brief  Formats a message so that it's ready to be written to a log.
