@@ -19,11 +19,12 @@ add_executable(
     swimps-io-unit-test/source/swimps-read-from-file-descriptor.cpp
     swimps-io-unit-test/source/swimps-format-string-test.cpp
     swimps-io-unit-test/source/swimps-format-string-valist-test.cpp
+    swimps-log-unit-test/source/swimps-format-log-message-test.cpp
     swimps-trace-file-unit-test/source/swimps-trace-file-backtrace-test.cpp
 )
 
 target_include_directories(swimps-unit-test PUBLIC include)
-target_link_libraries(swimps-unit-test swimps-io swimps-container swimps-trace-file Catch2::Catch2)
+target_link_libraries(swimps-unit-test swimps-io swimps-log swimps-container swimps-trace-file Catch2::Catch2)
 
 add_test(NAME swimps-unit-test
          COMMAND $<TARGET_FILE:swimps-unit-test>)
