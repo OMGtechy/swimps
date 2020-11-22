@@ -129,8 +129,8 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
                 REQUIRE(options.logLevel == log::LogLevel::Fatal);
             }
         }
-    
-}
+    }
+
     GIVEN("A target program option.") {
         MockArguments<2> args({
             "/fake/path/swimps",
@@ -146,6 +146,21 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
             THEN("The log level is set accordingly.") {
                 REQUIRE(options.targetProgram == "stress");
             }
+        }
+    }
+
+    GIVEN("An invalid option value." ) {
+        MockArguments<3> args({
+            "/fake/path/swimps",
+            "--log-level",
+            "monty python"
+        });
+
+        WHEN("The options are parsed.") {
+            REQUIRE_THROWS_AS(
+                option::parse_command_line(args.argc(), args.argv()),
+                option::InvalidOptionValueException
+            );
         }
     }
 }
