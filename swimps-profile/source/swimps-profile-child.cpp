@@ -58,6 +58,9 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         environmentSize += 1;
     }
 
+    // Add one for SWIMPS_OPTIONS
+    environmentSize += 1;
+
     // Add one for the NULL at the end
     environmentSize += 1;
 
@@ -111,6 +114,9 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     } else {
         environment[i++] = absolutePathToLDPreload;
     }
+
+    // Add SWIMPS_OPTIONS
+    environment[i++] = strdup((std::string("SWIMPS_OPTIONS=") + options.toString()).c_str());
 
     environment[i] = NULL;
 

@@ -1,4 +1,4 @@
-#include "swimps-test.h"
+#include "swimps-unit-test.h"
 #include "swimps-io.h"
 
 #include <cstdio>

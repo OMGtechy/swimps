@@ -1,2 +1,2 @@
 #define CATCH_CONFIG_MAIN
-#include "swimps-test.h"
+#include "swimps-unit-test.h"

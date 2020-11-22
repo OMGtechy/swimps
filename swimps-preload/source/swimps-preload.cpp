@@ -3,6 +3,7 @@
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
 #include "swimps-preload.h"
+#include "swimps-option.h"
 
 #include <atomic>
 #include <cerrno>
@@ -145,8 +146,15 @@ namespace {
         return timer_settime(timer, 0, &timerSpec, NULL);
     }
 
+    void load_options() {
+        const auto options = swimps::option::Options::fromString(std::getenv("SWIMPS_OPTIONS"));
+        swimps::log::setLevelToLog(options.logLevel);
+    }
+
     __attribute__((constructor))
     void swimps_preload_constructor() {
+        load_options();
+
         traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
 
         if (swimps_preload_setup_signal_handler() == -1) {
@@ -170,6 +178,8 @@ namespace {
 
             abort();
         }
+
+        // Everything from here onwards must be signal safe.
 
         if (swimps_preload_start_timer(sampleTimer) == -1) {
             swimps::log::format_and_write_to_log<1024>(
