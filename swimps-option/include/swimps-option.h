@@ -87,6 +87,7 @@ namespace swimps::option {
               + invalidValue
               + " (valid values: "
               + validValues
+              + ")"
         ) {
 
         }
