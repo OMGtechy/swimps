@@ -13,6 +13,8 @@ namespace swimps::option {
     struct Options {
         bool help = false;
         swimps::log::LogLevel logLevel = swimps::log::LogLevel::Info;
+        double samplesPerSecond = 1.0;
+
         std::string targetProgram;
         std::vector<std::string> targetProgramArgs;
 
