@@ -1,11 +1,14 @@
 #include "swimps-option.h"
 
 #include <iostream>
+#include <filesystem>
 #include <sstream>
 #include <string>
 
 #include "swimps-assert.h"
 #include "swimps-error.h"
+#include "swimps-time.h"
+#include "swimps-trace-file.h"
 
 using namespace swimps::option;
 using swimps::log::LogLevel;
@@ -13,6 +16,33 @@ using swimps::error::ErrorCode;
 
 namespace {
     constexpr char helpOptionName[] = "--help";
+
+    constexpr char targetTraceFileOptionName[] = "--target-trace-file";
+    std::string parseTargetTraceFile(const std::string& currentArg, int& argc, const char**& argv) {
+        swimps_assert(argv != nullptr);
+        swimps_assert(currentArg == targetTraceFileOptionName);
+        swimps_assert(currentArg == std::string(*argv));
+
+        if (argc < 2) {
+            // We need one for the parameter name and one for the parameter value.
+            throw ParseException(
+                std::string("Missing value after ") + targetTraceFileOptionName
+            );
+        }
+
+        --argc;
+        ++argv;
+
+        swimps_assert(argc >= 1);
+        swimps_assert(*argv != nullptr);
+
+        const auto targetTraceFile = std::string(*argv);
+
+        --argc;
+        ++argv;
+
+        return targetTraceFile;
+    }
 
     constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
     double parseSamplesPerSecond(const std::string& currentArg, int& argc, const char**& argv) {
@@ -96,6 +126,7 @@ namespace {
     const std::string stringOptionsHelpLabel = "help ";
     const std::string stringOptionsLogLevelLabel = "log-level ";
     const std::string stringOptionsSamplesPerSecondLabel = "samples-per-second ";
+    const std::string stringOptionsTargetTraceFileLabel = "target-trace-file ";
     const std::string stringOptionsTargetProgramLabel = "target-program ";
     const std::string stringOptionsTargetProgramArgsLabel = "target-program-args ";
 
@@ -134,6 +165,14 @@ Options swimps::option::Options::fromString(std::string string) {
     {
         const auto end = string.find("|");
         result.samplesPerSecond = std::stod(string.substr(0, end));
+        string = string.substr(end + 1);
+    }
+
+    // target trace file
+    string = chompPrefix(string, stringOptionsTargetTraceFileLabel);
+    {
+        const auto end = string.find("|");
+        result.targetTraceFile = string.substr(0, end);
         string = string.substr(end + 1);
     }
 
@@ -184,6 +223,9 @@ std::string swimps::option::Options::toString() const {
     // samples per second
     stringStream << stringOptionsSamplesPerSecondLabel << samplesPerSecond << "|";
 
+    // target trace file
+    stringStream << stringOptionsTargetTraceFileLabel << targetTraceFile << "|";
+
     // target program
     stringStream << stringOptionsTargetProgramLabel << targetProgram << "|";
 
@@ -223,6 +265,11 @@ Options swimps::option::parse_command_line(
             continue;
         }
 
+        if (currentArg == targetTraceFileOptionName) {
+            options.targetTraceFile = parseTargetTraceFile(currentArg, argc, argv);
+            continue;
+        }
+
         if (currentArg == helpOptionName) {
             options.help = true;
             --argc;
@@ -249,6 +296,22 @@ Options swimps::option::parse_command_line(
         }
     }
 
+    if (options.targetTraceFile.empty()) {
+        swimps::time::TimeSpecification time;
+        if (swimps::time::now(CLOCK_MONOTONIC, time) == -1) {
+            throw ParseException("Could not get time to generate default trace file name.");
+        }
+
+        char targetTraceFileBuffer[1024] = { };
+        swimps::trace::file::generate_name(
+            std::filesystem::path(options.targetProgram).filename().c_str(),
+            time,
+            targetTraceFileBuffer
+        );
+
+        options.targetTraceFile = targetTraceFileBuffer;
+    }
+
     return options;
 }
 
@@ -267,6 +330,8 @@ void swimps::option::print_help() {
               << "                 fatal]\n"
               << "\n"
               << "    --samples-per-second  How many samples to take per second when profiling.\n"
+              << "\n"
+              << "    --target-trace-file   Where to write the trace data.\n"
               << "\n"
               << "    --help                Shows this help message.\n"
               << std::endl;

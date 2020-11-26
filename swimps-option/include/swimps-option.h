@@ -14,6 +14,7 @@ namespace swimps::option {
         bool help = false;
         swimps::log::LogLevel logLevel = swimps::log::LogLevel::Info;
         double samplesPerSecond = 1.0;
+        std::string targetTraceFile;
 
         std::string targetProgram;
         std::vector<std::string> targetProgramArgs;

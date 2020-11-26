@@ -60,54 +60,8 @@ namespace {
         sigprofRunningFlag.clear();
     }
 
-    int swimps_preload_create_trace_file(char* traceFilePath, size_t traceFilePathSize) {
-        swimps::time::TimeSpecification time;
-        if (swimps::time::now(clockID, time) == -1) {
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Fatal,
-                "Could not get time to generate trace file name."
-            );
-
-            abort();
-        }
-
-        getcwd(traceFilePath, traceFilePathSize);
-        size_t bytesWritten = strnlen(traceFilePath, traceFilePathSize);
-        traceFilePath += bytesWritten;
-        traceFilePathSize -= bytesWritten;
-
-        if (traceFilePathSize == 0) {
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Fatal,
-                "Ran out of space when generating trace file name."
-            );
-
-            abort();
-        }
-
-        // replace null terminator with /
-        *traceFilePath = '/';
-        traceFilePath += 1;
-        bytesWritten += 1;
-
-        bytesWritten += swimps::trace::file::generate_name(
-            program_invocation_short_name,
-            time,
-            getpid(),
-            traceFilePath,
-            traceFilePathSize
-        );
-
-        // Whilst it could be *exactly* the right size,
-        // chances are there's just not enough room.
-        if (bytesWritten == traceFilePathSize) {
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Fatal,
-                "Could not generate trace file name."
-            );
-
-            abort();
-        }
+    int swimps_preload_create_trace_file(char* traceFilePath, size_t traceFilePathSize, const swimps::option::Options& options) {
+        strncpy(traceFilePath, options.targetTraceFile.c_str(), std::min(options.targetTraceFile.size(), traceFilePathSize));
 
         const int file = swimps::trace::file::create(traceFilePath);
         if (file == -1) {
@@ -162,7 +116,7 @@ namespace {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
 
-        traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath);
+        traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath, options);
 
         if (swimps_preload_setup_signal_handler() == -1) {
             swimps::log::format_and_write_to_log<1024>(
@@ -214,5 +168,7 @@ namespace {
         if (swimps::trace::file::finalise(traceFile, traceFilePath, strnlen(traceFilePath, sizeof traceFilePath)) != 0) {
             abort();
         }
+
+        close(traceFile);
     }
 }

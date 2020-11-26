@@ -1,6 +1,13 @@
 #include "swimps-profile.h"
 #include "swimps-option.h"
 #include "swimps-log.h"
+#include "swimps-analysis.h"
+#include "swimps-trace-file.h"
+
+#include <iostream>
+
+#include <sys/stat.h>
+#include <fcntl.h>
 
 int main(int argc, char** argv) {
     bool exceptionThrown = false;
@@ -31,5 +38,34 @@ int main(int argc, char** argv) {
     }
 
     swimps::log::setLevelToLog(options.logLevel);
-    return static_cast<int>(swimps::profile::start(options));
+    const auto profileResult = swimps::profile::start(options);
+    if (profileResult != swimps::error::ErrorCode::None) {
+        swimps::log::format_and_write_to_log<256>(
+            swimps::log::LogLevel::Fatal,
+            "Profile failed with code: %d",
+            static_cast<int>(profileResult)
+        );
+
+        return static_cast<int>(profileResult);
+    }
+
+    const auto targetTraceFileDescriptor = open(options.targetTraceFile.c_str(), O_RDONLY);
+    if (targetTraceFileDescriptor == -1) {
+        swimps::log::format_and_write_to_log<256>(
+            swimps::log::LogLevel::Fatal,
+            "Failed to open trace file: %s",
+            options.targetTraceFile.c_str()
+        );
+
+        return static_cast<int>(swimps::error::ErrorCode::OpenFailed);
+    }
+
+    const auto trace = swimps::trace::file::read(targetTraceFileDescriptor);
+    const auto analysis = swimps::analysis::analyse(*trace);
+
+    for (auto& entry : analysis.backtraceFrequency) {
+        std::cout << entry.first << ": " << entry.second << std::endl;
+    }
+
+    return static_cast<int>(swimps::error::ErrorCode::None);
 }

@@ -9,8 +9,13 @@ namespace swimps::error {
         PtraceFailed,
         ReadlinkFailed,
         ExecveFailed,
+        OpenFailed,
         ChildProcessHasNonZeroExitCode,
         ChildProcessExitedDueToSignal,
-        CommandLineParseFailed
+        CommandLineParseFailed,
+        ReadSampleFailed,
+        ReadBacktraceFailed,
+        UnknownEntryKind,
+        EndOfFile
     };
 }
