@@ -1,6 +1,7 @@
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
 #include "swimps-assert.h"
+#include "swimps-error.h"
 
 #include <cstdio>
 #include <cstring>
@@ -12,12 +13,51 @@
 #include <functional>
 #include <string>
 #include <filesystem>
+#include <variant>
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <execinfo.h>
 
 namespace {
+    struct Visitor {
+        using BacktraceHandler = std::function<void(swimps::trace::Backtrace&)>;
+        using SampleHandler = std::function<void(swimps::trace::Sample&)>;
+
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample) {
+
+        }
+
+        bool& m_stopTarget;
+        BacktraceHandler m_onBacktrace;
+        SampleHandler m_onSample;
+
+        void operator()(swimps::trace::Sample& sample) const {
+            m_onSample(sample);
+        }
+
+        void operator()(swimps::trace::Backtrace& backtrace) const {
+            m_onBacktrace(backtrace);
+        }
+
+        void operator()(swimps::error::ErrorCode errorCode) const {
+            m_stopTarget = true;
+            switch(errorCode) {
+            case swimps::error::ErrorCode::EndOfFile:
+                break;
+            default:
+                swimps::log::format_and_write_to_log<128>(
+                    swimps::log::LogLevel::Fatal,
+                    "Error reading trace file: %d",
+                    errorCode
+                );
+
+                break;
+            }
+        }
+    };
+
     enum class EntryKind : int {
         Unknown,
         EndOfFile,
@@ -33,6 +73,35 @@ namespace {
 
         return memcmp(buffer, swimps::trace::file::swimps_v1_trace_file_marker, sizeof swimps::trace::file::swimps_v1_trace_file_marker) == 0 ? 0 : -1;
     }
+
+    bool goToStartOfFile(const int fileDescriptor) {
+        if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
+            swimps::log::format_and_write_to_log<512>(
+                swimps::log::LogLevel::Fatal,
+                "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
+                errno,
+                strerror(errno)
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    bool isSwimpsTraceFile(const int fileDescriptor) {
+        if (read_trace_file_marker(fileDescriptor) != 0) {
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
+                "Missing swimps trace file marker."
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
 
     EntryKind read_next_entry_kind(const int fileDescriptor) {
         char buffer[swimps::trace::file::swimps_v1_trace_entry_marker_size];
@@ -99,6 +168,61 @@ namespace {
 
         return 0;
     }
+
+    std::variant<swimps::trace::Backtrace, swimps::trace::Sample, swimps::error::ErrorCode> read_entry(const int fileDescriptor) { 
+        using namespace swimps::trace::file; 
+        using swimps::error::ErrorCode;
+
+        const auto entryKind = read_next_entry_kind(fileDescriptor);
+
+        swimps::log::format_and_write_to_log<128>(
+            swimps::log::LogLevel::Debug,
+            "Trace file entry kind: %d.",
+            static_cast<int>(entryKind)
+        );
+
+        switch(entryKind) {
+        case EntryKind::Sample:
+            {
+                const auto sample = read_sample(fileDescriptor);
+                if (!sample) {
+
+                    swimps::log::write_to_log(
+                        swimps::log::LogLevel::Fatal,
+                        "Reading sample failed."
+                    );
+
+                    return ErrorCode::ReadSampleFailed;
+                }
+
+                return *sample;
+            }
+        case EntryKind::SymbolicBacktrace:
+            {
+                const auto backtrace = read_backtrace(fileDescriptor);
+                if (!backtrace) {
+                    swimps::log::write_to_log(
+                        swimps::log::LogLevel::Fatal,
+                        "Reading backtrace failed."
+                    );
+
+                    return ErrorCode::ReadBacktraceFailed;
+                }
+
+                return *backtrace;
+            }
+        case EntryKind::EndOfFile:
+            return ErrorCode::EndOfFile;
+        case EntryKind::Unknown:
+        default:
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Debug,
+                "Unknown entry kind detected, bailing."
+            );
+
+            return ErrorCode::UnknownEntryKind;
+        }
+    }
 }
 
 int swimps::trace::file::create(const char* const path) {
@@ -125,22 +249,17 @@ int swimps::trace::file::create(const char* const path) {
 
 size_t swimps::trace::file::generate_name(const char* const programName,
                                           const swimps::time::TimeSpecification& time,
-                                          const pid_t pid,
-                                          char* const targetBuffer,
-                                          const size_t targetBufferSize) {
+                                          swimps::container::Span<char> target) {
 
     swimps_assert(programName != NULL);
-    swimps_assert(targetBuffer != NULL);
 
     return snprintf(
-        targetBuffer,
-        targetBufferSize,
-        "swimps_trace_%s_%" PRId64 "_%" PRId64 "_%" PRId64,
+        &target[0],
+        target.current_size(),
+        "swimps_trace_%s_%" PRId64 "_%" PRId64,
         programName,
         time.seconds,
-        time.nanoseconds,
-        (int64_t) pid // There isn't a format specifier for pid_t,
-                      // so casting to a large signed type felt like the safest option
+        time.nanoseconds
     );
 }
 
@@ -239,25 +358,7 @@ size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swi
 }
 
 int swimps::trace::file::finalise(const int fileDescriptor, const char* const traceFilePath, const size_t traceFilePathSize) {
-    // Go to the start of the file.
-    if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
-        swimps::log::format_and_write_to_log<512>(
-            swimps::log::LogLevel::Fatal,
-            "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
-            errno,
-            strerror(errno)
-        );
-
-        return -1;
-    }
-
-    // Make sure this is actually a swimps trace file
-    if (read_trace_file_marker(fileDescriptor) != 0) {
-        swimps::log::write_to_log(
-            swimps::log::LogLevel::Fatal,
-            "Missing swimps trace file marker."
-        );
-
+    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
         return -1;
     }
 
@@ -295,66 +396,22 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         BacktraceHash,
         BacktraceEqual> backtraceMap;
 
-    auto entryKind = EntryKind::Unknown;
+    using swimps::error::ErrorCode;
 
-    do {
-        entryKind = read_next_entry_kind(fileDescriptor);
-
-        swimps::log::format_and_write_to_log<128>(
-            swimps::log::LogLevel::Debug,
-            "Trace file entry kind: %d.",
-            static_cast<int>(entryKind)
+    bool stop = false;
+    for (auto entry = read_entry(fileDescriptor);
+         !stop ;
+         entry = read_entry(fileDescriptor)) {
+        
+        std::visit(
+            Visitor{
+                stop,
+                [&backtraceMap](auto& backtrace){ backtraceMap[backtrace].insert(backtrace.id); },
+                [&samples](auto& sample){ samples.push_back(sample); }, 
+            },
+            entry
         );
-
-        switch(entryKind) {
-        case EntryKind::Sample:
-            {
-                const auto sample = read_sample(fileDescriptor);
-                if (!sample) {
-
-                    swimps::log::write_to_log(
-                        swimps::log::LogLevel::Fatal,
-                        "Reading sample failed."
-                    );
-
-                    return -1;
-                }
-
-                samples.push_back(*sample);
-            }
-            break;
-        case EntryKind::SymbolicBacktrace:
-            {
-                const auto backtrace = read_backtrace(fileDescriptor);
-                if (!backtrace) {
-                    swimps::log::write_to_log(
-                        swimps::log::LogLevel::Fatal,
-                        "Reading backtrace failed."
-                    );
-
-                    return -1;
-                }
-
-                backtraceMap[*backtrace].insert(backtrace->id);
-            }
-            break;
-        case EntryKind::EndOfFile:
-            // Nothing needs doing.
-            break;
-        case EntryKind::Unknown:
-            {
-                swimps::log::write_to_log(
-                    swimps::log::LogLevel::Debug,
-                    "Unknown entry kind detected, bailing."
-                );
-
-                return -1;
-            }
-            break;
-        }
-
     }
-    while (entryKind != EntryKind::EndOfFile);
 
     std::vector<swimps::trace::Sample> samplesSharingBacktraceID;
     for(const auto& sample : samples) {
@@ -413,5 +470,32 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     std::filesystem::copy(tempFileNameBuffer, traceFilePathString, std::filesystem::copy_options::overwrite_existing); 
 
     return 0;
+}
+
+std::optional<swimps::trace::Trace> swimps::trace::file::read(int fileDescriptor) {
+    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
+        return {};
+    }
+
+    using swimps::error::ErrorCode;
+
+    swimps::trace::Trace trace;
+
+    bool stop = false;
+    for (auto entry = read_entry(fileDescriptor);
+         !stop ;
+         entry = read_entry(fileDescriptor)) {
+        
+        std::visit(
+            Visitor{
+                stop,
+                [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
+                [&trace](auto& sample){ trace.samples.push_back(sample); }, 
+            },
+            entry
+        );
+    }
+
+    return trace;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "swimps-container.h"
 #include "swimps-time.h"
 #include "swimps-trace.h"
 
@@ -30,9 +31,7 @@ namespace swimps::trace::file {
     //!
     //! \param[in]   programName       The name of the program the trace file is for.
     //! \param[in]   time              The timestamp to use when generating the name.
-    //! \param[in]   pid               The process ID of the program the trace file is for.
-    //! \param[out]  targetBuffer      Where to write the generated name.
-    //! \param[in]   targetBufferSize  How large the target buffer is.
+    //! \param[out]  target            Where to write the generated name.
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
@@ -42,9 +41,7 @@ namespace swimps::trace::file {
     size_t generate_name(
          const char* const programName,
          const swimps::time::TimeSpecification& time,
-         const pid_t pid,
-         char* const targetBuffer,
-         const size_t targetBufferSize);
+         swimps::container::Span<char> target);
 
     //!
     //! \brief  Adds a sample to the given file.
@@ -73,6 +70,17 @@ namespace swimps::trace::file {
     size_t add_backtrace(
         const int targetFileDescriptor,
         const Backtrace& backtrace);
+
+    //!
+    //! \brief  Reads a trace from a given file.
+    //!
+    //! \param[in]  fileDescriptor  The file to read from.
+    //!
+    //! \returns  The trace contained in the file.
+    //!
+    //! \note  This function is *not* async signal safe.
+    //!
+    std::optional<Trace> read(const int fileDescriptor);
 
     //!
     //! \brief  Reads a backtrace from a given file.
