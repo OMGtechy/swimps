@@ -30,8 +30,8 @@ namespace {
         }
 
         bool& m_stopTarget;
-        BacktraceHandler& m_onBacktrace;
-        SampleHandler& m_onSample;
+        BacktraceHandler m_onBacktrace;
+        SampleHandler m_onSample;
 
         void operator()(swimps::trace::Sample& sample) const {
             m_onSample(sample);
