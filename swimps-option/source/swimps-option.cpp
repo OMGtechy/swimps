@@ -36,7 +36,7 @@ namespace {
         if (argc < 2) {
             // We need one for the parameter name and one for the parameter value.
             throw ParseException(
-                std::string("Missing value after ") + targetTraceFileOptionName
+                std::string("Missing value after ") + currentArg
             );
         }
 
