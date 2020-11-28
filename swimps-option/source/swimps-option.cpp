@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -16,11 +17,20 @@ using swimps::error::ErrorCode;
 
 namespace {
     constexpr char helpOptionName[] = "--help";
-
     constexpr char targetTraceFileOptionName[] = "--target-trace-file";
-    std::string parseTargetTraceFile(const std::string& currentArg, int& argc, const char**& argv) {
+    constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
+    constexpr char logLevelOptionName[] = "--log-level";
+
+    template <typename T>
+    inline T parseArgumentWithValue(
+        const std::string& argName,
+        const std::string& currentArg,
+        int& argc,
+        const char**& argv,
+        const std::function<T(const char*)>& valueConversionFunction) {
+
         swimps_assert(argv != nullptr);
-        swimps_assert(currentArg == targetTraceFileOptionName);
+        swimps_assert(currentArg == argName);
         swimps_assert(currentArg == std::string(*argv));
 
         if (argc < 2) {
@@ -36,86 +46,83 @@ namespace {
         swimps_assert(argc >= 1);
         swimps_assert(*argv != nullptr);
 
-        const auto targetTraceFile = std::string(*argv);
+        const auto value = valueConversionFunction(*argv);
 
         --argc;
         ++argv;
 
-        return targetTraceFile;
+        return value;
     }
 
-    constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
+    std::string parseString(
+        const std::string& argName,
+        const std::string& currentArg,
+        int& argc,
+        const char**& argv) {
+
+        return parseArgumentWithValue<std::string>(
+            argName,
+            currentArg,
+            argc,
+            argv,
+            [](const char* arg) { return std::string(arg); }
+        );
+    }
+
     double parseSamplesPerSecond(const std::string& currentArg, int& argc, const char**& argv) {
-        // TODO: this has a lot in common with parseLogLevel ... DRY?
-        swimps_assert(argv != nullptr);
-        swimps_assert(currentArg == samplesPerSecondOptionName);
-        swimps_assert(currentArg == std::string(*argv));
+        return parseArgumentWithValue<double>(
+            samplesPerSecondOptionName,
+            currentArg,
+            argc,
+            argv,
+            [](const char* arg) {
 
-        if (argc < 2) {
-            // We need one for the parameter name and one for the parameter value.
-            throw ParseException(
-                std::string("Missing value after ") + samplesPerSecondOptionName
-            );
-        }
+                const auto samplesPerSecondString = std::string(arg);
+                const auto samplesPerSecond = std::stod(samplesPerSecondString);
 
-        --argc;
-        ++argv;
+                if (samplesPerSecond < 0 || samplesPerSecond > 1'000'000'000 /* every nanosecond */) {
+                    throw InvalidOptionValueException(
+                        samplesPerSecondOptionName,
+                        samplesPerSecondString,
+                        "between 0 and 1,000,000,000, inclusive"
+                    );
+                }
 
-        swimps_assert(argc >= 1);
-        swimps_assert(*argv != nullptr);
-
-        const auto samplesPerSecondString = std::string(*argv);
-
-        --argc;
-        ++argv;
-
-        const auto samplesPerSecond = std::stod(samplesPerSecondString);
-
-        if (samplesPerSecond < 0 || samplesPerSecond > 1'000'000'000 /* every nanosecond */) {
-            throw InvalidOptionValueException(
-                samplesPerSecondOptionName,
-                samplesPerSecondString,
-                "between 0 and 1,000,000,000, inclusive"
-            );
-        }
-
-        return samplesPerSecond;
+                return samplesPerSecond;
+            }
+        );
     }
 
-    constexpr char logLevelOptionName[] = "--log-level";
+    std::string parseTargetTraceFile(const std::string& currentArg, int& argc, const char**& argv) {
+        return parseString(
+            targetTraceFileOptionName,
+            currentArg,
+            argc,
+            argv
+        );
+    }
+
     LogLevel parseLogLevel(const std::string& currentArg, int& argc, const char**& argv) {
-        swimps_assert(argv != nullptr);
-        swimps_assert(currentArg == logLevelOptionName);
-        swimps_assert(currentArg == std::string(*argv));
-
-        if (argc < 2) {
-            // We need one for the parameter name and one for the parameter value.
-            throw ParseException(
-                std::string("Missing value after ") + logLevelOptionName
-            );
-        }
-
-        --argc;
-        ++argv;
-
-        swimps_assert(argc >= 1);
-        swimps_assert(*argv != nullptr);
-
-        const auto logLevelString = std::string(*argv);
-
-        --argc;
-        ++argv;
-
-        if (logLevelString == "debug")        { return LogLevel::Debug; }
-        else if (logLevelString == "info")    { return LogLevel::Info; }
-        else if (logLevelString == "warning") { return LogLevel::Warning; }
-        else if (logLevelString == "error")   { return LogLevel::Error; }
-        else if (logLevelString == "fatal")   { return LogLevel::Fatal; }
-
-        throw InvalidOptionValueException(
+        return parseArgumentWithValue<LogLevel>(
             logLevelOptionName,
-            logLevelString,
-            "debug, info, warning, error, fatal"
+            currentArg,
+            argc,
+            argv,
+            [](const char* arg) {
+                const auto logLevelString = std::string(arg);
+
+                if (logLevelString == "debug")        { return LogLevel::Debug; }
+                else if (logLevelString == "info")    { return LogLevel::Info; }
+                else if (logLevelString == "warning") { return LogLevel::Warning; }
+                else if (logLevelString == "error")   { return LogLevel::Error; }
+                else if (logLevelString == "fatal")   { return LogLevel::Fatal; }
+
+                throw InvalidOptionValueException(
+                    logLevelOptionName,
+                    logLevelString,
+                    "debug, info, warning, error, fatal"
+                );
+            }
         );
     }
 }
