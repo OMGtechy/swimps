@@ -74,6 +74,35 @@ namespace {
         return memcmp(buffer, swimps::trace::file::swimps_v1_trace_file_marker, sizeof swimps::trace::file::swimps_v1_trace_file_marker) == 0 ? 0 : -1;
     }
 
+    bool goToStartOfFile(const int fileDescriptor) {
+        if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
+            swimps::log::format_and_write_to_log<512>(
+                swimps::log::LogLevel::Fatal,
+                "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
+                errno,
+                strerror(errno)
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    bool isSwimpsTraceFile(const int fileDescriptor) {
+        if (read_trace_file_marker(fileDescriptor) != 0) {
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Fatal,
+                "Missing swimps trace file marker."
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+
     EntryKind read_next_entry_kind(const int fileDescriptor) {
         char buffer[swimps::trace::file::swimps_v1_trace_entry_marker_size];
         memset(buffer, 0, sizeof buffer);
@@ -329,25 +358,7 @@ size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swi
 }
 
 int swimps::trace::file::finalise(const int fileDescriptor, const char* const traceFilePath, const size_t traceFilePathSize) {
-    // Go to the start of the file.
-    if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
-        swimps::log::format_and_write_to_log<512>(
-            swimps::log::LogLevel::Fatal,
-            "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
-            errno,
-            strerror(errno)
-        );
-
-        return -1;
-    }
-
-    // Make sure this is actually a swimps trace file
-    if (read_trace_file_marker(fileDescriptor) != 0) {
-        swimps::log::write_to_log(
-            swimps::log::LogLevel::Fatal,
-            "Missing swimps trace file marker."
-        );
-
+    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
         return -1;
     }
 
@@ -462,25 +473,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 }
 
 std::optional<swimps::trace::Trace> swimps::trace::file::read(int fileDescriptor) {
-    // Go to the start of the file.
-    if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
-        swimps::log::format_and_write_to_log<512>(
-            swimps::log::LogLevel::Fatal,
-            "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
-            errno,
-            strerror(errno)
-        );
-
-        return {};
-    }
-
-    // Make sure this is actually a swimps trace file
-    if (read_trace_file_marker(fileDescriptor) != 0) {
-        swimps::log::write_to_log(
-            swimps::log::LogLevel::Fatal,
-            "Missing swimps trace file marker."
-        );
-
+    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
         return {};
     }
 
