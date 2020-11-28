@@ -149,6 +149,27 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         }
     }
 
+    GIVEN("A target trace file option.") {
+        MockArguments<4> args({
+            "/fake/path/swimps",
+            "--target-trace-file",
+            "myfile.txt",
+            "dummy"
+        });
+
+        WHEN("They are parsed.") {
+            const auto options = option::parse_command_line(
+                args.argc(),
+                args.argv()
+            );
+
+            THEN("The target trace file is set accordingly.") {
+                REQUIRE(options.targetTraceFile == "myfile.txt");
+            }
+        }
+
+    }
+
     GIVEN("An invalid option value." ) {
         MockArguments<3> args({
             "/fake/path/swimps",
