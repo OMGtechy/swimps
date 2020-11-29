@@ -31,4 +31,7 @@ add_test(NAME swimps-system-test-high-sample-rate
 add_test(NAME swimps-system-test-help
          COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/source/swimps-system-test.py zero no-traces ${swimps_BINARY_DIR}/swimps --help)
 
+add_test(NAME swimps-system-test-relative-path
+         COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/source/swimps-system-test.py zero traces ${swimps_BINARY_DIR}/swimps ./swimps-dummy 0)
+
 add_executable(swimps-dummy source/swimps-dummy.cpp)
