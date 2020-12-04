@@ -159,9 +159,9 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
     argv.push_back(nullptr);
 
-    execve(argv[0], &argv[0], environment);
+    execvpe(argv[0], &argv[0], environment);
 
-    // we only get here if execve failed
+    // we only get here if the exec failed
     {
 
         swimps::log::format_and_write_to_log<128>(
