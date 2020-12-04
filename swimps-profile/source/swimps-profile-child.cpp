@@ -11,7 +11,7 @@
 #include <linux/limits.h>
 
 #include "swimps-log.h"
-#include "swimps-option.h"
+#include "swimps-option-parser.h"
 
 extern char** environ;
 

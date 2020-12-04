@@ -1,5 +1,5 @@
 #include "swimps-profile.h"
-#include "swimps-option.h"
+#include "swimps-option-parser.h"
 #include "swimps-log.h"
 #include "swimps-analysis.h"
 #include "swimps-trace-file.h"
