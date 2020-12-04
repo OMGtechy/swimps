@@ -3,7 +3,7 @@
 #include "swimps-trace-file.h"
 #include "swimps-io.h"
 #include "swimps-preload.h"
-#include "swimps-option.h"
+#include "swimps-option-options.h"
 
 #include <atomic>
 #include <cerrno>

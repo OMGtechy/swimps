@@ -1,5 +1,5 @@
 #include "swimps-unit-test.h"
-#include "swimps-option.h"
+#include "swimps-option-parser.h"
 
 #include <array>
 #include <cstring>
