@@ -16,6 +16,7 @@
 extern char** environ;
 
 swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& options) {
+    // LCOV_EXCL_START
     if (options.targetProgram.empty()) {
         swimps::log::write_to_log(
             swimps::log::LogLevel::Fatal,
@@ -173,4 +174,5 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     }
 
     return swimps::error::ErrorCode::ExecveFailed;
+    // LCOV_EXCL_STOP
 }
