@@ -10,6 +10,7 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
         constexpr int flags = UNW_INIT_SIGNAL_FRAME;
         memcpy(&unwindContext, context, sizeof unwindContext);
     #else
+        (void)context;
         constexpr int flags = 0;
         unw_getcontext(&unwindContext);
     #endif
