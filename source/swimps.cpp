@@ -64,7 +64,10 @@ int main(int argc, char** argv) {
     const auto trace = swimps::trace::file::read(targetTraceFileDescriptor);
     const auto analysis = swimps::analysis::analyse(*trace);
 
-    for (const auto& [sampleCount, backtraceID] : analysis.backtraceFrequency) {
+    for (const auto& entry : analysis.backtraceFrequency) {
+        const auto sampleCount = entry.first;
+        const auto backtraceID = entry.second;
+
         const auto& backtraces = trace->backtraces;
         const auto& backtraceIter = std::find_if(
             backtraces.cbegin(),
