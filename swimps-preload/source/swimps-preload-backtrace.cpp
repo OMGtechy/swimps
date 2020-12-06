@@ -3,6 +3,11 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
+#define S(x) S2(x)
+#define S2(x) #x
+
+#pragma message "libunwind version: " S(UNW_VERSION_MAJOR) "." S(UNW_VERSION_MINOR) "." S(UNW_VERSION_EXTRA)
+
 swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
     unw_context_t unwindContext;
 
