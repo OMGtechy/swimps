@@ -3,6 +3,7 @@
 #include "swimps-log.h"
 #include "swimps-analysis.h"
 #include "swimps-trace-file.h"
+#include "swimps-assert.h"
 
 #include <iostream>
 
@@ -63,8 +64,26 @@ int main(int argc, char** argv) {
     const auto trace = swimps::trace::file::read(targetTraceFileDescriptor);
     const auto analysis = swimps::analysis::analyse(*trace);
 
-    for (auto& entry : analysis.backtraceFrequency) {
-        std::cout << entry.first << ": " << entry.second << std::endl;
+    for (const auto& entry : analysis.backtraceFrequency) {
+        const auto sampleCount = entry.first;
+        const auto backtraceID = entry.second;
+
+        const auto& backtraces = trace->backtraces;
+        const auto& backtraceIter = std::find_if(
+            backtraces.cbegin(),
+            backtraces.cend(),
+            [backtraceID](const auto& backtrace){ return backtrace.id == backtraceID; }
+        );
+
+        swimps_assert(backtraceIter != backtraces.cend());
+
+        const auto& backtrace = *backtraceIter;
+
+        std::cout << "Backtrace #" << backtraceID << " (" << sampleCount << " times):\n";
+        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
+            std::cout << "    Frame #" << i << ": " << backtrace.stackFrames[i].mangledFunctionName << "\n";
+        }
+        std::cout << std::endl;
     }
 
     return static_cast<int>(swimps::error::ErrorCode::None);
