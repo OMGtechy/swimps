@@ -21,7 +21,16 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
     #endif
 
     unw_cursor_t unwindCursor;
-    unw_init_local2(&unwindCursor, &unwindContext, flags);
+
+    #if UNW_VERSION < UNW_VERSION_CODE(1,3)
+        #ifdef __aarch64__
+            #error "AArch64 requires libunwind 1.3 or greater."
+        #endif
+        (void)flags;
+        unw_init_local(&unwindCursor, &unwindContext);
+    #else
+        unw_init_local2(&unwindCursor, &unwindContext, flags);
+    #endif
 
     swimps::trace::Backtrace result;
 
