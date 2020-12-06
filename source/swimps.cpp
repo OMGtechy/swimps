@@ -3,6 +3,7 @@
 #include "swimps-log.h"
 #include "swimps-analysis.h"
 #include "swimps-trace-file.h"
+#include "swimps-assert.h"
 
 #include <iostream>
 
@@ -64,7 +65,16 @@ int main(int argc, char** argv) {
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (const auto& [sampleCount, backtraceID] : analysis.backtraceFrequency) {
-        const auto& backtrace = trace->backtraces[backtraceID];
+        const auto& backtraces = trace->backtraces;
+        const auto& backtraceIter = std::find_if(
+            backtraces.cbegin(),
+            backtraces.cend(),
+            [backtraceID](const auto& backtrace){ return backtrace.id == backtraceID; }
+        );
+
+        swimps_assert(backtraceIter != backtraces.cend());
+
+        const auto& backtrace = *backtraceIter;
 
         std::cout << "Backtrace #" << backtraceID << " (" << sampleCount << " times):\n";
         for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
