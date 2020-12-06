@@ -3,12 +3,34 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
-swimps::trace::Backtrace swimps::preload::get_backtrace() {
+#define S(x) S2(x)
+#define S2(x) #x
+
+#pragma message "libunwind version: " S(UNW_VERSION_MAJOR) "." S(UNW_VERSION_MINOR) "." S(UNW_VERSION_EXTRA)
+
+swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
     unw_context_t unwindContext;
-    unw_getcontext(&unwindContext);
+
+    #ifdef __aarch64__
+        constexpr int flags = UNW_INIT_SIGNAL_FRAME;
+        memcpy(&unwindContext, context, sizeof unwindContext);
+    #else
+        (void)context;
+        constexpr int flags = 0;
+        unw_getcontext(&unwindContext);
+    #endif
 
     unw_cursor_t unwindCursor;
-    unw_init_local(&unwindCursor, &unwindContext);
+
+    #if UNW_VERSION < UNW_VERSION_CODE(1,3)
+        #ifdef __aarch64__
+            #error "AArch64 requires libunwind 1.3 or greater."
+        #endif
+        (void)flags;
+        unw_init_local(&unwindCursor, &unwindContext);
+    #else
+        unw_init_local2(&unwindCursor, &unwindContext, flags);
+    #endif
 
     swimps::trace::Backtrace result;
 
