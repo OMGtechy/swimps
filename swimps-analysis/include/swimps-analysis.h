@@ -1,14 +1,16 @@
 #pragma once
 
-#include <map>
+#include <vector>
 
 #include "swimps-trace.h"
 
 namespace swimps::analysis {
     struct Analysis {
-        using BacktraceFrequency = std::map<
-            swimps::trace::backtrace_id_t,
-            swimps::trace::sample_count_t
+        using BacktraceFrequency = std::vector<
+            std::pair<
+                swimps::trace::sample_count_t,
+                swimps::trace::backtrace_id_t
+            >
         >;
 
         BacktraceFrequency backtraceFrequency;
