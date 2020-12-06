@@ -64,7 +64,13 @@ int main(int argc, char** argv) {
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (auto& entry : analysis.backtraceFrequency) {
-        std::cout << entry.first << ": " << entry.second << std::endl;
+        const auto& backtrace = trace->backtraces[entry.first];
+
+        std::cout << "Backtrace #" << entry.first << " (" << entry.second << " times):\n";
+        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
+            std::cout << "    Frame #" << i << ": " << backtrace.stackFrames[i].mangledFunctionName << "\n";
+        }
+        std::cout << std::endl;
     }
 
     return static_cast<int>(swimps::error::ErrorCode::None);
