@@ -25,7 +25,7 @@ namespace {
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
 
-    void swimps_preload_sigprof_handler(const int) {
+    void swimps_preload_sigprof_handler(const int, siginfo_t*, void* context) {
         if (sigprofRunningFlag.test_and_set()) {
             // Drop samples that occur when a sample is already being taken.
             return;
@@ -48,7 +48,7 @@ namespace {
         swimps::trace::file::add_sample(traceFile, sample);
 
         {
-            auto backtrace = swimps::preload::get_backtrace();
+            auto backtrace = swimps::preload::get_backtrace(static_cast<ucontext_t*>(context));
             backtrace.id = sample.backtraceID;
             swimps::trace::file::add_backtrace(
                 traceFile,
@@ -78,7 +78,7 @@ namespace {
 
     int swimps_preload_setup_signal_handler() {
         struct sigaction action;
-        action.sa_handler = swimps_preload_sigprof_handler;
+        action.sa_sigaction = swimps_preload_sigprof_handler;
         action.sa_flags = SA_SIGINFO | SA_RESTART;
         sigemptyset(&action.sa_mask);
 

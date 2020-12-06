@@ -3,12 +3,19 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
-swimps::trace::Backtrace swimps::preload::get_backtrace() {
+swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
     unw_context_t unwindContext;
-    unw_getcontext(&unwindContext);
+
+    #ifdef __aarch64__
+        constexpr int flags = UNW_INIT_SIGNAL_FRAME;
+        memcpy(&unwindContext, context, sizeof unwindContext);
+    #else
+        constexpr int flags = 0;
+        unw_getcontext(&unwindContext);
+    #endif
 
     unw_cursor_t unwindCursor;
-    unw_init_local(&unwindCursor, &unwindContext);
+    unw_init_local2(&unwindCursor, &unwindContext, flags);
 
     swimps::trace::Backtrace result;
 
