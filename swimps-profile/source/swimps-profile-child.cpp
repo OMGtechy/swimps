@@ -30,7 +30,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     if (ptrace(PTRACE_TRACEME) == -1) {
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            "ptrace(PTRACE_TRACEME) failed, errno %d (%s).",
+            "ptrace(PTRACE_TRACEME) failed, errno % (%).",
             errno,
             strerror(errno)
         );
@@ -99,7 +99,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            "readlink failed, errno %d (%s).",
+            "readlink failed, errno % (%).",
             errno,
             strerror(errno)
         );
@@ -132,7 +132,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
         for (auto& arg : options.targetProgramArgs) {
             targetSpan += swimps::io::format_string(
-                " %s",
+                " %",
                 targetSpan,
                 arg.c_str()
             );
@@ -167,7 +167,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            "Failed to execute target program, errno %d (%s).",
+            "Failed to execute target program, errno % (%).",
             errno,
             strerror(errno)
         );

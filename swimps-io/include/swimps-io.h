@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+#include <cstring>
 #include <cstdarg>
 #include <cstddef>
 #include <concepts>
@@ -55,11 +57,11 @@ namespace swimps::io {
         int fileDescriptor);
 
     //!
-    //! \brief  Formats the string, as per printf rules (see supported list), into the target.
+    //! \brief  Formats the string with the args provided, using % to denote where each should be inserted.
     //!
     //! \param[in]   format  The format string. Does not need to be null terminated.
     //! \param[out]  target  Where to write the formatted string.
-    //! \param[in]   ...     The values to use when formatting the string.
+    //! \param[in]   args    The values to use when formatting the string.
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
@@ -72,21 +74,15 @@ namespace swimps::io {
     //!
     //! \note  Only single-byte ASCII characters are supported.
     //!
-    //! \note  Supported format specifiers are:
-    //!        - %d: int
-    //!        - %s: a null terminated string as a const char*
+    //! \note  Types supported for formatting:
+    //!        - int
+    //!        - a null terminated string as a char* or const char*
     //!
+    template <typename T, typename... ArgTypes>
     size_t format_string(
         swimps::container::Span<const char> format,
         swimps::container::Span<char> target,
-        ...);
-
-    //!
-    //! \brief  A variant of swimps::io::format_string that takes a va_list.
-    //!
-    //! \see swimps::io::format_string.
-    //!
-    size_t format_string_valist(swimps::container::Span<const char> format,
-                                swimps::container::Span<char> target,
-                                va_list varargs);
+        const ArgTypes ... args);
 }
+
+#include "swimps-io.impl"

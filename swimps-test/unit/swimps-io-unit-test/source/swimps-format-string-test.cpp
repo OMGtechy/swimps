@@ -65,8 +65,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[3];
         memset(targetBuffer, 120, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a single digit vararg and no null terminator is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 2, a single digit arg and no null terminator is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -92,8 +92,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[3];
         memset(targetBuffer, 24, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an interger format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit vararg is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit arg is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -119,8 +119,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[2];
         memset(targetBuffer, 5, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an interger format specifier, a targetBufferSize of 1, a negative single digit vararg and no null terminator is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 1, a negative single digit arg and no null terminator is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 1),
@@ -145,8 +145,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[4];
         memset(targetBuffer, 8, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a four digit vararg and no null terminator is written into it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 2, a four digit arg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -173,8 +173,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[8];
         memset(targetBuffer, 96, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 4, a four digit vararg and no null terminator is written into it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 4, a four digit arg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 4),
@@ -204,8 +204,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
     GIVEN("An uninitialised target buffer of 64 bytes.") {
         char targetBuffer[64];
 
-        WHEN("A 2 byte string with a string format specifier that has no null terminator and a string vararg is written into it.") {
-            const char formatBuffer[] = { '%', 's' };
+        WHEN("A 2 byte string with a format specifier that has no null terminator and a string arg is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -269,8 +269,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[53];
         memset(targetBuffer, 1, sizeof targetBuffer);
 
-        WHEN("A 41 byte string with two string format specifiers, an integer format specifier, a null terminator and corresponding varargs.") {
-            const char formatBuffer[] = "%s, my name is %s and I am %d years old.";
+        WHEN("A 41 byte string with three format specifiers, a null terminator, two string args and an integer arg.") {
+            const char formatBuffer[] = "%, my name is % and I am % years old.";
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -305,8 +305,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[12];
         memset(targetBuffer, 42, sizeof targetBuffer);
 
-        WHEN("A format specifier of %d is passed alongside errno.") {
-            const char formatBuffer[] = "errno %d.";
+        WHEN("A format specifier is passed alongside errno.") {
+            const char formatBuffer[] = "errno %.";
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -337,6 +337,121 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
                 REQUIRE(targetBuffer[9]  == 42);
                 REQUIRE(targetBuffer[10] == 42);
                 REQUIRE(targetBuffer[11] == 42);
+            }
+        }
+    }
+
+    GIVEN("A zero-initialised buffer of 14 bytes.") {
+        char targetBuffer[14] = { };
+
+        WHEN("Four format specifiers are passed alongside const and non-const char buffers.") {
+            const char arg1[] = "Hello";
+            const char arg2[] = " Wor";
+            char arg3[] = "ld";
+            char arg4[] = "!";
+
+            const char formatBuffer[] = "%%%%";
+            const size_t bytesWritten = swimps::io::format_string<const char*, const char* const, char*, char* const>(
+                formatBuffer,
+                targetBuffer,
+                arg1,
+                arg2,
+                arg3,
+                arg4
+            );
+
+            THEN("The number of bytes claimed to be written as expected.") {
+                REQUIRE(bytesWritten == 13);
+            }
+
+            THEN("The formatted string is correct.") {
+                REQUIRE(targetBuffer[0] == 'H');
+                REQUIRE(targetBuffer[1] == 'e');
+                REQUIRE(targetBuffer[2] == 'l');
+                REQUIRE(targetBuffer[3] == 'l');
+                REQUIRE(targetBuffer[4] == 'o');
+                REQUIRE(targetBuffer[5] == ' ');
+                REQUIRE(targetBuffer[6] == 'W');
+                REQUIRE(targetBuffer[7] == 'o');
+                REQUIRE(targetBuffer[8] == 'r');
+                REQUIRE(targetBuffer[9] == 'l');
+                REQUIRE(targetBuffer[10] == 'd');
+                REQUIRE(targetBuffer[11] == '!');
+                REQUIRE(targetBuffer[12] == 0);
+            }
+
+            THEN("The remaing bytes are untouched.") {
+                REQUIRE(targetBuffer[13] == 0);
+            }
+        }
+    }
+
+    GIVEN("A target buffer of 4 initialised bytes.") {
+        char targetBuffer[] = { 0, 1, 2, 3 };
+        static_assert(sizeof(targetBuffer) == 4);
+
+        WHEN("A long format string with no format specifiers is provided and only 2 bytes of the target buffer are provided.") {
+            const char formatBuffer[] = "This is too big.";
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                { targetBuffer, 2 }
+            );
+
+            THEN("The bytes written match the number of bytes provided.") {
+                REQUIRE(bytesWritten == 2);
+            }
+
+            THEN("The bytes that would have fit have been copied over.") {
+                REQUIRE(targetBuffer[0] == 'T');
+                REQUIRE(targetBuffer[1] == 'h');
+            }
+
+            THEN("The remaining bytes are unchanged.") {
+                REQUIRE(targetBuffer[2] == 2);
+                REQUIRE(targetBuffer[3] == 3);
+            }
+        }
+    }
+
+    GIVEN("A target buffer of 21 zero-initialised bytes.") {
+        char targetBuffer[21] = { };
+
+        WHEN("A a large long long int is formatted.") {
+            const size_t bytesWritten = swimps::io::format_string(
+                "%",
+                targetBuffer,
+                9'223'372'036'854'775'800LL
+            );
+
+            THEN("The correct number of bytes are claimed to be written.") {
+                REQUIRE(bytesWritten == 20);
+            }
+
+            THEN("The correct string representation of the provided integer is in the target buffer.") {
+                REQUIRE(targetBuffer[0]  == '9');
+                REQUIRE(targetBuffer[1]  == '2');
+                REQUIRE(targetBuffer[2]  == '2');
+                REQUIRE(targetBuffer[3]  == '3');
+                REQUIRE(targetBuffer[4]  == '3');
+                REQUIRE(targetBuffer[5]  == '7');
+                REQUIRE(targetBuffer[6]  == '2');
+                REQUIRE(targetBuffer[7]  == '0');
+                REQUIRE(targetBuffer[8]  == '3');
+                REQUIRE(targetBuffer[9]  == '6');
+                REQUIRE(targetBuffer[10] == '8');
+                REQUIRE(targetBuffer[11] == '5');
+                REQUIRE(targetBuffer[12] == '4');
+                REQUIRE(targetBuffer[13] == '7');
+                REQUIRE(targetBuffer[14] == '7');
+                REQUIRE(targetBuffer[15] == '5');
+                REQUIRE(targetBuffer[16] == '8');
+                REQUIRE(targetBuffer[17] == '0');
+                REQUIRE(targetBuffer[18] == '0');
+                REQUIRE(targetBuffer[19] == '\0');
+            }
+
+            THEN("The remaining byte is unchanged.") {
+                REQUIRE(targetBuffer[20] == 0);
             }
         }
     }

@@ -18,7 +18,7 @@ swimps::error::ErrorCode swimps::profile::parent(const pid_t childPid) {
 
             swimps::log::format_and_write_to_log<256>(
                 swimps::log::LogLevel::Debug,
-                "Child process exited with code %d.",
+                "Child process exited with code %.",
                 exitCode
             );
 
@@ -40,7 +40,7 @@ swimps::error::ErrorCode swimps::profile::parent(const pid_t childPid) {
 
             swimps::log::format_and_write_to_log<128>(
                 swimps::log::LogLevel::Debug,
-                "Child process stopped due to signal %d (%s).",
+                "Child process stopped due to signal % (%).",
                 signalNumber,
                 strsignal(signalNumber)
             );
@@ -58,7 +58,7 @@ swimps::error::ErrorCode swimps::profile::parent(const pid_t childPid) {
             if (ptrace(PTRACE_CONT, childPid, 0 /* ignored */, signalToSend) == -1) {
                 swimps::log::format_and_write_to_log<128>(
                     swimps::log::LogLevel::Debug,
-                    "ptrace(PTRACE_CONT) failed, errno %d (%s).",
+                    "ptrace(PTRACE_CONT) failed, errno % (%).",
                     errno,
                     strerror(errno)
                 );

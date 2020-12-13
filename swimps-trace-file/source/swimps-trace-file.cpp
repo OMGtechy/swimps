@@ -49,7 +49,7 @@ namespace {
             default:
                 swimps::log::format_and_write_to_log<128>(
                     swimps::log::LogLevel::Fatal,
-                    "Error reading trace file: %d",
+                    "Error reading trace file: %",
                     errorCode
                 );
 
@@ -78,7 +78,7 @@ namespace {
         if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
             swimps::log::format_and_write_to_log<512>(
                 swimps::log::LogLevel::Fatal,
-                "Could not lseek to start of trace file to begin finalising, errno %d (%s).",
+                "Could not lseek to start of trace file to begin finalising, errno % (%).",
                 errno,
                 strerror(errno)
             );
@@ -111,7 +111,7 @@ namespace {
 
         swimps::log::format_and_write_to_log<64>(
             swimps::log::LogLevel::Debug,
-            "Entry marker: %s.",
+            "Entry marker: %.",
             buffer
         );
 
@@ -177,7 +177,7 @@ namespace {
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Debug,
-            "Trace file entry kind: %d.",
+            "Trace file entry kind: %.",
             static_cast<int>(entryKind)
         );
 
@@ -438,7 +438,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
-            "Could not create temp file to write finalised trace into, errno %d (%s).",
+            "Could not create temp file to write finalised trace into, errno % (%).",
             errno,
             strerror(errno)
         );
@@ -450,7 +450,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
-            "Could not write trace file marker to finalisation temp file, errno %d (%s).",
+            "Could not write trace file marker to finalisation temp file, errno % (%).",
             errno,
             strerror(errno)
         );
