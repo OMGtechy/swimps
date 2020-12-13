@@ -24,6 +24,7 @@ namespace {
     char traceFilePath[PATH_MAX] = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
+    swimps::trace::stack_frame_id_t nextStackFrameID = 1;
 
     void swimps_preload_sigprof_handler(const int, siginfo_t*, void* context) {
         if (sigprofRunningFlag.test_and_set()) {
@@ -32,7 +33,7 @@ namespace {
         }
 
         swimps::trace::Sample sample;
-        sample.backtraceID = nextBacktraceID++;
+        sample.backtraceID = nextBacktraceID;
 
         {
             if (swimps::time::now(clockID, sample.timestamp) != 0) {
@@ -48,8 +49,12 @@ namespace {
         swimps::trace::file::add_sample(traceFile, sample);
 
         {
-            auto backtrace = swimps::preload::get_backtrace(static_cast<ucontext_t*>(context));
-            backtrace.id = sample.backtraceID;
+            auto backtrace = swimps::preload::get_backtrace(
+                static_cast<ucontext_t*>(context),
+                nextBacktraceID,
+                nextStackFrameID
+            );
+
             swimps::trace::file::add_backtrace(
                 traceFile,
                 backtrace

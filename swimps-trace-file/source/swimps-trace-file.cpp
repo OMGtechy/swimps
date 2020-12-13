@@ -273,12 +273,18 @@ size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
 
     for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
         const auto& stackFrame = backtrace.stackFrames[i];
+        const auto  id = stackFrame.id;
         const auto& mangledFunctionName = stackFrame.mangledFunctionName;
         const auto  mangledFunctionNameLength = static_cast<mangled_function_name_length_t>(strnlen(&mangledFunctionName[0], sizeof mangledFunctionName));
 
         const auto& offset = stackFrame.offset;
 
         swimps_assert(mangledFunctionNameLength >= 0);
+
+        bytesWritten += swimps::io::write_to_file_descriptor(
+            id,
+            targetFileDescriptor
+        );
 
         bytesWritten += swimps::io::write_to_file_descriptor(
             mangledFunctionNameLength,
@@ -317,6 +323,11 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
     swimps_assert(backtrace.stackFrameCount > 0);
 
     for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
+        if (! swimps::io::read_from_file_descriptor(
+                fileDescriptor,
+                backtrace.stackFrames[i].id)) {
+            return {};
+        }
 
         if (! swimps::io::read_from_file_descriptor(
                 fileDescriptor,
@@ -379,7 +390,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             }
 
             for (decltype(lhs.stackFrameCount) i = 0; i < lhs.stackFrameCount; ++i) {
-                if (lhs.stackFrames[i] != rhs.stackFrames[i]) {
+                if (! lhs.stackFrames[i].isEquivalentTo(rhs.stackFrames[i])) {
                     return false;
                 }
             }

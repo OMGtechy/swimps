@@ -8,7 +8,7 @@
 
 #pragma message "libunwind version: " S(UNW_VERSION_MAJOR) "." S(UNW_VERSION_MINOR) "." S(UNW_VERSION_EXTRA)
 
-swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
+swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context, swimps::trace::backtrace_id_t& nextBacktraceID, swimps::trace::stack_frame_id_t& nextStackFrameID) {
     unw_context_t unwindContext;
 
     #ifdef __aarch64__
@@ -33,6 +33,7 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
     #endif
 
     swimps::trace::Backtrace result;
+    result.id = nextBacktraceID++;
 
     bool thereIsAnotherStackFrame = true;
     for(size_t stackFrameIndex = 0;
@@ -40,6 +41,7 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context) {
         ++stackFrameIndex) {
 
         auto& stackFrame = result.stackFrames[stackFrameIndex];
+        stackFrame.id = nextStackFrameID++;
 
         unw_word_t offset = 0;
 
