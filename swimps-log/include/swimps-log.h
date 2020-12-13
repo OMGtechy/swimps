@@ -80,24 +80,19 @@ namespace swimps::log {
     //!
     //! \note  This function is async signal safe.
     //!
-    template <size_t targetBufferSize>
+    template <size_t targetBufferSize, typename... ArgTypes>
     size_t format_and_write_to_log(
         const swimps::log::LogLevel logLevel,
         swimps::container::Span<const char> format,
-        ...) {
+        const ArgTypes ... args) {
 
         char targetBuffer[targetBufferSize] = { };
 
-        va_list varargs;
-        va_start(varargs, format);
-
-        const size_t bytesWritten = swimps::io::format_string_valist(
+        const size_t bytesWritten = swimps::io::format_string(
             format,
             targetBuffer,
-            varargs
+            args...
         );
-
-        va_end(varargs);
 
         return swimps::log::write_to_log(
             logLevel,

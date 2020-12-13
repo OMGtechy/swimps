@@ -18,7 +18,6 @@ add_executable(
     swimps-io-unit-test/source/swimps-write-to-file-descriptor-test.cpp
     swimps-io-unit-test/source/swimps-read-from-file-descriptor.cpp
     swimps-io-unit-test/source/swimps-format-string-test.cpp
-    swimps-io-unit-test/source/swimps-format-string-valist-test.cpp
     swimps-log-unit-test/source/swimps-format-log-message-test.cpp
     swimps-option-unit-test/source/swimps-parse-command-line.cpp
     swimps-trace-file-unit-test/source/swimps-trace-file-backtrace-test.cpp

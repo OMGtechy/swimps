@@ -340,4 +340,49 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("A zero-initialised buffer of 14 bytes.") {
+        char targetBuffer[14] = { };
+
+        WHEN("Four %s format specifiers are passed alongside const and non-const char buffers") {
+            const char arg1[] = "Hello";
+            const char arg2[] = " Wor";
+            char arg3[] = "ld";
+            char arg4[] = "!";
+
+            const char formatBuffer[] = "%s%s%s%s";
+            const size_t bytesWritten = swimps::io::format_string<const char*, const char* const, char*, char* const>(
+                formatBuffer,
+                targetBuffer,
+                arg1,
+                arg2,
+                arg3,
+                arg4
+            );
+
+            THEN("The number of bytes claimed to be written as expected.") {
+                REQUIRE(bytesWritten == 13);
+            }
+
+            THEN("The formatted string is correct.") {
+                REQUIRE(targetBuffer[0] == 'H');
+                REQUIRE(targetBuffer[1] == 'e');
+                REQUIRE(targetBuffer[2] == 'l');
+                REQUIRE(targetBuffer[3] == 'l');
+                REQUIRE(targetBuffer[4] == 'o');
+                REQUIRE(targetBuffer[5] == ' ');
+                REQUIRE(targetBuffer[6] == 'W');
+                REQUIRE(targetBuffer[7] == 'o');
+                REQUIRE(targetBuffer[8] == 'r');
+                REQUIRE(targetBuffer[9] == 'l');
+                REQUIRE(targetBuffer[10] == 'd');
+                REQUIRE(targetBuffer[11] == '!');
+                REQUIRE(targetBuffer[12] == 0);
+            }
+
+            THEN("The remaing bytes are untouched.") {
+                REQUIRE(targetBuffer[13] == 0);
+            }
+        }
+    }
 }
