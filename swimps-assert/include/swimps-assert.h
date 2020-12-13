@@ -10,7 +10,7 @@ do { \
     if (!(assertion)) { \
         swimps::log::format_and_write_to_log<2048>( \
             swimps::log::LogLevel::Fatal, \
-            "Assertion %s failed at " __FILE__ ":%d", \
+            "Assertion % failed at " __FILE__ ":%", \
             (#assertion), \
             __LINE__ \
         ); \

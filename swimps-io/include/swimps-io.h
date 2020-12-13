@@ -57,11 +57,11 @@ namespace swimps::io {
         int fileDescriptor);
 
     //!
-    //! \brief  Formats the string, as per printf rules (see supported list), into the target.
+    //! \brief  Formats the string with the args provided, using % to denote where each should be inserted.
     //!
     //! \param[in]   format  The format string. Does not need to be null terminated.
     //! \param[out]  target  Where to write the formatted string.
-    //! \param[in]   arg     The values to use when formatting the string.
+    //! \param[in]   args    The values to use when formatting the string.
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
@@ -74,9 +74,9 @@ namespace swimps::io {
     //!
     //! \note  Only single-byte ASCII characters are supported.
     //!
-    //! \note  Supported format specifiers are:
-    //!        - %d: int
-    //!        - %s: a null terminated string as a const char*
+    //! \note  Types supported for formatting:
+    //!        - int
+    //!        - a null terminated string as a char* or const char*
     //!
     template <typename T, typename... ArgTypes>
     size_t format_string(

@@ -110,7 +110,7 @@ namespace swimps::io {
             bytesWritten += newBytesWritten;
         }
 
-        if (formatCharacterTarget == NULL || format.current_size() == 0 || target.current_size() == 0) {
+        if (formatCharacterTarget == NULL || target.current_size() == 0) {
             // end of string!
             return bytesWritten;
         }
@@ -118,12 +118,8 @@ namespace swimps::io {
         // Overwriting % sign, so one less byte written.
         bytesWritten -= 1;
 
-        const auto formatCharacter = format[0];
-        format += 1;
-
         do {
             if constexpr (std::is_same_v<int, T>) {
-                assert(formatCharacter == 'd');
 
                 const auto formatResult = format_integer(target, firstArg);
                 target = std::get<swimps::container::Span<char>>(formatResult);

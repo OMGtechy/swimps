@@ -121,7 +121,7 @@ namespace {
         if (swimps_preload_setup_signal_handler() == -1) {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                "Could not setup signal handler, errno %d (%s).",
+                "Could not setup signal handler, errno % (%).",
                 errno,
                 strerror(errno)
             );
@@ -132,7 +132,7 @@ namespace {
         if (swimps::time::create_signal_timer(clockID, SIGPROF, sampleTimer) == -1) {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                "Could not create timer, errno %d (%s).",
+                "Could not create timer, errno % (%).",
                 errno,
                 strerror(errno)
             );
@@ -145,7 +145,7 @@ namespace {
         if (swimps_preload_start_timer(sampleTimer, options.samplesPerSecond) == -1) {
             swimps::log::format_and_write_to_log<1024>(
                 swimps::log::LogLevel::Fatal,
-                "Could not start timer, errno %d (%s).",
+                "Could not start timer, errno % (%).",
                 errno,
                 strerror(errno)
             );

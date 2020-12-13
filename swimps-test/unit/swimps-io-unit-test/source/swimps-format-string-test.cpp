@@ -65,8 +65,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[3];
         memset(targetBuffer, 120, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a single digit vararg and no null terminator is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 2, a single digit arg and no null terminator is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -92,8 +92,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[3];
         memset(targetBuffer, 24, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an interger format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit vararg is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier with no null terminator, a targetBufferSize of 2 and a negative single digit arg is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -119,8 +119,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[2];
         memset(targetBuffer, 5, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an interger format specifier, a targetBufferSize of 1, a negative single digit vararg and no null terminator is given to it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 1, a negative single digit arg and no null terminator is given to it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 1),
@@ -145,8 +145,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[4];
         memset(targetBuffer, 8, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 2, a four digit vararg and no null terminator is written into it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 2, a four digit arg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 2),
@@ -173,8 +173,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[8];
         memset(targetBuffer, 96, sizeof targetBuffer);
 
-        WHEN("A 2 byte string with an integer format specifier, a targetBufferSize of 4, a four digit vararg and no null terminator is written into it.") {
-            const char formatBuffer[] = { '%', 'd' };
+        WHEN("A 2 byte string with a format specifier, a targetBufferSize of 4, a four digit arg and no null terminator is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 swimps::container::Span<char>(targetBuffer, 4),
@@ -204,8 +204,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
     GIVEN("An uninitialised target buffer of 64 bytes.") {
         char targetBuffer[64];
 
-        WHEN("A 2 byte string with a string format specifier that has no null terminator and a string vararg is written into it.") {
-            const char formatBuffer[] = { '%', 's' };
+        WHEN("A 2 byte string with a format specifier that has no null terminator and a string arg is written into it.") {
+            const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -269,8 +269,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[53];
         memset(targetBuffer, 1, sizeof targetBuffer);
 
-        WHEN("A 41 byte string with two string format specifiers, an integer format specifier, a null terminator and corresponding varargs.") {
-            const char formatBuffer[] = "%s, my name is %s and I am %d years old.";
+        WHEN("A 41 byte string with three format specifiers, a null terminator, two string args and an integer arg.") {
+            const char formatBuffer[] = "%, my name is % and I am % years old.";
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -305,8 +305,8 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
         char targetBuffer[12];
         memset(targetBuffer, 42, sizeof targetBuffer);
 
-        WHEN("A format specifier of %d is passed alongside errno.") {
-            const char formatBuffer[] = "errno %d.";
+        WHEN("A format specifier is passed alongside errno.") {
+            const char formatBuffer[] = "errno %.";
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
                 targetBuffer,
@@ -344,13 +344,13 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
     GIVEN("A zero-initialised buffer of 14 bytes.") {
         char targetBuffer[14] = { };
 
-        WHEN("Four %s format specifiers are passed alongside const and non-const char buffers") {
+        WHEN("Four format specifiers are passed alongside const and non-const char buffers.") {
             const char arg1[] = "Hello";
             const char arg2[] = " Wor";
             char arg3[] = "ld";
             char arg4[] = "!";
 
-            const char formatBuffer[] = "%s%s%s%s";
+            const char formatBuffer[] = "%%%%";
             const size_t bytesWritten = swimps::io::format_string<const char*, const char* const, char*, char* const>(
                 formatBuffer,
                 targetBuffer,

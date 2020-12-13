@@ -15,7 +15,7 @@ swimps::error::ErrorCode swimps::profile::start(const swimps::option::Options& o
         // Fork failed.
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Fatal,
-            "fork failed, errno %d (%s).",
+            "fork failed, errno % (%).",
             errno,
             strerror(errno)
         );

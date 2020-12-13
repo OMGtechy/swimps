@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     } catch (const std::exception& exception) {
         swimps::log::format_and_write_to_log<2048>(
             swimps::log::LogLevel::Fatal,
-            "Error encountered whilst parsing command line: %s",
+            "Error encountered whilst parsing command line: %",
             exception.what()
         );
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     if (profileResult != swimps::error::ErrorCode::None) {
         swimps::log::format_and_write_to_log<256>(
             swimps::log::LogLevel::Fatal,
-            "Profile failed with code: %d",
+            "Profile failed with code: %",
             static_cast<int>(profileResult)
         );
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     if (targetTraceFileDescriptor == -1) {
         swimps::log::format_and_write_to_log<256>(
             swimps::log::LogLevel::Fatal,
-            "Failed to open trace file: %s",
+            "Failed to open trace file: %",
             options.targetTraceFile.c_str()
         );
 
