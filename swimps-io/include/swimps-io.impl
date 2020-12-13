@@ -3,7 +3,7 @@ namespace swimps::io {
         swimps::container::Span<const char> format,
         swimps::container::Span<char> target) {
         const size_t bytesToWrite = std::min(target.current_size(), format.current_size());
-        strncpy(&target[0], &format[0], format.current_size());
+        memcpy(&target[0], &format[0], bytesToWrite);
         return bytesToWrite;
     }
 

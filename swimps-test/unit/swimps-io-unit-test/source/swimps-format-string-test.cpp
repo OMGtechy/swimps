@@ -385,4 +385,31 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("A target buffer of 4 initialised bytes.") {
+        char targetBuffer[] = { 0, 1, 2, 3 };
+        static_assert(sizeof(targetBuffer) == 4);
+
+        WHEN("A long format string with no format specifiers is provided and only 2 bytes of the target buffer are provided.") {
+            const char formatBuffer[] = "This is too big.";
+            const size_t bytesWritten = swimps::io::format_string(
+                formatBuffer,
+                { targetBuffer, 2 }
+            );
+
+            THEN("The bytes written match the number of bytes provided.") {
+                REQUIRE(bytesWritten == 2);
+            }
+
+            THEN("The bytes that would have fit have been copied over.") {
+                REQUIRE(targetBuffer[0] == 'T');
+                REQUIRE(targetBuffer[1] == 'h');
+            }
+
+            THEN("The remaining bytes are unchanged.") {
+                REQUIRE(targetBuffer[2] == 2);
+                REQUIRE(targetBuffer[3] == 3);
+            }
+        }
+    }
 }
