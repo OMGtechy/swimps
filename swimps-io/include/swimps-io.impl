@@ -34,7 +34,7 @@ namespace {
             }
         }
 
-        const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
+        const unsigned int numberOfDigitsInValue = std::floor(std::log10(std::abs(value))) + 1;
         unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
 
         assert(target.current_size() != 0);
@@ -119,7 +119,7 @@ namespace swimps::io {
         bytesWritten -= 1;
 
         do {
-            if constexpr (std::is_same_v<int, T>) {
+            if constexpr (std::is_same_v<int, T> || std::is_same_v<long long int, T>) {
 
                 const auto formatResult = format_integer(target, firstArg);
                 target = std::get<swimps::container::Span<char>>(formatResult);

@@ -412,4 +412,47 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("A target buffer of 21 zero-initialised bytes.") {
+        char targetBuffer[21] = { };
+
+        WHEN("A a large long long int is formatted.") {
+            const size_t bytesWritten = swimps::io::format_string(
+                "%",
+                targetBuffer,
+                9'223'372'036'854'775'800LL
+            );
+
+            THEN("The correct number of bytes are claimed to be written.") {
+                REQUIRE(bytesWritten == 20);
+            }
+
+            THEN("The correct string representation of the provided integer is in the target buffer.") {
+                REQUIRE(targetBuffer[0]  == '9');
+                REQUIRE(targetBuffer[1]  == '2');
+                REQUIRE(targetBuffer[2]  == '2');
+                REQUIRE(targetBuffer[3]  == '3');
+                REQUIRE(targetBuffer[4]  == '3');
+                REQUIRE(targetBuffer[5]  == '7');
+                REQUIRE(targetBuffer[6]  == '2');
+                REQUIRE(targetBuffer[7]  == '0');
+                REQUIRE(targetBuffer[8]  == '3');
+                REQUIRE(targetBuffer[9]  == '6');
+                REQUIRE(targetBuffer[10] == '8');
+                REQUIRE(targetBuffer[11] == '5');
+                REQUIRE(targetBuffer[12] == '4');
+                REQUIRE(targetBuffer[13] == '7');
+                REQUIRE(targetBuffer[14] == '7');
+                REQUIRE(targetBuffer[15] == '5');
+                REQUIRE(targetBuffer[16] == '8');
+                REQUIRE(targetBuffer[17] == '0');
+                REQUIRE(targetBuffer[18] == '0');
+                REQUIRE(targetBuffer[19] == '\0');
+            }
+
+            THEN("The remaining byte is unchanged.") {
+                REQUIRE(targetBuffer[20] == 0);
+            }
+        }
+    }
 }
