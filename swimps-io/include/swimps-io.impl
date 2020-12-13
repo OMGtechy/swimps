@@ -1,3 +1,66 @@
+#pragma once
+
+#include <tuple>
+
+namespace {
+    template <typename T>
+    constexpr inline std::tuple<swimps::container::Span<char>, size_t> format_integer(
+        swimps::container::Span<char> target,
+        T value)
+        requires std::integral<T> {
+
+        size_t bytesWritten = 0;
+
+        if (value == 0) {
+            target[0] = '0';
+            target += 1;
+            bytesWritten += 1;
+            return std::make_tuple(target, bytesWritten);
+        }
+
+        // If the value is a negative, write '-' into the target buffer.
+        if (value < 0) {
+            assert(target.current_size() != 0);
+            target[0] = '-';
+            bytesWritten += 1;
+
+            target += 1;
+
+            value = value * -1;
+
+            if (target.current_size() == 0) {
+                // No room for anything other then the '-' sign.
+                return std::make_tuple(target, bytesWritten);
+            }
+        }
+
+        const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
+        unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
+
+        assert(target.current_size() != 0);
+
+        // Ensure that we do not write to memory we do not own.
+        while (target.current_size() <= numberOfDigitsInValueLeft - 1)
+        {
+            numberOfDigitsInValueLeft -= 1;
+            value /= 10;
+        }
+
+        unsigned int numberOfDigitsWritten = 0;
+        while (target.current_size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
+        {
+            target[numberOfDigitsInValueLeft - 1] = '0' + (value % 10);
+            bytesWritten += 1;
+            numberOfDigitsInValueLeft -= 1;
+            numberOfDigitsWritten += 1;
+            value /= 10;
+        }
+
+        target += numberOfDigitsWritten;
+        return std::make_tuple(target, bytesWritten);
+    }
+}
+
 namespace swimps::io {
     inline size_t format_string(
         swimps::container::Span<const char> format,
@@ -61,54 +124,11 @@ namespace swimps::io {
         do {
             if constexpr (std::is_same_v<int, T>) {
                 assert(formatCharacter == 'd');
-                int value = firstArg;
 
-                if (value == 0) {
-                    target[0] = '0';
-                    target += 1;
-                    bytesWritten += 1;
-                    break;
-                }
+                const auto formatResult = format_integer(target, firstArg);
+                target = std::get<swimps::container::Span<char>>(formatResult);
+                bytesWritten += std::get<size_t>(formatResult);
 
-                // If the value is a negative, write '-' into the target buffer.
-                if (value < 0) {
-                    assert(target.current_size() != 0);
-                    target[0] = '-';
-                    bytesWritten += 1;
-
-                    target += 1;
-
-                    value = value * -1;
-
-                    if (target.current_size() == 0) {
-                        // No room for anything other then the '-' sign.
-                        break;
-                    }
-                }
-
-                const unsigned int numberOfDigitsInValue = floor(log10(abs(value))) + 1;
-                unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
-
-                assert(target.current_size() != 0);
-
-                // Ensure that we do not write to memory we do not own.
-                while (target.current_size() <= numberOfDigitsInValueLeft - 1)
-                {
-                    numberOfDigitsInValueLeft -= 1;
-                    value /= 10;
-                }
-
-                unsigned int numberOfDigitsWritten = 0;
-                while (target.current_size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
-                {
-                    target[numberOfDigitsInValueLeft - 1] = '0' + (value % 10);
-                    bytesWritten += 1;
-                    numberOfDigitsInValueLeft -= 1;
-                    numberOfDigitsWritten += 1;
-                    value /= 10;
-                }
-
-                target += numberOfDigitsWritten;
             } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
                 const char* const value = firstArg;
                 for (size_t index = 0; value[index] != '\0' || target.current_size() == 0; ++index)
