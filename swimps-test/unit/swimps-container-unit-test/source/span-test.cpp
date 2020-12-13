@@ -610,4 +610,14 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
             }
         }
     }
+
+    GIVEN("A span.") {
+        char dummy[1] = { };
+        swimps::container::Span<char> copySource(dummy);
+
+        THEN("operator= can be used to copy it.") {
+            swimps::container::Span<char> copyTarget(dummy);
+            copyTarget.operator=(copyTarget);
+        }
+    }
 }

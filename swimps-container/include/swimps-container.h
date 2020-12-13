@@ -250,7 +250,7 @@ namespace swimps::container {
         T* m_bufferCurrent;
 
         //! How big the span was originally (in elements).
-        const size_t m_originalSize;
+        size_t m_originalSize;
 
         //! How many elements are left in the span (adjusted for offset).
         size_t m_remainingElements;
