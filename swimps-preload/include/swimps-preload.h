@@ -3,13 +3,14 @@
 #include "swimps-trace.h"
 
 #include <tuple>
+#include <array>
 
 #include <ucontext.h>
 
 namespace swimps::preload {
     using get_backtrace_result_t =
             std::tuple<swimps::trace::Backtrace,
-                       swimps::trace::StackFrame[64]>;
+                       std::array<swimps::trace::StackFrame, 64>>;
 
     //!
     //! \brief  Gets a backtrace from the currently running program.
