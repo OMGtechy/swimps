@@ -421,7 +421,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     }
 
     struct BacktraceHash {
-        bool operator() (const swimps::trace::Backtrace& backtrace) const {
+        size_t operator() (const swimps::trace::Backtrace& backtrace) const {
             swimps_assert(backtrace.stackFrameIDCount > 0);
             return std::hash<swimps::trace::stack_frame_id_t>{}(backtrace.stackFrameIDs[0]);
         }
@@ -447,7 +447,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     };
 
     struct StackFrameHash {
-        bool operator() (const swimps::trace::StackFrame& stackFrame) const {
+        size_t operator() (const swimps::trace::StackFrame& stackFrame) const {
             return std::hash<const char*>{}(stackFrame.mangledFunctionNameLength == 0 ? nullptr : &stackFrame.mangledFunctionName[0]);
         }
     };
