@@ -49,11 +49,22 @@ namespace {
         swimps::trace::file::add_sample(traceFile, sample);
 
         {
-            auto backtrace = swimps::preload::get_backtrace(
+            const auto result = swimps::preload::get_backtrace(
                 static_cast<ucontext_t*>(context),
                 nextBacktraceID,
                 nextStackFrameID
             );
+
+            const auto& backtrace = std::get<0>(result);
+            const auto& stackFrames = std::get<1>(result);
+
+            for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
+                const auto& stackFrame = stackFrames[i];
+                swimps::trace::file::add_stack_frame(
+                    traceFile,
+                    stackFrame
+                );
+            }
 
             swimps::trace::file::add_backtrace(
                 traceFile,

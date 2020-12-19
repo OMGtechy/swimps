@@ -23,15 +23,17 @@ namespace {
     struct Visitor {
         using BacktraceHandler = std::function<void(swimps::trace::Backtrace&)>;
         using SampleHandler = std::function<void(swimps::trace::Sample&)>;
+        using StackFrameHandler = std::function<void(swimps::trace::StackFrame&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame) {
 
         }
 
         bool& m_stopTarget;
         BacktraceHandler m_onBacktrace;
         SampleHandler m_onSample;
+        StackFrameHandler m_onStackFrame;
 
         void operator()(swimps::trace::Sample& sample) const {
             m_onSample(sample);
@@ -39,6 +41,10 @@ namespace {
 
         void operator()(swimps::trace::Backtrace& backtrace) const {
             m_onBacktrace(backtrace);
+        }
+
+        void operator()(swimps::trace::StackFrame& stackFrame) const {
+            m_onStackFrame(stackFrame);
         }
 
         void operator()(swimps::error::ErrorCode errorCode) const {
@@ -62,7 +68,8 @@ namespace {
         Unknown,
         EndOfFile,
         Sample,
-        SymbolicBacktrace
+        SymbolicBacktrace,
+        StackFrame
     };
 
     int read_trace_file_marker(const int fileDescriptor) {
@@ -131,6 +138,10 @@ namespace {
             return EntryKind::SymbolicBacktrace;
         }
 
+        if (memcmp(buffer, swimps::trace::file::swimps_v1_trace_stack_frame_marker, sizeof swimps::trace::file::swimps_v1_trace_stack_frame_marker) == 0) {
+            return EntryKind::StackFrame;
+        }
+
         return EntryKind::Unknown;
     }
 
@@ -169,7 +180,7 @@ namespace {
         return 0;
     }
 
-    std::variant<swimps::trace::Backtrace, swimps::trace::Sample, swimps::error::ErrorCode> read_entry(const int fileDescriptor) { 
+    std::variant<swimps::trace::Backtrace, swimps::trace::Sample, swimps::trace::StackFrame, swimps::error::ErrorCode> read_entry(const int fileDescriptor) { 
         using namespace swimps::trace::file; 
         using swimps::error::ErrorCode;
 
@@ -210,6 +221,20 @@ namespace {
                 }
 
                 return *backtrace;
+            }
+        case EntryKind::StackFrame:
+            {
+                const auto stackFrame = read_stack_frame(fileDescriptor);
+                if (!stackFrame) {
+                    swimps::log::write_to_log(
+                        swimps::log::LogLevel::Fatal,
+                        "Reading stack frame failed."
+                    );
+
+                    return ErrorCode::ReadStackFrameFailed;
+                }
+
+                return *stackFrame;
             }
         case EntryKind::EndOfFile:
             return ErrorCode::EndOfFile;
@@ -269,38 +294,48 @@ size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
 
     bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker, targetFileDescriptor);
     bytesWritten += swimps::io::write_to_file_descriptor(backtrace.id, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameCount, targetFileDescriptor);
+    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameIDCount, targetFileDescriptor);
 
-    for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
-        const auto& stackFrame = backtrace.stackFrames[i];
-        const auto  id = stackFrame.id;
-        const auto& mangledFunctionName = stackFrame.mangledFunctionName;
-        const auto  mangledFunctionNameLength = static_cast<mangled_function_name_length_t>(strnlen(&mangledFunctionName[0], sizeof mangledFunctionName));
-
-        const auto& offset = stackFrame.offset;
-
-        swimps_assert(mangledFunctionNameLength >= 0);
-
-        bytesWritten += swimps::io::write_to_file_descriptor(
-            id,
-            targetFileDescriptor
-        );
-
-        bytesWritten += swimps::io::write_to_file_descriptor(
-            mangledFunctionNameLength,
-            targetFileDescriptor
-        );
-
-        bytesWritten += swimps::io::write_to_file_descriptor(
-            { &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) },
-            targetFileDescriptor
-        );
-
-        bytesWritten += swimps::io::write_to_file_descriptor(
-            offset,
-            targetFileDescriptor
-        );
+    for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
+        bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameIDs[i], targetFileDescriptor);
     }
+
+    return bytesWritten;
+}
+
+size_t swimps::trace::file::add_stack_frame(const int targetFileDescriptor,
+                                            const StackFrame& stackFrame) {
+    size_t bytesWritten = 0;
+
+    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_stack_frame_marker, targetFileDescriptor);
+
+    const auto  id = stackFrame.id;
+    const auto& mangledFunctionName = stackFrame.mangledFunctionName;
+    const auto  mangledFunctionNameLength = static_cast<mangled_function_name_length_t>(strnlen(&mangledFunctionName[0], sizeof mangledFunctionName));
+
+    const auto& offset = stackFrame.offset;
+
+    swimps_assert(mangledFunctionNameLength >= 0);
+
+    bytesWritten += swimps::io::write_to_file_descriptor(
+        id,
+        targetFileDescriptor
+    );
+
+    bytesWritten += swimps::io::write_to_file_descriptor(
+        mangledFunctionNameLength,
+        targetFileDescriptor
+    );
+
+    bytesWritten += swimps::io::write_to_file_descriptor(
+        { &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) },
+        targetFileDescriptor
+    );
+
+    bytesWritten += swimps::io::write_to_file_descriptor(
+        offset,
+        targetFileDescriptor
+    );
 
     return bytesWritten;
 }
@@ -316,45 +351,57 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
 
     if (! swimps::io::read_from_file_descriptor(
             fileDescriptor,
-            backtrace.stackFrameCount)) {
+            backtrace.stackFrameIDCount)) {
         return {};
     }
 
-    swimps_assert(backtrace.stackFrameCount > 0);
+    swimps_assert(backtrace.stackFrameIDCount > 0);
 
-    for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
+    for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
         if (! swimps::io::read_from_file_descriptor(
                 fileDescriptor,
-                backtrace.stackFrames[i].id)) {
-            return {};
-        }
-
-        if (! swimps::io::read_from_file_descriptor(
-                fileDescriptor,
-                backtrace.stackFrames[i].mangledFunctionNameLength)) {
-            return {};
-        }
-
-        if (! swimps::io::read_from_file_descriptor(
-                fileDescriptor,
-                {
-                    backtrace.stackFrames[i].mangledFunctionName,
-                    std::min(
-                        static_cast<size_t>(backtrace.stackFrames[i].mangledFunctionNameLength),
-                        sizeof swimps::trace::StackFrame::mangledFunctionName
-                    )
-                })) {
-            return {};
-        }
-
-        if (! swimps::io::read_from_file_descriptor(
-                fileDescriptor,
-                backtrace.stackFrames[i].offset)) {
+                backtrace.stackFrameIDs[i])) {
             return {};
         }
     }
 
     return backtrace;
+}
+
+std::optional<swimps::trace::StackFrame> swimps::trace::file::read_stack_frame(const int fileDescriptor) {
+    swimps::trace::StackFrame stackFrame;
+
+    if (! swimps::io::read_from_file_descriptor(
+            fileDescriptor,
+            stackFrame.id)) {
+        return {};
+    }
+
+    if (! swimps::io::read_from_file_descriptor(
+            fileDescriptor,
+            stackFrame.mangledFunctionNameLength)) {
+        return {};
+    }
+
+    if (! swimps::io::read_from_file_descriptor(
+            fileDescriptor,
+            {
+                stackFrame.mangledFunctionName,
+                std::min(
+                    static_cast<size_t>(stackFrame.mangledFunctionNameLength),
+                    sizeof swimps::trace::StackFrame::mangledFunctionName
+                )
+            })) {
+        return {};
+    }
+
+    if (! swimps::io::read_from_file_descriptor(
+            fileDescriptor,
+            stackFrame.offset)) {
+        return {};
+    }
+
+    return stackFrame;
 }
 
 size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swimps::trace::Sample& sample) {
@@ -375,8 +422,8 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
     struct BacktraceHash {
         bool operator() (const swimps::trace::Backtrace& backtrace) const {
-            swimps_assert(backtrace.stackFrameCount > 0);
-            return std::hash<const char*>{}((&backtrace.stackFrames[0].mangledFunctionName[0]));
+            swimps_assert(backtrace.stackFrameIDCount > 0);
+            return std::hash<swimps::trace::stack_frame_id_t>{}(backtrace.stackFrameIDs[0]);
         }
     };
 
@@ -385,17 +432,32 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             const swimps::trace::Backtrace& lhs,
             const swimps::trace::Backtrace& rhs
         ) const {
-            if (lhs.stackFrameCount != rhs.stackFrameCount) {
+            if (lhs.stackFrameIDCount != rhs.stackFrameIDCount) {
                 return false;
             }
 
-            for (decltype(lhs.stackFrameCount) i = 0; i < lhs.stackFrameCount; ++i) {
-                if (! lhs.stackFrames[i].isEquivalentTo(rhs.stackFrames[i])) {
+            for (decltype(lhs.stackFrameIDCount) i = 0; i < lhs.stackFrameIDCount; ++i) {
+                if (lhs.stackFrameIDs[i] != rhs.stackFrameIDs[i]) {
                     return false;
                 }
             }
 
             return true;
+        }
+    };
+
+    struct StackFrameHash {
+        bool operator() (const swimps::trace::StackFrame& stackFrame) const {
+            return std::hash<const char*>{}(stackFrame.mangledFunctionNameLength == 0 ? nullptr : &stackFrame.mangledFunctionName[0]);
+        }
+    };
+
+    struct StackFrameEqual {
+        bool operator() (
+            const swimps::trace::StackFrame& lhs,
+            const swimps::trace::StackFrame& rhs
+        ) const {
+            return lhs.isEquivalentTo(rhs);
         }
     };
 
@@ -406,6 +468,12 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         std::unordered_set<swimps::trace::backtrace_id_t>,
         BacktraceHash,
         BacktraceEqual> backtraceMap;
+
+    std::unordered_map<
+        StackFrame,
+        std::unordered_set<swimps::trace::stack_frame_id_t>,
+        StackFrameHash,
+        StackFrameEqual> stackFrameMap;
 
     using swimps::error::ErrorCode;
 
@@ -419,6 +487,7 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
                 stop,
                 [&backtraceMap](auto& backtrace){ backtraceMap[backtrace].insert(backtrace.id); },
                 [&samples](auto& sample){ samples.push_back(sample); }, 
+                [&stackFrameMap](auto& stackFrame){ stackFrameMap[stackFrame].insert(stackFrame.id); }
             },
             entry
         );
@@ -440,6 +509,33 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
             matchingBacktraceIter->first.id,
             sample.timestamp
         });
+    }
+
+    std::vector<swimps::trace::Backtrace> backtracesSharingStackFrameID;
+    for(const auto& [oldBacktrace, unused] : backtraceMap) {
+
+        swimps::trace::Backtrace newBacktrace;
+        newBacktrace.id = oldBacktrace.id;
+
+        for(stack_frame_count_t i = 0; i < oldBacktrace.stackFrameIDCount; ++i) {
+            const auto& stackFrameID = oldBacktrace.stackFrameIDs[i];
+            const auto matchingStackFrameIter = std::find_if(
+                stackFrameMap.cbegin(),
+                stackFrameMap.cend(),
+                [stackFrameID](const auto& stackFramePair) {
+                    return stackFramePair.second.contains(stackFrameID);
+                }
+            );
+
+            swimps_assert(matchingStackFrameIter != stackFrameMap.cend());
+
+            newBacktrace.stackFrameIDs[i] = matchingStackFrameIter->first.id;
+            newBacktrace.stackFrameIDCount += 1;
+        }
+
+        swimps_assert(newBacktrace.stackFrameIDCount == oldBacktrace.stackFrameIDCount);
+
+        backtracesSharingStackFrameID.push_back(newBacktrace);
     }
 
     char tempFileNameBuffer[] = "/tmp/swimps_finalise_temp_file_XXXXXX";
@@ -473,8 +569,12 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         add_sample(tempFile, sample);
     }
 
-    for(const auto& backtrace : backtraceMap) {
-        add_backtrace(tempFile, backtrace.first);
+    for(const auto& backtrace : backtracesSharingStackFrameID) {
+        add_backtrace(tempFile, backtrace);
+    }
+
+    for(const auto& stackFrame: stackFrameMap) {
+        add_stack_frame(tempFile, stackFrame.first);
     }
 
     const std::string traceFilePathString(traceFilePath, traceFilePathSize);
@@ -501,7 +601,8 @@ std::optional<swimps::trace::Trace> swimps::trace::file::read(int fileDescriptor
             Visitor{
                 stop,
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
-                [&trace](auto& sample){ trace.samples.push_back(sample); }, 
+                [&trace](auto& sample){ trace.samples.push_back(sample); },
+                [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); }
             },
             entry
         );

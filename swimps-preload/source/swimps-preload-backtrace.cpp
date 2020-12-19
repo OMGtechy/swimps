@@ -8,7 +8,7 @@
 
 #pragma message "libunwind version: " S(UNW_VERSION_MAJOR) "." S(UNW_VERSION_MINOR) "." S(UNW_VERSION_EXTRA)
 
-swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context, swimps::trace::backtrace_id_t& nextBacktraceID, swimps::trace::stack_frame_id_t& nextStackFrameID) {
+swimps::preload::get_backtrace_result_t swimps::preload::get_backtrace(ucontext_t* context, swimps::trace::backtrace_id_t& nextBacktraceID, swimps::trace::stack_frame_id_t& nextStackFrameID) {
     unw_context_t unwindContext;
 
     #ifdef __aarch64__
@@ -32,15 +32,17 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context, swi
         unw_init_local2(&unwindCursor, &unwindContext, flags);
     #endif
 
-    swimps::trace::Backtrace result;
-    result.id = nextBacktraceID++;
+    get_backtrace_result_t result;
+    auto& backtrace = std::get<0>(result);
+    auto& stackFrames = std::get<1>(result);
+    backtrace.id = nextBacktraceID++;
 
     bool thereIsAnotherStackFrame = true;
     for(size_t stackFrameIndex = 0;
-        thereIsAnotherStackFrame && stackFrameIndex < sizeof result.stackFrames;
+        thereIsAnotherStackFrame && stackFrameIndex < std::size(stackFrames);
         ++stackFrameIndex) {
 
-        auto& stackFrame = result.stackFrames[stackFrameIndex];
+        auto& stackFrame = stackFrames[stackFrameIndex];
         stackFrame.id = nextStackFrameID++;
 
         unw_word_t offset = 0;
@@ -58,7 +60,8 @@ swimps::trace::Backtrace swimps::preload::get_backtrace(ucontext_t* context, swi
             stackFrame.mangledFunctionName[0] = '\0';
         }
 
-        result.stackFrameCount += 1;
+        backtrace.stackFrameIDs[stackFrameIndex] = stackFrame.id;
+        backtrace.stackFrameIDCount += 1;
         stackFrame.offset = getProcNameResult == 0 ? static_cast<int64_t>(offset) : 0;
         stackFrame.mangledFunctionNameLength = getProcNameResult == 0 ? strnlen(stackFrame.mangledFunctionName, maxMangledFunctionNameLength) : 0;
 

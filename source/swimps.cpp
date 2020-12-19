@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
         const auto sampleCount = entry.first;
         const auto backtraceID = entry.second;
 
+        const auto& stackFrames = trace->stackFrames;
         const auto& backtraces = trace->backtraces;
         const auto& backtraceIter = std::find_if(
             backtraces.cbegin(),
@@ -80,9 +81,18 @@ int main(int argc, char** argv) {
         const auto& backtrace = *backtraceIter;
 
         std::cout << "Backtrace #" << backtraceID << " (" << sampleCount << " times):\n";
-        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameCount; ++i) {
-            std::cout << "    Frame #" << i << ": " << backtrace.stackFrames[i].mangledFunctionName << "\n";
+        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
+            const auto& stackFramesIter = std::find_if(
+                stackFrames.cbegin(),
+                stackFrames.cend(),
+                [backtrace, i](const auto& stackFrame){ return backtrace.stackFrameIDs[i] == stackFrame.id; }
+            );
+
+            swimps_assert(stackFramesIter != stackFrames.cend());
+
+            std::cout << "    Frame #" << i << ": " << stackFramesIter->mangledFunctionName << "\n";
         }
+
         std::cout << std::endl;
     }
 
