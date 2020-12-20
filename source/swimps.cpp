@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 
             swimps_assert(stackFramesIter != stackFrames.cend());
 
-            std::cout << "    Frame #" << i << ": " << stackFramesIter->mangledFunctionName << "\n";
+            std::cout << "    Frame #" << i << ": " << stackFramesIter->mangledFunctionName << "+" << stackFramesIter->offset << "\n";
         }
 
         std::cout << std::endl;
