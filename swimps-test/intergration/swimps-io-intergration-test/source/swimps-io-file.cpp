@@ -11,7 +11,7 @@ SCENARIO("swimps::io::File", "[swimp-io]") {
         File file(fileDescriptor, fileNameBuffer);
 
         WHEN("8 bytes of data are written into it.") {
-            std::array<const char, 8> dataSource = { 128, 0, 59, 24, 2, 43, 42, 1 };
+            std::array<const char, 8> dataSource = { 120, 0, 59, 24, 2, 43, 42, 1 };
             REQUIRE(file.write(dataSource) == dataSource.size());
 
             AND_WHEN("seekToStart() is called.") {
