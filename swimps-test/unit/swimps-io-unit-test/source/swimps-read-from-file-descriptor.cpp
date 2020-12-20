@@ -1,26 +1,27 @@
 #include "swimps-unit-test.h"
-#include "swimps-io.h"
+#include "swimps-io-file.h"
 
 #include <unistd.h>
 
-SCENARIO("swimps::io::read_from_file_descriptor", "[swimps-io]") {
+using swimps::io::File;
+
+SCENARIO("swimps::io::File::read", "[swimps-io]") {
     // TODO: this is more of an intergration test.
     GIVEN("A file with some data in it.") {
         char targetFileNameBuffer[] = "/tmp/swimps::io::read_from_file_descriptor-test-XXXXXX";
         const int targetFileDescriptor = mkstemp(targetFileNameBuffer);
-
-        REQUIRE(targetFileDescriptor != -1);
+        File targetFile{targetFileDescriptor, targetFileNameBuffer};
 
         {
             const int32_t data = 42;
-            swimps::io::write_to_file_descriptor(data, targetFileDescriptor);
+            targetFile.write(data);
         }
 
         WHEN("It is read back as an integer.") {
-            REQUIRE(lseek(targetFileDescriptor, 0, SEEK_SET) == 0);
+            REQUIRE(targetFile.seekToStart());
 
             int32_t myInt = 0;
-            const bool succeeded = swimps::io::read_from_file_descriptor(targetFileDescriptor, myInt);
+            const bool succeeded = targetFile.read(myInt);
 
             THEN("The read succeeds.") {
                 REQUIRE(succeeded);

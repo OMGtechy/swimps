@@ -1,7 +1,4 @@
 #include "swimps-trace-file.h"
-#include "swimps-io.h"
-#include "swimps-assert.h"
-#include "swimps-error.h"
 
 #include <cstdio>
 #include <cstring>
@@ -18,6 +15,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <execinfo.h>
+
+#include "swimps-assert.h"
+#include "swimps-error.h"
+#include "swimps-io.h"
+#include "swimps-io-file.h"
+#include "swimps-log.h"
+
+using swimps::io::File;
 
 namespace {
     struct Visitor {
@@ -72,17 +77,17 @@ namespace {
         StackFrame
     };
 
-    int read_trace_file_marker(const int fileDescriptor) {
+    int read_trace_file_marker(File& sourceFile) {
         char buffer[sizeof swimps::trace::file::swimps_v1_trace_file_marker];
-        if (! swimps::io::read_from_file_descriptor(fileDescriptor, buffer)) {
+        if (! sourceFile.read(buffer)) {
             return -1;
         }
 
         return memcmp(buffer, swimps::trace::file::swimps_v1_trace_file_marker, sizeof swimps::trace::file::swimps_v1_trace_file_marker) == 0 ? 0 : -1;
     }
 
-    bool goToStartOfFile(const int fileDescriptor) {
-        if (lseek(fileDescriptor, 0, SEEK_SET) != 0) {
+    bool goToStartOfFile(File& file) {
+        if (! file.seekToStart()) {
             swimps::log::format_and_write_to_log<512>(
                 swimps::log::LogLevel::Fatal,
                 "Could not lseek to start of trace file to begin finalising, errno % (%).",
@@ -96,8 +101,8 @@ namespace {
         return true;
     }
 
-    bool isSwimpsTraceFile(const int fileDescriptor) {
-        if (read_trace_file_marker(fileDescriptor) != 0) {
+    bool isSwimpsTraceFile(File& sourceFile) {
+        if (read_trace_file_marker(sourceFile) != 0) {
             swimps::log::write_to_log(
                 swimps::log::LogLevel::Fatal,
                 "Missing swimps trace file marker."
@@ -110,11 +115,11 @@ namespace {
     }
 
 
-    EntryKind read_next_entry_kind(const int fileDescriptor) {
+    EntryKind read_next_entry_kind(File& sourceFile) {
         char buffer[swimps::trace::file::swimps_v1_trace_entry_marker_size];
         memset(buffer, 0, sizeof buffer);
 
-        const ssize_t readReturnCode = read(fileDescriptor, buffer, sizeof buffer);
+        const auto readReturnCode = sourceFile.read(buffer);
 
         swimps::log::format_and_write_to_log<64>(
             swimps::log::LogLevel::Debug,
@@ -145,46 +150,42 @@ namespace {
         return EntryKind::Unknown;
     }
 
-    std::optional<swimps::trace::Sample> read_sample(const int fileDescriptor) {
+    std::optional<swimps::trace::Sample> read_sample(File& sourceFile) {
         swimps::trace::backtrace_id_t backtraceID;
 
-        if (! swimps::io::read_from_file_descriptor(fileDescriptor, backtraceID)) {
+        if (! sourceFile.read(backtraceID)) {
             return {};
         }
 
         swimps::time::TimeSpecification timestamp;
 
-        if (! swimps::io::read_from_file_descriptor(fileDescriptor, timestamp.seconds)) {
+        if (! sourceFile.read(timestamp.seconds)) {
             return {};
         }
 
-        if (! swimps::io::read_from_file_descriptor(fileDescriptor, timestamp.nanoseconds)) {
+        if (! sourceFile.read(timestamp.nanoseconds)) {
             return {};
         }
 
         return {{ backtraceID, timestamp }};
     }
 
-    int write_trace_file_marker(const int fileDescriptor, const char* const path) {
-        const size_t bytesWritten = swimps::io::write_to_file_descriptor(
-            swimps::trace::file::swimps_v1_trace_file_marker,
-            fileDescriptor
-        );
+    int write_trace_file_marker(File& targetFile) {
+        const auto bytesWritten = targetFile.write(swimps::trace::file::swimps_v1_trace_file_marker);
 
         if (bytesWritten != sizeof swimps::trace::file::swimps_v1_trace_file_marker) {
-            close(fileDescriptor);
-            unlink(path);
+            targetFile.remove();
             return -1;
         }
 
         return 0;
     }
 
-    std::variant<swimps::trace::Backtrace, swimps::trace::Sample, swimps::trace::StackFrame, swimps::error::ErrorCode> read_entry(const int fileDescriptor) { 
+    std::variant<swimps::trace::Backtrace, swimps::trace::Sample, swimps::trace::StackFrame, swimps::error::ErrorCode> read_entry(File& sourceFile) {
         using namespace swimps::trace::file; 
         using swimps::error::ErrorCode;
 
-        const auto entryKind = read_next_entry_kind(fileDescriptor);
+        const auto entryKind = read_next_entry_kind(sourceFile);
 
         swimps::log::format_and_write_to_log<128>(
             swimps::log::LogLevel::Debug,
@@ -195,7 +196,7 @@ namespace {
         switch(entryKind) {
         case EntryKind::Sample:
             {
-                const auto sample = read_sample(fileDescriptor);
+                const auto sample = read_sample(sourceFile);
                 if (!sample) {
 
                     swimps::log::write_to_log(
@@ -210,7 +211,7 @@ namespace {
             }
         case EntryKind::SymbolicBacktrace:
             {
-                const auto backtrace = read_backtrace(fileDescriptor);
+                const auto backtrace = read_backtrace(sourceFile);
                 if (!backtrace) {
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
@@ -224,7 +225,7 @@ namespace {
             }
         case EntryKind::StackFrame:
             {
-                const auto stackFrame = read_stack_frame(fileDescriptor);
+                const auto stackFrame = read_stack_frame(sourceFile);
                 if (!stackFrame) {
                     swimps::log::write_to_log(
                         swimps::log::LogLevel::Fatal,
@@ -250,24 +251,17 @@ namespace {
     }
 }
 
-int swimps::trace::file::create(const char* const path) {
+File swimps::trace::file::create(swimps::container::Span<const char> path) {
 
-    swimps_assert(path != NULL);
-
-    const int file = open(
+    File file(
         path,
         O_CREAT | O_EXCL | O_RDWR, // Create a file with read and write access.
         S_IRUSR | S_IWUSR // Given read and write permissions to current user.
     );
 
-    if (file == -1) {
-        return file;
-    }
-
     // Write out the swimps marker to make such files easily recognisable
-    if (write_trace_file_marker(file, path) == -1) {
-        return -1;
-    }
+    const auto writeMarkerReturnValue = write_trace_file_marker(file);
+    swimps_assert(writeMarkerReturnValue != -1);
 
     return file;
 }
@@ -288,26 +282,26 @@ size_t swimps::trace::file::generate_name(const char* const programName,
     );
 }
 
-size_t swimps::trace::file::add_backtrace(const int targetFileDescriptor,
+size_t swimps::trace::file::add_backtrace(File& targetFile,
                                           const swimps::trace::Backtrace& backtrace) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.id, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameIDCount, targetFileDescriptor);
+    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker);
+    bytesWritten += targetFile.write(backtrace.id);
+    bytesWritten += targetFile.write(backtrace.stackFrameIDCount);
 
     for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-        bytesWritten += swimps::io::write_to_file_descriptor(backtrace.stackFrameIDs[i], targetFileDescriptor);
+        bytesWritten += targetFile.write(backtrace.stackFrameIDs[i]);
     }
 
     return bytesWritten;
 }
 
-size_t swimps::trace::file::add_stack_frame(const int targetFileDescriptor,
+size_t swimps::trace::file::add_stack_frame(File& targetFile,
                                             const StackFrame& stackFrame) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_stack_frame_marker, targetFileDescriptor);
+    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_stack_frame_marker);
 
     const auto  id = stackFrame.id;
     const auto& mangledFunctionName = stackFrame.mangledFunctionName;
@@ -317,50 +311,29 @@ size_t swimps::trace::file::add_stack_frame(const int targetFileDescriptor,
 
     swimps_assert(mangledFunctionNameLength >= 0);
 
-    bytesWritten += swimps::io::write_to_file_descriptor(
-        id,
-        targetFileDescriptor
-    );
-
-    bytesWritten += swimps::io::write_to_file_descriptor(
-        mangledFunctionNameLength,
-        targetFileDescriptor
-    );
-
-    bytesWritten += swimps::io::write_to_file_descriptor(
-        { &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) },
-        targetFileDescriptor
-    );
-
-    bytesWritten += swimps::io::write_to_file_descriptor(
-        offset,
-        targetFileDescriptor
-    );
+    bytesWritten += targetFile.write(id);
+    bytesWritten += targetFile.write(mangledFunctionNameLength);
+    bytesWritten += targetFile.write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
+    bytesWritten += targetFile.write(offset);
 
     return bytesWritten;
 }
 
-std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(const int fileDescriptor) {
+std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(File& sourceFile) {
     swimps::trace::Backtrace backtrace;
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            backtrace.id)) {
+    if (! sourceFile.read(backtrace.id)) {
         return {};
     }
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            backtrace.stackFrameIDCount)) {
+    if (! sourceFile.read(backtrace.stackFrameIDCount)) {
         return {};
     }
 
     swimps_assert(backtrace.stackFrameIDCount > 0);
 
     for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-        if (! swimps::io::read_from_file_descriptor(
-                fileDescriptor,
-                backtrace.stackFrameIDs[i])) {
+        if (! sourceFile.read(backtrace.stackFrameIDs[i])) {
             return {};
         }
     }
@@ -368,55 +341,51 @@ std::optional<swimps::trace::Backtrace> swimps::trace::file::read_backtrace(cons
     return backtrace;
 }
 
-std::optional<swimps::trace::StackFrame> swimps::trace::file::read_stack_frame(const int fileDescriptor) {
+std::optional<swimps::trace::StackFrame> swimps::trace::file::read_stack_frame(File& sourceFile) {
     swimps::trace::StackFrame stackFrame;
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            stackFrame.id)) {
+    if (! sourceFile.read(stackFrame.id)) {
         return {};
     }
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            stackFrame.mangledFunctionNameLength)) {
+    if (! sourceFile.read(stackFrame.mangledFunctionNameLength)) {
         return {};
     }
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            {
+    {
+        const auto bytesToWrite = std::min(
+            static_cast<size_t>(stackFrame.mangledFunctionNameLength),
+            sizeof swimps::trace::StackFrame::mangledFunctionName
+        );
+
+        if (sourceFile.read({
                 stackFrame.mangledFunctionName,
-                std::min(
-                    static_cast<size_t>(stackFrame.mangledFunctionNameLength),
-                    sizeof swimps::trace::StackFrame::mangledFunctionName
-                )
-            })) {
-        return {};
+                bytesToWrite
+            }) != bytesToWrite) {
+            return {};
+        }
     }
 
-    if (! swimps::io::read_from_file_descriptor(
-            fileDescriptor,
-            stackFrame.offset)) {
+    if (sourceFile.read(stackFrame.offset) != sizeof(stackFrame.offset)) {
         return {};
     }
 
     return stackFrame;
 }
 
-size_t swimps::trace::file::add_sample(const int targetFileDescriptor, const swimps::trace::Sample& sample) {
+size_t swimps::trace::file::add_sample(File& targetFile, const swimps::trace::Sample& sample) {
     size_t bytesWritten = 0;
 
-    bytesWritten += swimps::io::write_to_file_descriptor(swimps::trace::file::swimps_v1_trace_sample_marker, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample.backtraceID, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample.timestamp.seconds, targetFileDescriptor);
-    bytesWritten += swimps::io::write_to_file_descriptor(sample.timestamp.nanoseconds, targetFileDescriptor);
+    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_sample_marker);
+    bytesWritten += targetFile.write(sample.backtraceID);
+    bytesWritten += targetFile.write(sample.timestamp.seconds);
+    bytesWritten += targetFile.write(sample.timestamp.nanoseconds);
 
     return bytesWritten;
 }
 
-int swimps::trace::file::finalise(const int fileDescriptor, const char* const traceFilePath, const size_t traceFilePathSize) {
-    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
+int swimps::trace::file::finalise(File& traceFile, const char* const traceFilePath, const size_t traceFilePathSize) {
+    if (! (goToStartOfFile(traceFile) && isSwimpsTraceFile(traceFile))) {
         return -1;
     }
 
@@ -482,9 +451,9 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     size_t preOptimisationBacktraceCount = 0;
     size_t preOptimisationStackFrameCount = 0;
 
-    for (auto entry = read_entry(fileDescriptor);
+    for (auto entry = read_entry(traceFile);
          !stop ;
-         entry = read_entry(fileDescriptor)) {
+         entry = read_entry(traceFile)) {
         
         std::visit(
             Visitor{
@@ -552,9 +521,9 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     }
 
     char tempFileNameBuffer[] = "/tmp/swimps_finalise_temp_file_XXXXXX";
-    const auto tempFile = mkstemp(tempFileNameBuffer);
+    const auto tempFileDescriptor = mkstemp(tempFileNameBuffer);
 
-    if (tempFile == -1) {
+    if (tempFileDescriptor == -1) {
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
@@ -566,7 +535,8 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         return -1;
     }
 
-    if (write_trace_file_marker(tempFile, tempFileNameBuffer) == -1) {
+    File tempFile{tempFileDescriptor, tempFileNameBuffer};
+    if (write_trace_file_marker(tempFile) == -1) {
 
         swimps::log::format_and_write_to_log<512>(
             swimps::log::LogLevel::Fatal,
@@ -607,8 +577,8 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     return 0;
 }
 
-std::optional<swimps::trace::Trace> swimps::trace::file::read(int fileDescriptor) {
-    if (! (goToStartOfFile(fileDescriptor) && isSwimpsTraceFile(fileDescriptor))) {
+std::optional<swimps::trace::Trace> swimps::trace::file::read(File& sourceFile) {
+    if (! (goToStartOfFile(sourceFile) && isSwimpsTraceFile(sourceFile))) {
         return {};
     }
 
@@ -617,10 +587,10 @@ std::optional<swimps::trace::Trace> swimps::trace::file::read(int fileDescriptor
     swimps::trace::Trace trace;
 
     bool stop = false;
-    for (auto entry = read_entry(fileDescriptor);
+    for (auto entry = read_entry(sourceFile);
          !stop ;
-         entry = read_entry(fileDescriptor)) {
-        
+         entry = read_entry(sourceFile)) {
+
         std::visit(
             Visitor{
                 stop,
