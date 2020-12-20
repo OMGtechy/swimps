@@ -134,9 +134,8 @@ namespace swimps::io {
                     bytesWritten += 1;
                 }
             } else {
-                target[0] = '?';
-                target += 1;
-                bytesWritten += 1;
+                // The first parameter here nudges compilers into printing the offending type.
+                static_assert(std::is_same_v<T, void>, "Formatting this type is not supported.");
             }
         } while (false);
 

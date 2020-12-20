@@ -50,7 +50,7 @@ namespace {
                 swimps::log::format_and_write_to_log<128>(
                     swimps::log::LogLevel::Fatal,
                     "Error reading trace file: %",
-                    errorCode
+                    static_cast<int>(errorCode)
                 );
 
                 break;
