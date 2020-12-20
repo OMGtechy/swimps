@@ -10,12 +10,15 @@
 using namespace swimps::trace;
 using namespace swimps::trace::file;
 
+using swimps::io::File;
+
 // TODO: this is more of an intergration test than unit ... make a folder for such things and move it there.
 
 SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
     GIVEN("A temp file.") {
         char targetFileNameBuffer[] = "/tmp/swimps::trace::file::read_backtrace-test-XXXXXX";
         const int targetFileDescriptor = mkstemp(targetFileNameBuffer);
+        File targetFile{targetFileDescriptor, targetFileNameBuffer};
 
         std::array<char, 2048> data = { };
         auto dataSpan = swimps::container::Span<char>(data);
@@ -50,15 +53,12 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
         }
 
         WHEN("A valid backtrace is written to it.") {
-            REQUIRE(swimps::io::write_to_file_descriptor(
-                data,
-                targetFileDescriptor
-            ) == data.size());
+            REQUIRE(targetFile.write(data) == data.size());
 
             AND_WHEN("It is read back.") {
-                REQUIRE(lseek(targetFileDescriptor, 0, SEEK_SET) == 0);
+                REQUIRE(targetFile.seekToStart());
 
-                const auto backtrace = swimps::trace::file::read_backtrace(targetFileDescriptor);
+                const auto backtrace = swimps::trace::file::read_backtrace(targetFile);
 
                 THEN("A valid backtrace is returned.") {
                     REQUIRE(backtrace);

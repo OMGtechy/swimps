@@ -9,19 +9,6 @@
 #include "swimps-container.h"
 
 namespace swimps::io {
-
-    //!
-    //! \brief  Reads data from a file to fill the target.
-    //!
-    //! \param[in]   sourceFileDescriptor  Where to read the data from.
-    //! \param[out]  target                Where to write the data to.
-    //!
-    //! \return  Whether the read was successful or not.
-    //!
-    bool read_from_file_descriptor(
-        const int sourceFileDescriptor,
-        swimps::container::Span<char> target);
-
     //!
     //! \brief  Writes the provided data to the spans specified.
     //!         This is much the same as memcpy_s on Windows: it's a memcpy that checks the size of the target.
@@ -41,20 +28,6 @@ namespace swimps::io {
     size_t write_to_buffer(
         swimps::container::Span<const char> source,
         swimps::container::Span<char> target);
-
-    //!
-    //! \brief  Writes the provided data to the file specified.
-    //!
-    //! \param[in]  source          The data to be written to the file. Does not need to be null terminated.
-    //! \param[in]  fileDescriptor  The file to write the data to.
-    //!
-    //! \returns  The number of bytes written to the file.
-    //!
-    //! \note  This function is async signal safe.
-    //!
-    size_t write_to_file_descriptor(
-        swimps::container::Span<const char> source,
-        int fileDescriptor);
 
     //!
     //! \brief  Formats the string with the args provided, using % to denote where each should be inserted.

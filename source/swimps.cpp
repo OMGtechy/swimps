@@ -50,18 +50,9 @@ int main(int argc, char** argv) {
         return static_cast<int>(profileResult);
     }
 
-    const auto targetTraceFileDescriptor = open(options.targetTraceFile.c_str(), O_RDONLY);
-    if (targetTraceFileDescriptor == -1) {
-        swimps::log::format_and_write_to_log<256>(
-            swimps::log::LogLevel::Fatal,
-            "Failed to open trace file: %",
-            options.targetTraceFile.c_str()
-        );
+    swimps::io::File traceFile{{ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, O_RDONLY, 0};
 
-        return static_cast<int>(swimps::error::ErrorCode::OpenFailed);
-    }
-
-    const auto trace = swimps::trace::file::read(targetTraceFileDescriptor);
+    const auto trace = swimps::trace::file::read(traceFile);
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (const auto& entry : analysis.backtraceFrequency) {

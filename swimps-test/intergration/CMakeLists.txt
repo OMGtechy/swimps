@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(catch)
 add_executable(
     swimps-intergration-test
     source/swimps-intergration-test.cpp
+    swimps-io-intergration-test/source/swimps-io-file.cpp
     swimps-option-intergration-test/source/swimps-option-stringify.cpp
 )
 

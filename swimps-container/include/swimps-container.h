@@ -45,12 +45,13 @@ namespace swimps::container {
         //!
         //! \brief  Creates a span convering the contents of an std::array.
         //!
+        //! \tparam  The type held by the std::array.
         //! \tparam  The size parameter of the std::array.
         //!
         //! \param[in]  array  The std::array.
         //!
-        template <size_t N>
-        constexpr Span(std::array<std::remove_const_t<T>, N>& array) noexcept
+        template <typename ArrayType, size_t N>
+        constexpr Span(std::array<ArrayType, N>& array) noexcept
             : Span(array.data(), array.size()) { }
 
         //!

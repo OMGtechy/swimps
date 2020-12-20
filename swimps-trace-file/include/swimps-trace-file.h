@@ -1,13 +1,15 @@
 #pragma once
 
-#include "swimps-container.h"
-#include "swimps-time.h"
-#include "swimps-trace.h"
-
 #include <cstddef>
 #include <optional>
 
 #include <unistd.h>
+
+#include "swimps-container.h"
+#include "swimps-io-file.h"
+#include "swimps-time.h"
+#include "swimps-trace.h"
+
 
 namespace swimps::trace::file {
     constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
@@ -21,11 +23,11 @@ namespace swimps::trace::file {
     //!
     //! \param[in]  path  Where to create the file.
     //!
-    //! \returns  The file descriptor for the trace file, or -1 if something went wrong.
+    //! \returns  The trace file.
     //!
     //! \note  This function is async signal safe.
     //!
-    int create(const char* const path);
+    swimps::io::File create(swimps::container::Span<const char> path);
 
     //!
     //! \brief  Generates a name for the trace file based upon a program name.
@@ -47,55 +49,55 @@ namespace swimps::trace::file {
     //!
     //! \brief  Adds a sample to the given file.
     //!
-    //! \param[in]  targetFileDescriptor  The file to add to.
-    //! \param[in]  sample                The sample to add.
+    //! \param[in]  targetFile  The file to add to.
+    //! \param[in]  sample      The sample to add.
     //!
     //! \returns  The number of bytes written to the file.
     //!
     //! \note  This function is async signal safe.
     //!
     size_t add_sample(
-        const int targetFileDescriptor,
+        swimps::io::File& targetFile,
         const swimps::trace::Sample& sample);
 
     //!
     //! \brief  Adds a backtrace to the given file.
     //!
-    //! \param[in]  targetFileDescriptor  The file to add to.
-    //! \param[in]  backtrace             The backtrace to add.
+    //! \param[in]  targetFile  The file to add to.
+    //! \param[in]  backtrace   The backtrace to add.
     //!
     //! \returns  The number of bytes written to the file.
     //!
     //! \note  This function is async signal safe.
     //!
     size_t add_backtrace(
-        const int targetFileDescriptor,
+        swimps::io::File& targetFile,
         const Backtrace& backtrace);
 
     //!
     //! \brief  Adds a stack frame to the given file.
     //!
-    //! \param[in]  targetFileDescriptor  The file to add to.
-    //! \param[in]  stackFrame            The stack frame to add.
+    //! \param[in]  targetFile  The file to add to.
+    //! \param[in]  stackFrame  The stack frame to add.
     //!
     //! \returns  The number of bytes written to the file.
     //!
     //! \note  This function is async signal safe.
     //!
     size_t add_stack_frame(
-        const int targetFileDescriptor,
+        swimps::io::File& targetFile,
         const StackFrame& stackFrame);
 
     //!
     //! \brief  Reads a trace from a given file.
     //!
-    //! \param[in]  fileDescriptor  The file to read from.
+    //! \param[in]  sourceFile  The file to read from.
     //!
     //! \returns  The trace contained in the file.
     //!
     //! \note  This function is *not* async signal safe.
     //!
-    std::optional<Trace> read(const int fileDescriptor);
+    std::optional<Trace> read(swimps::io::File& sourceFile);
 
     //!
     //! \brief  Reads a backtrace from a given file.
@@ -110,12 +112,12 @@ namespace swimps::trace::file {
     //! \note  The file descriptor shall be pointing at the data after the backtrace
     //!        if the read was successful. If it was not, its state is undefined.
     //!
-    std::optional<swimps::trace::Backtrace> read_backtrace(const int fileDescriptor);
+    std::optional<swimps::trace::Backtrace> read_backtrace(swimps::io::File& sourceFile);
 
     //!
     //! \brief  Reads a stack frame from a given file.
     //!
-    //! \param[in]  fileDescriptor  The file to read from.
+    //! \param[in]  sourceFile  The file to read from.
     //!
     //! \returns  The stack frame if all went well, an empty optional otherwise.
     //!
@@ -124,12 +126,12 @@ namespace swimps::trace::file {
     //! \note  The file descriptor shall be pointing at the data after the stack frame
     //!        if the read was successful. If it was not, its state is undefined.
     //!
-    std::optional<swimps::trace::StackFrame> read_stack_frame(const int fileDescriptor);
+    std::optional<swimps::trace::StackFrame> read_stack_frame(swimps::io::File& sourceFile);
 
     //!
     //! \brief  Finalises an opened trace file.
     //!
-    //! \param[in]  fileDescriptor     The file to finalise.
+    //! \param[in]  traceFile          The trace file to finalise.
     //! \param[in]  traceFilePath      The path to the trace file.
     //! \param[in]  traceFilePathSize  The size of the trace file path.
     //!
@@ -139,5 +141,5 @@ namespace swimps::trace::file {
     //!
     //! \note  This function is *not* async signal safe.
     //!
-    int finalise(const int fileDescriptor, const char* traceFilePath, const size_t traceFilePathSize);
+    int finalise(swimps::io::File& traceFile, const char* traceFilePath, const size_t traceFilePathSize);
 }

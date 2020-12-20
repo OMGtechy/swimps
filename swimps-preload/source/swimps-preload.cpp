@@ -15,13 +15,15 @@
 #include <signal.h>
 #include <limits.h>
 
+using swimps::io::File;
+
 namespace {
 
     constexpr clockid_t clockID = CLOCK_MONOTONIC;
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
-    int traceFile = -1;
-    char traceFilePath[PATH_MAX] = { };
+    File traceFile;
+    std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
     swimps::trace::stack_frame_id_t nextStackFrameID = 1;
@@ -76,20 +78,11 @@ namespace {
         sigprofRunningFlag.clear();
     }
 
-    int swimps_preload_create_trace_file(char* traceFilePath, size_t traceFilePathSize, const swimps::option::Options& options) {
-        strncpy(traceFilePath, options.targetTraceFile.c_str(), std::min(options.targetTraceFile.size(), traceFilePathSize));
-
-        const int file = swimps::trace::file::create(traceFilePath);
-        if (file == -1) {
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Fatal,
-                "Could not create trace file."
-            );
-
-            abort();
-        }
-
-        return file;
+    template <std::size_t TraceFilePathSize>
+    File swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
+        const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
+        swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
+        return swimps::trace::file::create({ traceFilePath.data(), pathLength });
     }
 
     int swimps_preload_setup_signal_handler() {
@@ -132,7 +125,7 @@ namespace {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
 
-        traceFile = swimps_preload_create_trace_file(traceFilePath, sizeof traceFilePath, options);
+        traceFile = swimps_preload_create_trace_file(traceFilePath, options);
 
         if (swimps_preload_setup_signal_handler() == -1) {
             swimps::log::format_and_write_to_log<1024>(
@@ -181,10 +174,11 @@ namespace {
 
         // Tidy up the data in the trace file.
         // TODO: What happens if the trace file fails to be created properly?
-        if (swimps::trace::file::finalise(traceFile, traceFilePath, strnlen(traceFilePath, sizeof traceFilePath)) != 0) {
+        if (swimps::trace::file::finalise(traceFile, traceFilePath.data(), strnlen(traceFilePath.data(), sizeof traceFilePath)) != 0) {
             abort();
         }
 
-        close(traceFile);
+        // TODO: Is this necessary now?
+        traceFile.close();
     }
 }

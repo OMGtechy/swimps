@@ -1,19 +1,28 @@
 #pragma once
 
-#include "swimps-log.h"
-#include "swimps-io.h"
+#include <cstdio>
+#include <cstdlib>
 
-#include <stdlib.h>
+#include "signal.h"
 
 #define swimps_assert(assertion) \
 do { \
     if (!(assertion)) { \
-        swimps::log::format_and_write_to_log<2048>( \
-            swimps::log::LogLevel::Fatal, \
-            "Assertion % failed at " __FILE__ ":%", \
+        /* Block out all signals to we can use non-async-signal-safe functions. */ \
+        sigset_t signalsToBlock; \
+        sigset_t oldSignalsToBlock; \
+        sigfillset(&signalsToBlock); \
+        sigprocmask(SIG_BLOCK, &signalsToBlock, &oldSignalsToBlock); \
+\
+        fprintf( \
+            stderr, \
+            "Assertion %s failed at " __FILE__ ":%d\n", \
             (#assertion), \
             __LINE__ \
         ); \
+\
+        /* Reenable old signals so that SIGABRT can trigger correctly. */ \
+        sigprocmask(SIG_SETMASK, &oldSignalsToBlock, nullptr); \
 \
         abort(); \
     } \
