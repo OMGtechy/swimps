@@ -15,8 +15,6 @@ add_executable(
     source/swimps-unit-test.cpp
     swimps-container-unit-test/source/span-test.cpp
     swimps-io-unit-test/source/swimps-write-to-buffer-test.cpp
-    swimps-io-unit-test/source/swimps-write-to-file-descriptor-test.cpp
-    swimps-io-unit-test/source/swimps-read-from-file-descriptor.cpp
     swimps-io-unit-test/source/swimps-format-string-test.cpp
     swimps-log-unit-test/source/swimps-format-log-message-test.cpp
     swimps-option-unit-test/source/swimps-parse-command-line.cpp
