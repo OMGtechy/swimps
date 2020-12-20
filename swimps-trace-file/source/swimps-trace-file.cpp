@@ -478,6 +478,10 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
     using swimps::error::ErrorCode;
 
     bool stop = false;
+    size_t preOptimisationSampleCount = 0;
+    size_t preOptimisationBacktraceCount = 0;
+    size_t preOptimisationStackFrameCount = 0;
+
     for (auto entry = read_entry(fileDescriptor);
          !stop ;
          entry = read_entry(fileDescriptor)) {
@@ -485,9 +489,18 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
         std::visit(
             Visitor{
                 stop,
-                [&backtraceMap](auto& backtrace){ backtraceMap[backtrace].insert(backtrace.id); },
-                [&samples](auto& sample){ samples.push_back(sample); }, 
-                [&stackFrameMap](auto& stackFrame){ stackFrameMap[stackFrame].insert(stackFrame.id); }
+                [&backtraceMap, &preOptimisationBacktraceCount](auto& backtrace){
+                    ++preOptimisationBacktraceCount;
+                    backtraceMap[backtrace].insert(backtrace.id);
+                },
+                [&samples, &preOptimisationSampleCount](auto& sample){
+                    ++preOptimisationSampleCount;
+                    samples.push_back(sample);
+                },
+                [&stackFrameMap, &preOptimisationStackFrameCount](auto& stackFrame){
+                    ++preOptimisationStackFrameCount;
+                    stackFrameMap[stackFrame].insert(stackFrame.id);
+                }
             },
             entry
         );
@@ -564,6 +577,17 @@ int swimps::trace::file::finalise(const int fileDescriptor, const char* const tr
 
         return -1;
     }
+
+    swimps::log::format_and_write_to_log<512>(
+        swimps::log::LogLevel::Debug,
+        "Optimisation: % -> % samples, % -> % backtraces, % -> % stack frames.",
+        preOptimisationSampleCount,
+        samplesSharingBacktraceID.size(),
+        preOptimisationBacktraceCount,
+        backtracesSharingStackFrameID.size(),
+        preOptimisationStackFrameCount,
+        stackFrameMap.size()
+    );
 
     for(const auto& sample : samplesSharingBacktraceID) {
         add_sample(tempFile, sample);
