@@ -31,32 +31,22 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
         // 2) Stack frame counter (4 bytes)
         static_assert(sizeof(stack_frame_count_t) == 4);
 
-        std::vector<StackFrame> stackFrames;
-        stackFrames.push_back(StackFrame{"Hi", static_cast<mangled_function_name_length_t>(strlen("Hi")), 42});
-        stackFrames.push_back(StackFrame{"there", static_cast<mangled_function_name_length_t>(strlen("there")), 12});
-        stackFrames.push_back(StackFrame{"backtrace", static_cast<mangled_function_name_length_t>(strlen("backtrace")), 17});
+        std::vector<stack_frame_id_t> stackFrameIDs;
+        stackFrameIDs.push_back(0);
+        stackFrameIDs.push_back(1);
+        stackFrameIDs.push_back(2);
 
         {
-            const stack_frame_count_t stackFrameCount = stackFrames.size();
-            memcpy(&dataSpan[0], &stackFrameCount, sizeof(stackFrameCount));
-            dataSpan += sizeof(stackFrameCount);
+            const stack_frame_count_t stackFrameIDCount = stackFrameIDs.size();
+            memcpy(&dataSpan[0], &stackFrameIDCount, sizeof(stackFrameIDCount));
+            dataSpan += sizeof(stackFrameIDCount);
         }
 
-        // Then, for each backtrace
-        for (auto& stackFrame : stackFrames) {
-            // 1) Mangled function name length (4 bytes)
-            static_assert(sizeof(mangled_function_name_length_t) == 4);
-            memcpy(&dataSpan[0], &stackFrame.mangledFunctionNameLength, sizeof(stackFrame.mangledFunctionNameLength));
-            dataSpan += sizeof(mangled_function_name_length_t);
-
-            // 2) Mangled function name (variable number of bytes, determined by length written)
-            memcpy(&dataSpan[0], &stackFrame.mangledFunctionName, stackFrame.mangledFunctionNameLength);
-            dataSpan += stackFrame.mangledFunctionNameLength;
-
-            // 3) Offset (8 bytes)
-            static_assert(sizeof(offset_t) == 8);
-            memcpy(&dataSpan[0], &stackFrame.offset, sizeof stackFrame.offset);
-            dataSpan += sizeof(offset_t);
+        // Write out the stack frame IDs used (8 bytes each)
+        for (auto& stackFrameID : stackFrameIDs) {
+            static_assert(sizeof(stack_frame_id_t) == 8);
+            memcpy(&dataSpan[0], &stackFrameID, sizeof(stackFrameID));
+            dataSpan += sizeof(stack_frame_id_t);
         }
 
         WHEN("A valid backtrace is written to it.") {
@@ -74,13 +64,13 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
                     REQUIRE(backtrace);
 
                     AND_THEN("The backtrace has the correct number of stack frames.") {
-                        REQUIRE(backtrace->stackFrameCount == 3);
-                        REQUIRE(stackFrames.size() == 3);
+                        REQUIRE(backtrace->stackFrameIDCount == 3);
+                        REQUIRE(stackFrameIDs.size() == 3);
 
                         AND_THEN("The stack frames are equal to those written.") {
-                            REQUIRE(stackFrames[0] == backtrace->stackFrames[0]);
-                            REQUIRE(stackFrames[1] == backtrace->stackFrames[1]);
-                            REQUIRE(stackFrames[2] == backtrace->stackFrames[2]);
+                            REQUIRE(stackFrameIDs[0] == backtrace->stackFrameIDs[0]);
+                            REQUIRE(stackFrameIDs[1] == backtrace->stackFrameIDs[1]);
+                            REQUIRE(stackFrameIDs[2] == backtrace->stackFrameIDs[2]);
                         }
                     }
 

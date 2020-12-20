@@ -15,6 +15,7 @@ namespace swimps::error {
         CommandLineParseFailed,
         ReadSampleFailed,
         ReadBacktraceFailed,
+        ReadStackFrameFailed,
         UnknownEntryKind,
         EndOfFile
     };
