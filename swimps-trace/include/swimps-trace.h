@@ -29,23 +29,34 @@ namespace swimps::trace {
     // so for now it's safer to be too big than too small.
     using offset_t = int64_t;
 
+    // 2^63 unique stack frames, if each backtrace has 256 of them, sampled every nanosecond should cover over a year of runtime.
+    using stack_frame_id_t = int64_t;
+
     struct StackFrame {
+        stack_frame_id_t id = std::numeric_limits<stack_frame_id_t>::min();
+
         char mangledFunctionName[256] = { };
         mangled_function_name_length_t mangledFunctionNameLength = 0;
         offset_t offset = 0;
 
-        constexpr bool operator==(const StackFrame& other) const noexcept {
+        constexpr bool isSameAs(const StackFrame& other) const noexcept {
+            return id == other.id && isEquivalentTo(other);
+        }
+
+        constexpr bool isEquivalentTo(const StackFrame& other) const noexcept {
             return offset == other.offset
                 && 0 == strncmp(&mangledFunctionName[0],
                                 &other.mangledFunctionName[0],
                                 sizeof mangledFunctionName);
         }
+
+        bool operator==(const StackFrame& other) = delete;
     };
 
     struct Backtrace {
         backtrace_id_t id = std::numeric_limits<backtrace_id_t>::min();
-        StackFrame stackFrames[64] = { };
-        stack_frame_count_t stackFrameCount = 0;
+        stack_frame_id_t stackFrameIDs[64] = { };
+        stack_frame_count_t stackFrameIDCount = 0;
     };
 
     struct Sample {
@@ -56,5 +67,6 @@ namespace swimps::trace {
     struct Trace {
         std::vector<Sample> samples;
         std::vector<Backtrace> backtraces;
+        std::vector<StackFrame> stackFrames;
     };
 }

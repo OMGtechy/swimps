@@ -14,6 +14,7 @@ namespace swimps::trace::file {
     constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
+    constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
 
     //!
     //! \brief  Creates a file with the necessary headers to store a swimps_trace.
@@ -72,6 +73,20 @@ namespace swimps::trace::file {
         const Backtrace& backtrace);
 
     //!
+    //! \brief  Adds a stack frame to the given file.
+    //!
+    //! \param[in]  targetFileDescriptor  The file to add to.
+    //! \param[in]  stackFrame            The stack frame to add.
+    //!
+    //! \returns  The number of bytes written to the file.
+    //!
+    //! \note  This function is async signal safe.
+    //!
+    size_t add_stack_frame(
+        const int targetFileDescriptor,
+        const StackFrame& stackFrame);
+
+    //!
     //! \brief  Reads a trace from a given file.
     //!
     //! \param[in]  fileDescriptor  The file to read from.
@@ -93,9 +108,23 @@ namespace swimps::trace::file {
     //!        to determine that it's a backtrace first.
     //!
     //! \note  The file descriptor shall be pointing at the data after the backtrace
-    //         if the read was successful. If it was not, its state is undefined.
+    //!        if the read was successful. If it was not, its state is undefined.
     //!
     std::optional<swimps::trace::Backtrace> read_backtrace(const int fileDescriptor);
+
+    //!
+    //! \brief  Reads a stack frame from a given file.
+    //!
+    //! \param[in]  fileDescriptor  The file to read from.
+    //!
+    //! \returns  The stack frame if all went well, an empty optional otherwise.
+    //!
+    //! \note  No marker is expected.
+    //!
+    //! \note  The file descriptor shall be pointing at the data after the stack frame
+    //!        if the read was successful. If it was not, its state is undefined.
+    //!
+    std::optional<swimps::trace::StackFrame> read_stack_frame(const int fileDescriptor);
 
     //!
     //! \brief  Finalises an opened trace file.

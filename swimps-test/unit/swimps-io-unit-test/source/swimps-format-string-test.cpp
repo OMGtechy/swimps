@@ -455,4 +455,32 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             }
         }
     }
+
+    GIVEN("A target buffer of 8 zero-initialised bytes.") {
+        char targetBuffer[8] = { };
+
+        WHEN("A size_t is formatted.") {
+            const size_t bytesWritten = swimps::io::format_string(
+                "%",
+                targetBuffer,
+                static_cast<size_t>(6000)
+            );
+
+            THEN("The correct number of bytes are claimed to be written.") {
+                REQUIRE(bytesWritten == 5);
+            }
+
+            THEN("The correct string representation of the provided integer is in the target buffer.") {
+                REQUIRE(targetBuffer[0] == '6');
+                REQUIRE(targetBuffer[1] == '0');
+                REQUIRE(targetBuffer[2] == '0');
+                REQUIRE(targetBuffer[3] == '0');
+                REQUIRE(targetBuffer[4] == '\0');
+            }
+
+            THEN("The remaining byte is unchanged.") {
+                REQUIRE(targetBuffer[5] == 0);
+            }
+        }
+    }
 }
