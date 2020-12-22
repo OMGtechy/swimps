@@ -131,7 +131,4 @@ bool File::remove() noexcept {
     close();
 
     return ::unlink(m_path) == 0;
-
-    return false;
-
 }
