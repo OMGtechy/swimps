@@ -2,15 +2,12 @@
 
 #include <ctime>
 #include <cstdint>
+#include <type_traits>
 
 namespace swimps::time {
-    // If the original typedef is anything other than the type specified,
-    // this'll cause a compile time error...
-    //
     // This is needed because swimps assumes that time_t and long are aliases for int64_t.
     // Things using swimps::time::TimeSpecification may break if that's not the case.
-    typedef int64_t time_t;
-    typedef long int64_t;
+    static_assert(std::is_same_v<int64_t, long>);
 
     // This type exists because the standard timespec might not be the same across platforms,
     // meaning that one would only be able to read a profile on the platform it was built for.
