@@ -383,7 +383,7 @@ size_t swimps::trace::file::add_sample(File& targetFile, const swimps::trace::Sa
     return bytesWritten;
 }
 
-int swimps::trace::file::finalise(File& traceFile, const char* const traceFilePath, const size_t traceFilePathSize) {
+int swimps::trace::file::finalise(File& traceFile) {
     if (! (goToStartOfFile(traceFile) && isSwimpsTraceFile(traceFile))) {
         return -1;
     }
@@ -570,7 +570,8 @@ int swimps::trace::file::finalise(File& traceFile, const char* const traceFilePa
         add_stack_frame(tempFile, stackFrame.first);
     }
 
-    const std::string traceFilePathString(traceFilePath, traceFilePathSize);
+    const swimps::container::Span<const char> traceFilePath = traceFile.getPath();
+    const std::string traceFilePathString(&traceFilePath[0], traceFilePath.current_size());
     std::filesystem::copy(tempFileNameBuffer, traceFilePathString, std::filesystem::copy_options::overwrite_existing); 
 
     return 0;

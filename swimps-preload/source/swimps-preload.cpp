@@ -173,8 +173,7 @@ namespace {
         while (sigprofRunningFlag.test_and_set());
 
         // Tidy up the data in the trace file.
-        // TODO: What happens if the trace file fails to be created properly?
-        if (swimps::trace::file::finalise(traceFile, traceFilePath.data(), strnlen(traceFilePath.data(), sizeof traceFilePath)) != 0) {
+        if (swimps::trace::file::finalise(traceFile) != 0) {
             abort();
         }
 

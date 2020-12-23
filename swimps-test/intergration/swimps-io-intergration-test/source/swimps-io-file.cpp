@@ -2,6 +2,7 @@
 #include "swimps-io-file.h"
 
 using swimps::io::File;
+using swimps::container::Span;
 
 SCENARIO("swimps::io::File", "[swimp-io]") {
     GIVEN("A file constructed from a file descriptor.") {
@@ -9,6 +10,13 @@ SCENARIO("swimps::io::File", "[swimp-io]") {
         const int fileDescriptor = mkstemp(fileNameBuffer);
 
         File file(fileDescriptor, fileNameBuffer);
+
+        WHEN("getPath() is called.") {
+            const auto path = file.getPath();
+            THEN("It matches what was provided.") {
+                REQUIRE(strncmp(fileNameBuffer, &path[0], path.current_size()) == 0);
+            }
+        }
 
         WHEN("8 bytes of data are written into it.") {
             std::array<const char, 8> dataSource = { 120, 0, 59, 24, 2, 43, 42, 1 };

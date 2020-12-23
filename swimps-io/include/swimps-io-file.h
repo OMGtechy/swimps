@@ -132,6 +132,16 @@ namespace swimps::io {
         //!
         bool remove() noexcept;
 
+        //!
+        //!  \brief  Gets the path to the file, if there is one.
+        //!
+        //!  \returns  A span covering the path data.
+        //!            If there is no path, the span will be empty.
+        //!
+        //!  \note  This function is async signal safe.
+        //!
+        Span<const char> getPath() const noexcept;
+
     private:
         // Non-copyable.
         // One person might expect the same file to be referred to.
@@ -145,5 +155,6 @@ namespace swimps::io {
 
         int m_fileDescriptor = -1;
         char m_path[PATH_MAX + 1 /* null terminator */] = {};
+        std::size_t m_pathLength = 0;
     };
 }

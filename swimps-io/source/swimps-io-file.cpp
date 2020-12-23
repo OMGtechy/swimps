@@ -17,21 +17,23 @@ File::File(Span<const char> path,
            const int openFlags,
            const int modeFlags) noexcept {
     const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
+    m_pathLength = bytesWritten;
     swimps_assert(bytesWritten == path.current_size());
 
     m_fileDescriptor = open(&path[0], openFlags, modeFlags);
+
 
     swimps_assert(m_fileDescriptor != -1);
 }
 
 File::File(const int fileDescriptor) noexcept
-: m_fileDescriptor(fileDescriptor) {
-    swimps_assert(m_fileDescriptor != -1);
-}
+: File(fileDescriptor, Span<const char>{m_path, 0}) { }
 
 File::File(const int fileDescriptor, Span<const char> path) noexcept
-: File(fileDescriptor) {
+: m_fileDescriptor(fileDescriptor) {
+    swimps_assert(m_fileDescriptor != -1);
     const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
+    m_pathLength = bytesWritten;
     swimps_assert(bytesWritten == path.current_size());
 }
 
@@ -131,4 +133,8 @@ bool File::remove() noexcept {
     close();
 
     return ::unlink(m_path) == 0;
+}
+
+Span<const char> File::getPath() const noexcept {
+    return { m_path, m_pathLength };
 }
