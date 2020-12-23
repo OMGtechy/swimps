@@ -1,6 +1,5 @@
 #include "swimps-trace-file.h"
 
-#include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include <cinttypes>
@@ -23,6 +22,7 @@
 #include "swimps-log.h"
 
 using swimps::io::File;
+using swimps::io::format_string;
 
 namespace {
     struct Visitor {
@@ -272,10 +272,9 @@ size_t swimps::trace::file::generate_name(const char* const programName,
 
     swimps_assert(programName != NULL);
 
-    return snprintf(
-        &target[0],
-        target.current_size(),
-        "swimps_trace_%s_%" PRId64 "_%" PRId64,
+    return format_string(
+        "swimps_trace_%_%_%",
+        target,
         programName,
         time.seconds,
         time.nanoseconds

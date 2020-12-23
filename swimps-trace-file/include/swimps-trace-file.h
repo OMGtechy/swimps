@@ -38,8 +38,7 @@ namespace swimps::trace::file {
     //!
     //! \returns  The number of bytes written to the target buffer.
     //!
-    //! \note  This function is *not* async signal safe.
-    //!        TODO: should it be? Would need to implement format specifiers for int64 for that...
+    //! \note  This function is async signal safe.
     //!
     size_t generate_name(
          const char* const programName,

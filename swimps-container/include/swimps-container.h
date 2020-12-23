@@ -113,6 +113,19 @@ namespace swimps::container {
         constexpr Span& operator= (Span&& other) = default;
 
         //!
+        //! \brief  Construct Span<const T> from Span<T>
+        //!
+        //! \param[in]  other  The span to copy from.
+        //!
+        template <typename ReevaluatedT = T,
+                  std::enable_if_t<std::is_const_v<ReevaluatedT>, bool> = true>
+        constexpr Span(const Span<std::remove_const_t<T>>& other) noexcept
+        : m_bufferStart(other.m_bufferStart),
+          m_bufferCurrent(other.m_bufferCurrent),
+          m_originalSize(other.m_originalSize),
+          m_remainingElements(other.m_remainingElements) { }
+
+        //!
         //! \brief  Pre-increment operator.
         //!
         //! \returns  The same span, but with one element "consumed."
@@ -244,6 +257,9 @@ namespace swimps::container {
         }
 
     private:
+        template <typename>
+        friend class Span;
+
         //! Where the buffer started.
         const T* m_bufferStart;
 

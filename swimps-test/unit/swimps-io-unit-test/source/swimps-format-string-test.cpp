@@ -1,6 +1,7 @@
 #include "swimps-unit-test.h"
 #include "swimps-io.h"
 
+#include <array>
 #include <cstring>
 
 SCENARIO("swimps::io::format_string", "[swimps-io]") {
@@ -480,6 +481,41 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
 
             THEN("The remaining byte is unchanged.") {
                 REQUIRE(targetBuffer[5] == 0);
+            }
+        }
+    }
+
+    GIVEN("A target buffer with 12 initialised bytes.") {
+        std::array<char, 12> targetBuffer;
+        targetBuffer.fill(42);
+
+        WHEN("A long int is formatted.") {
+            const size_t bytesWritten = swimps::io::format_string(
+                "%",
+                targetBuffer,
+                2'147'483'647L
+            );
+
+            THEN("The correct number of bytes are claimed to be written.") {
+                REQUIRE(bytesWritten == 11);
+            }
+
+            THEN("The correct string representations of the provided integer is in the target buffer.") {
+                REQUIRE(targetBuffer[0]  == '2');
+                REQUIRE(targetBuffer[1]  == '1');
+                REQUIRE(targetBuffer[2]  == '4');
+                REQUIRE(targetBuffer[3]  == '7');
+                REQUIRE(targetBuffer[4]  == '4');
+                REQUIRE(targetBuffer[5]  == '8');
+                REQUIRE(targetBuffer[6]  == '3');
+                REQUIRE(targetBuffer[7]  == '6');
+                REQUIRE(targetBuffer[8]  == '4');
+                REQUIRE(targetBuffer[9]  == '7');
+                REQUIRE(targetBuffer[10] == '\0');
+            }
+
+            THEN("The remaining byte is unchanged.") {
+                REQUIRE(targetBuffer[11] == 42);
             }
         }
     }

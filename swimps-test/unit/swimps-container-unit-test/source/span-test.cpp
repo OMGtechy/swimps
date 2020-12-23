@@ -620,4 +620,14 @@ SCENARIO("swimps::container::span", "[swimps-container]") {
             copyTarget.operator=(copyTarget);
         }
     }
+
+    GIVEN("A span covering non-const data.") {
+        char dummy[1] = { };
+        swimps::container::Span<char> spanOverNonConstData(dummy);
+
+        THEN("It can be used where a span over const data is required.") {
+            swimps::container::Span<const char> spanOverConstData = spanOverNonConstData;
+            REQUIRE(&spanOverConstData[0] == &spanOverNonConstData[0]);
+        }
+    }
 }
