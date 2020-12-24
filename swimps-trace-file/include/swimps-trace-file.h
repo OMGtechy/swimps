@@ -42,9 +42,33 @@ namespace swimps::trace::file {
         TraceFile(swimps::container::Span<const char> path) noexcept;
 
         //!
+        //! \brief  Creates a trace file using an already open file descriptor.
+        //!
+        //! \param[in]  fileDescriptor  The open file descriptor to read from and write to.
+        //! \param[in]  path            The path that matches the file descriptor.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        TraceFile(int fileDescriptor, swimps::container::Span<const char> path) noexcept;
+
+        //!
+        //! \brief  Adds a sample to the trace file.
+        //!
+        //! \param[in]  sample  The sample to add.
+        //!
+        //! \returns  The number of bytes written to the file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        std::size_t add_sample(const swimps::trace::Sample& sample);
+
+        //!
         //! \brief  TODO
         //!
         virtual ~TraceFile() = default;
+
+        TraceFile& operator=(TraceFile&&) = default;
+        TraceFile& operator=(const TraceFile&) = delete;
     };
 
     //!
@@ -63,19 +87,6 @@ namespace swimps::trace::file {
          const swimps::time::TimeSpecification& time,
          swimps::container::Span<char> target);
 
-    //!
-    //! \brief  Adds a sample to the given file.
-    //!
-    //! \param[in]  targetFile  The file to add to.
-    //! \param[in]  sample      The sample to add.
-    //!
-    //! \returns  The number of bytes written to the file.
-    //!
-    //! \note  This function is async signal safe.
-    //!
-    size_t add_sample(
-        swimps::io::File& targetFile,
-        const swimps::trace::Sample& sample);
 
     //!
     //! \brief  Adds a backtrace to the given file.

@@ -262,6 +262,16 @@ swimps::trace::file::TraceFile::TraceFile(swimps::container::Span<const char> pa
     swimps_assert(writeMarkerReturnValue != -1);
 }
 
+swimps::trace::file::TraceFile::TraceFile(int fileDescriptor, swimps::container::Span<const char> path) noexcept
+: File(
+    fileDescriptor,
+    path
+  ) {
+    // Write out the swimps marker to make such files easily recognisable
+    const auto writeMarkerReturnValue = write_trace_file_marker(*this);
+    swimps_assert(writeMarkerReturnValue != -1);
+}
+
 size_t swimps::trace::file::generate_name(const char* const programName,
                                           const swimps::time::TimeSpecification& time,
                                           swimps::container::Span<char> target) {
@@ -368,13 +378,13 @@ std::optional<swimps::trace::StackFrame> swimps::trace::file::read_stack_frame(F
     return stackFrame;
 }
 
-size_t swimps::trace::file::add_sample(File& targetFile, const swimps::trace::Sample& sample) {
-    size_t bytesWritten = 0;
+std::size_t swimps::trace::file::TraceFile::add_sample(const swimps::trace::Sample& sample) {
+    std::size_t bytesWritten = 0;
 
-    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_sample_marker);
-    bytesWritten += targetFile.write(sample.backtraceID);
-    bytesWritten += targetFile.write(sample.timestamp.seconds);
-    bytesWritten += targetFile.write(sample.timestamp.nanoseconds);
+    bytesWritten += write(swimps::trace::file::swimps_v1_trace_sample_marker);
+    bytesWritten += write(sample.backtraceID);
+    bytesWritten += write(sample.timestamp.seconds);
+    bytesWritten += write(sample.timestamp.nanoseconds);
 
     return bytesWritten;
 }
@@ -530,18 +540,7 @@ int swimps::trace::file::finalise(File& traceFile) {
         return -1;
     }
 
-    File tempFile{tempFileDescriptor, tempFileNameBuffer};
-    if (write_trace_file_marker(tempFile) == -1) {
-
-        swimps::log::format_and_write_to_log<512>(
-            swimps::log::LogLevel::Fatal,
-            "Could not write trace file marker to finalisation temp file, errno % (%).",
-            errno,
-            strerror(errno)
-        );
-
-        return -1;
-    }
+    TraceFile tempFile{tempFileDescriptor, tempFileNameBuffer};
 
     swimps::log::format_and_write_to_log<512>(
         swimps::log::LogLevel::Debug,
@@ -555,7 +554,7 @@ int swimps::trace::file::finalise(File& traceFile) {
     );
 
     for(const auto& sample : samplesSharingBacktraceID) {
-        add_sample(tempFile, sample);
+        tempFile.add_sample(sample);
     }
 
     for(const auto& backtrace : backtracesSharingStackFrameID) {

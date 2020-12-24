@@ -15,14 +15,14 @@
 #include <signal.h>
 #include <limits.h>
 
-using swimps::io::File;
+using swimps::trace::file::TraceFile;
 
 namespace {
 
     constexpr clockid_t clockID = CLOCK_MONOTONIC;
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
-    File traceFile;
+    TraceFile traceFile;
     std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
@@ -48,7 +48,7 @@ namespace {
             }
         }
 
-        swimps::trace::file::add_sample(traceFile, sample);
+        traceFile.add_sample(sample);
 
         {
             const auto result = swimps::preload::get_backtrace(
@@ -79,7 +79,7 @@ namespace {
     }
 
     template <std::size_t TraceFilePathSize>
-    File swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
+    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
         swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
         return swimps::trace::file::TraceFile({ traceFilePath.data(), pathLength });

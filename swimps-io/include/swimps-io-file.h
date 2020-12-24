@@ -143,17 +143,21 @@ namespace swimps::io {
         //!
         Span<const char> getPath() const noexcept;
 
-    private:
-        // Non-copyable.
-        // One person might expect the same file to be referred to.
-        // Another might expect a copy of file under another name.
+        //!
+        //!  \brief  Non-copyable.
+        //!          One person might expect the same file to be referred to.
+        //!          Another might expect a copy of file under another name.
+        //!
         File(const File&) = delete;
-        File& operator=(const File&);
+        File& operator=(const File&) = delete;
 
-        // It's not clear what equality means for files.
-        // Same file name, same descriptor, same contents?
+        //!
+        //!  \brief  It's not clear what equality means for files.
+        //!          Same file name, same descriptor, same contents?
+        //!
         bool operator==(const File&) = delete;
 
+    private:
         int m_fileDescriptor = -1;
         char m_path[PATH_MAX + 1 /* null terminator */] = {};
         std::size_t m_pathLength = 0;
