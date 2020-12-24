@@ -251,19 +251,15 @@ namespace {
     }
 }
 
-File swimps::trace::file::create(swimps::container::Span<const char> path) {
-
-    File file(
-        path,
-        O_CREAT | O_EXCL | O_RDWR, // Create a file with read and write access.
-        S_IRUSR | S_IWUSR // Given read and write permissions to current user.
-    );
-
+swimps::trace::file::TraceFile::TraceFile(swimps::container::Span<const char> path) noexcept
+: File(
+    path,
+    O_CREAT | O_EXCL | O_RDWR, // Create a file with read and write access.
+    S_IRUSR | S_IWUSR // Given read and write permissions to current user.
+  ) {
     // Write out the swimps marker to make such files easily recognisable
-    const auto writeMarkerReturnValue = write_trace_file_marker(file);
+    const auto writeMarkerReturnValue = write_trace_file_marker(*this);
     swimps_assert(writeMarkerReturnValue != -1);
-
-    return file;
 }
 
 size_t swimps::trace::file::generate_name(const char* const programName,

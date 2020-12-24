@@ -12,7 +12,7 @@ namespace swimps::io {
     //!
     //!  \brief  Provides an async signal safe type for file operations.
     //!
-    class File final {
+    class File {
     public:
         template <typename T>
         using Span = swimps::container::Span<T>;
@@ -23,8 +23,9 @@ namespace swimps::io {
         //!  \note  This function is async signal safe.
         //!
         File() = default;
-
-        // TODO: dtor? How should things like STDOUT be handled here?
+        // TODO: Should this close the file?
+        //       If so, how should things like STDOUT be handled?
+        virtual ~File() = default;
 
         //!
         //!  \brief  Creates a File instance.

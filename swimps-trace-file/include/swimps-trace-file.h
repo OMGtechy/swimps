@@ -19,15 +19,33 @@ namespace swimps::trace::file {
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
 
     //!
-    //! \brief  Creates a file with the necessary headers to store a swimps_trace.
+    //! \brief  Represents a swimps trace file.
     //!
-    //! \param[in]  path  Where to create the file.
-    //!
-    //! \returns  The trace file.
-    //!
-    //! \note  This function is async signal safe.
-    //!
-    swimps::io::File create(swimps::container::Span<const char> path);
+    class TraceFile : public swimps::io::File {
+    public:
+        //!
+        //! \brief  Creates an empty trace file instance.
+        //!
+        TraceFile() = default;
+
+        //!
+        //! \brief  Creates a trace file.
+        //!
+        //! \param[in]  path  Where to create the file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        //! \note  People might want to open existing one sometimes,
+        //!        should the ctor by hidden away and static member functions used
+        //!        to make it clear which is happening?
+        //!
+        TraceFile(swimps::container::Span<const char> path) noexcept;
+
+        //!
+        //! \brief  TODO
+        //!
+        virtual ~TraceFile() = default;
+    };
 
     //!
     //! \brief  Generates a name for the trace file based upon a program name.
