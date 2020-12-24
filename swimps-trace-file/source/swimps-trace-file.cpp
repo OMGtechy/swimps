@@ -301,11 +301,10 @@ std::size_t swimps::trace::file::TraceFile::add_backtrace(const swimps::trace::B
     return bytesWritten;
 }
 
-size_t swimps::trace::file::add_stack_frame(File& targetFile,
-                                            const StackFrame& stackFrame) {
-    size_t bytesWritten = 0;
+std::size_t swimps::trace::file::TraceFile::add_stack_frame(const StackFrame& stackFrame) {
+    std::size_t bytesWritten = 0;
 
-    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_stack_frame_marker);
+    bytesWritten += write(swimps::trace::file::swimps_v1_trace_stack_frame_marker);
 
     const auto  id = stackFrame.id;
     const auto& mangledFunctionName = stackFrame.mangledFunctionName;
@@ -315,10 +314,10 @@ size_t swimps::trace::file::add_stack_frame(File& targetFile,
 
     swimps_assert(mangledFunctionNameLength >= 0);
 
-    bytesWritten += targetFile.write(id);
-    bytesWritten += targetFile.write(mangledFunctionNameLength);
-    bytesWritten += targetFile.write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
-    bytesWritten += targetFile.write(offset);
+    bytesWritten += write(id);
+    bytesWritten += write(mangledFunctionNameLength);
+    bytesWritten += write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
+    bytesWritten += write(offset);
 
     return bytesWritten;
 }
@@ -561,7 +560,7 @@ int swimps::trace::file::finalise(File& traceFile) {
     }
 
     for(const auto& stackFrame: stackFrameMap) {
-        add_stack_frame(tempFile, stackFrame.first);
+        tempFile.add_stack_frame(stackFrame.first);
     }
 
     const swimps::container::Span<const char> traceFilePath = traceFile.getPath();

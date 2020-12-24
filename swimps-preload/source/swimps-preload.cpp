@@ -61,11 +61,7 @@ namespace {
             const auto& stackFrames = std::get<1>(result);
 
             for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-                const auto& stackFrame = stackFrames[i];
-                swimps::trace::file::add_stack_frame(
-                    traceFile,
-                    stackFrame
-                );
+                traceFile.add_stack_frame(stackFrames[i]);
             }
 
             traceFile.add_backtrace(backtrace);
