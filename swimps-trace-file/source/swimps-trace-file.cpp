@@ -287,16 +287,15 @@ size_t swimps::trace::file::generate_name(const char* const programName,
     );
 }
 
-size_t swimps::trace::file::add_backtrace(File& targetFile,
-                                          const swimps::trace::Backtrace& backtrace) {
-    size_t bytesWritten = 0;
+std::size_t swimps::trace::file::TraceFile::add_backtrace(const swimps::trace::Backtrace& backtrace) {
+    std::size_t bytesWritten = 0;
 
-    bytesWritten += targetFile.write(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker);
-    bytesWritten += targetFile.write(backtrace.id);
-    bytesWritten += targetFile.write(backtrace.stackFrameIDCount);
+    bytesWritten += write(swimps::trace::file::swimps_v1_trace_symbolic_backtrace_marker);
+    bytesWritten += write(backtrace.id);
+    bytesWritten += write(backtrace.stackFrameIDCount);
 
     for(swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-        bytesWritten += targetFile.write(backtrace.stackFrameIDs[i]);
+        bytesWritten += write(backtrace.stackFrameIDs[i]);
     }
 
     return bytesWritten;
@@ -558,7 +557,7 @@ int swimps::trace::file::finalise(File& traceFile) {
     }
 
     for(const auto& backtrace : backtracesSharingStackFrameID) {
-        add_backtrace(tempFile, backtrace);
+        tempFile.add_backtrace(backtrace);
     }
 
     for(const auto& stackFrame: stackFrameMap) {

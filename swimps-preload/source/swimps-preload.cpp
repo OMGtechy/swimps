@@ -68,10 +68,7 @@ namespace {
                 );
             }
 
-            swimps::trace::file::add_backtrace(
-                traceFile,
-                backtrace
-            );
+            traceFile.add_backtrace(backtrace);
         }
 
     swimps_preload_sigprof_cleanup:

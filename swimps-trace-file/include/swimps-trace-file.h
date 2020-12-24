@@ -63,6 +63,17 @@ namespace swimps::trace::file {
         std::size_t add_sample(const swimps::trace::Sample& sample);
 
         //!
+        //! \brief  Adds a backtrace to the trace file.
+        //!
+        //! \param[in]  backtrace  The backtrace to add.
+        //!
+        //! \returns  The number of bytes written to the file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        std::size_t add_backtrace(const Backtrace& backtrace);
+
+        //!
         //! \brief  TODO
         //!
         virtual ~TraceFile() = default;
@@ -86,21 +97,6 @@ namespace swimps::trace::file {
          const char* const programName,
          const swimps::time::TimeSpecification& time,
          swimps::container::Span<char> target);
-
-
-    //!
-    //! \brief  Adds a backtrace to the given file.
-    //!
-    //! \param[in]  targetFile  The file to add to.
-    //! \param[in]  backtrace   The backtrace to add.
-    //!
-    //! \returns  The number of bytes written to the file.
-    //!
-    //! \note  This function is async signal safe.
-    //!
-    size_t add_backtrace(
-        swimps::io::File& targetFile,
-        const Backtrace& backtrace);
 
     //!
     //! \brief  Adds a stack frame to the given file.
