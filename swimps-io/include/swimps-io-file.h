@@ -4,7 +4,12 @@
 #include <optional>
 
 #include <linux/limits.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "swimps-assert.h"
 #include "swimps-container.h"
 #include "swimps-io.h"
 
@@ -27,16 +32,35 @@ namespace swimps::io {
         //       If so, how should things like STDOUT be handled?
         virtual ~File() = default;
 
+        enum class Permissions : decltype(O_RDWR) {
+            ReadOnly = O_RDONLY,
+            WriteOnly = O_WRONLY,
+            ReadWrite = O_RDWR
+        };
+
         //!
-        //!  \brief  Creates a File instance.
+        //!  \brief  Creates a File.
         //!
-        //!  \param[in]  path       The path to the file.
-        //!  \param[in]  openFlags  The flags to be passed to the open system call.
-        //!  \param[in]  modeFlags  The mode flags to be passed to the open system call.
+        //!  \param[in]  path         Where the file should be created.
+        //!  \param[in]  permissions  The permissions to create the file with.
+        //!
+        //!  \returns  The requested file.
         //!
         //!  \note  This function is async signal safe.
         //!
-        File(Span<const char> path, int openFlags, int modeFlags) noexcept;
+        static File create(Span<const char> path, Permissions permissions) noexcept;
+
+        //!
+        //!  \brief  Opens a file.
+        //!
+        //!  \param[in]  path         Where the file to be opened is.
+        //!  \param[in]  permissions  The permissions to open the file with.
+        //!
+        //!  \returns  The requested file.
+        //!
+        //!  \note  This function is async signal safe.
+        //!
+        static File open(Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //!  \brief  Creates a File instance.
@@ -157,7 +181,11 @@ namespace swimps::io {
         //!
         bool operator==(const File&) = delete;
 
-    private:
+    protected:
+        void create_internal(Span<const char> path, Permissions permissions) noexcept;
+        void open_internal(Span<const char> path, Permissions permissions) noexcept;
+        void path_based_internal(Span<const char> path, int flags, int modeFlags) noexcept;
+
         int m_fileDescriptor = -1;
         char m_path[PATH_MAX + 1 /* null terminator */] = {};
         std::size_t m_pathLength = 0;

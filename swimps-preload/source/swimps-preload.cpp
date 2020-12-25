@@ -75,7 +75,7 @@ namespace {
     TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
         swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
-        return swimps::trace::file::TraceFile({ traceFilePath.data(), pathLength });
+        return swimps::trace::file::TraceFile::create({ traceFilePath.data(), pathLength }, TraceFile::Permissions::ReadWrite);
     }
 
     int swimps_preload_setup_signal_handler() {

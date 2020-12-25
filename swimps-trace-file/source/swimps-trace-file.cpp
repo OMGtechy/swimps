@@ -251,15 +251,18 @@ namespace {
     }
 }
 
-swimps::trace::file::TraceFile::TraceFile(swimps::container::Span<const char> path) noexcept
-: File(
-    path,
-    O_CREAT | O_EXCL | O_RDWR, // Create a file with read and write access.
-    S_IRUSR | S_IWUSR // Given read and write permissions to current user.
-  ) {
+swimps::trace::file::TraceFile swimps::trace::file::TraceFile::create(const swimps::container::Span<const char> path, const Permissions permissions) noexcept {
+    TraceFile traceFile;
+    traceFile.create_internal(
+        path,
+        permissions
+    );
+
     // Write out the swimps marker to make such files easily recognisable
-    const auto writeMarkerReturnValue = write_trace_file_marker(*this);
+    const auto writeMarkerReturnValue = write_trace_file_marker(traceFile);
     swimps_assert(writeMarkerReturnValue != -1);
+
+    return traceFile;
 }
 
 swimps::trace::file::TraceFile::TraceFile(int fileDescriptor, swimps::container::Span<const char> path) noexcept

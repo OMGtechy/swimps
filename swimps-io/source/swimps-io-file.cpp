@@ -1,29 +1,22 @@
 #include "swimps-io-file.h"
 
-#include <cassert>
 #include <cerrno>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include "swimps-assert.h"
 
 using swimps::container::Span;
 using swimps::io::File;
 
-File::File(Span<const char> path,
-           const int openFlags,
-           const int modeFlags) noexcept {
-    const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
-    m_pathLength = bytesWritten;
-    swimps_assert(bytesWritten == path.current_size());
+File File::create(const Span<const char> path,
+                  const Permissions permissions) noexcept {
+    File file;
+    file.create_internal(path, permissions);
+    return file;
+}
 
-    m_fileDescriptor = open(&path[0], openFlags, modeFlags);
-
-
-    swimps_assert(m_fileDescriptor != -1);
+File File::open(const Span<const char> path,
+                const Permissions permissions) noexcept {
+    File file;
+    file.open_internal(path, permissions);
+    return file;
 }
 
 File::File(const int fileDescriptor) noexcept
@@ -137,4 +130,22 @@ bool File::remove() noexcept {
 
 Span<const char> File::getPath() const noexcept {
     return { m_path, m_pathLength };
+}
+
+void File::create_internal(const Span<const char> path, const Permissions permissions) noexcept {
+    path_based_internal(path, static_cast<decltype(O_RDWR)>(permissions) | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+}
+
+void File::open_internal(const Span<const char> path, const Permissions permissions) noexcept {
+    path_based_internal(path, static_cast<decltype(O_RDWR)>(permissions), 0);
+}
+
+void File::path_based_internal(const Span<const char> path, const int flags, const int modeFlags) noexcept {
+    const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
+    m_pathLength = bytesWritten;
+    swimps_assert(bytesWritten == path.current_size());
+
+    m_fileDescriptor = ::open(&path[0], flags, modeFlags);
+
+    swimps_assert(m_fileDescriptor != -1);
 }

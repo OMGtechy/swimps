@@ -29,17 +29,14 @@ namespace swimps::trace::file {
         TraceFile() = default;
 
         //!
-        //! \brief  Creates a trace file.
+        //! \brief  Creates a trace file at the given path.
         //!
-        //! \param[in]  path  Where to create the file.
+        //! \param[in]  path         Where to create the file.
+        //! \param[in]  permissions  The permissions to create the file with.
         //!
         //! \note  This function is async signal safe.
         //!
-        //! \note  People might want to open existing one sometimes,
-        //!        should the ctor by hidden away and static member functions used
-        //!        to make it clear which is happening?
-        //!
-        TraceFile(swimps::container::Span<const char> path) noexcept;
+        static TraceFile create(swimps::container::Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Creates a trace file using an already open file descriptor.
@@ -89,7 +86,10 @@ namespace swimps::trace::file {
         //!
         virtual ~TraceFile() = default;
 
+        TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
+
+        TraceFile(const TraceFile&) = delete;
         TraceFile& operator=(const TraceFile&) = delete;
     };
 
