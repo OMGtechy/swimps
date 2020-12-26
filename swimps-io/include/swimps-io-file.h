@@ -28,9 +28,11 @@ namespace swimps::io {
         //!  \note  This function is async signal safe.
         //!
         File() = default;
-        // TODO: Should this close the file?
-        //       If so, how should things like STDOUT be handled?
-        virtual ~File() = default;
+
+        //!
+        //!  \brief  Closes the file.
+        //!
+        virtual ~File();
 
         enum class Permissions : decltype(O_RDWR) {
             ReadOnly = O_RDONLY,
@@ -75,15 +77,6 @@ namespace swimps::io {
         static File open(Span<const char> path, Permissions permissions) noexcept;
 
         //!
-        //!  \brief  Creates a File instance.
-        //!
-        //!  \param[in]  fileDescriptor  The file descriptor to refer to.
-        //!
-        //!  \note  This function is async signal safe.
-        //!
-        File(int fileDescriptor) noexcept;
-
-        //!
         //!  \brief  Move constructs a File.
         //!
         //!  \param[in,out]  other  The File to move from.
@@ -92,7 +85,7 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        File(File&& other) = default;
+        File(File&& other);
 
         //!
         //!  \brief  Move assigns a File.
@@ -105,7 +98,7 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        File& operator=(File&& other) = default;
+        File& operator=(File&& other);
 
         //!
         //!  \brief  Tries to fill the target with data from the file.
@@ -119,7 +112,7 @@ namespace swimps::io {
         std::size_t read(Span<char> target) noexcept;
 
         //!
-        //!  \brief  Writes the provided data to the file specified.
+        //!  \brief  Writes the provided data to the file.
         //!
         //!  \param[in]  dataSource  The data to be written to the file.
         //!
@@ -187,7 +180,7 @@ namespace swimps::io {
         void path_based_internal(Span<const char> path, int flags, int modeFlags) noexcept;
 
         int m_fileDescriptor = -1;
-        char m_path[PATH_MAX + 1 /* null terminator */] = {};
+        std::array<char, PATH_MAX + 1 /* null terminator */> m_path = {};
         std::size_t m_pathLength = 0;
     };
 }

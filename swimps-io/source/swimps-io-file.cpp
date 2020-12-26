@@ -7,6 +7,12 @@ using swimps::io::File;
 using swimps::io::format_string;
 using swimps::io::write_to_buffer;
 
+File::~File() {
+    if (m_fileDescriptor != -1) {
+        close();
+    }
+}
+
 File File::create(const Span<const char> path,
                   const Permissions permissions) noexcept {
     File file;
@@ -28,9 +34,21 @@ File File::open(const Span<const char> path,
     return file;
 }
 
-File::File(const int fileDescriptor) noexcept
-: m_fileDescriptor(fileDescriptor) {
-    swimps_assert(m_fileDescriptor != -1);
+File::File(File&& other) {
+    *this = std::move(other);
+}
+
+File& File::operator=(File&& other) {
+    m_fileDescriptor = other.m_fileDescriptor;
+    other.m_fileDescriptor = -1;
+
+    m_path = other.m_path;
+    m_pathLength = other.m_pathLength;
+
+    // Make debugging easier if something is used after a move.
+    write_to_buffer("Moved from!", m_path);
+
+    return *this;
 }
 
 std::size_t File::read(Span<char> target) noexcept {
@@ -70,32 +88,7 @@ std::size_t File::read(Span<char> target) noexcept {
 }
 
 std::size_t File::write(Span<const char> dataSource) noexcept {
-    std::size_t bytesWritten = 0;
-
-    while(dataSource.current_size() > 0) {
-        const auto newBytesWrittenOrError = ::write(
-            m_fileDescriptor,
-            &dataSource[0],
-            dataSource.current_size()
-        );
-
-        if (newBytesWrittenOrError < 0) {
-            // Just in case any subsequent calls modify it.
-            const auto errorCode = errno;
-
-            // This is the only "acceptable" error;
-            // it can happen when a signal fires mid-write.
-            swimps_assert(errorCode == EINTR);
-
-            continue;
-        }
-
-        const auto newBytesWritten = static_cast<std::size_t>(newBytesWrittenOrError);
-        dataSource += newBytesWritten;
-        bytesWritten += static_cast<size_t>(newBytesWritten);
-    }
-
-    return bytesWritten;
+    return write_to_file_descriptor(m_fileDescriptor, dataSource);
 }
 
 bool File::seekToStart() noexcept {
@@ -128,11 +121,11 @@ bool File::remove() noexcept {
     // Ignoring return code: it might have already been closed.
     close();
 
-    return ::unlink(m_path) == 0;
+    return ::unlink(m_path.data()) == 0;
 }
 
 Span<const char> File::getPath() const noexcept {
-    return { m_path, m_pathLength };
+    return { m_path.data(), m_pathLength };
 }
 
 void File::create_internal(const Span<const char> path, const Permissions permissions) noexcept {

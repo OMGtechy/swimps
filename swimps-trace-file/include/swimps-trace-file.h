@@ -83,11 +83,6 @@ namespace swimps::trace::file {
         //!
         std::size_t add_stack_frame(const StackFrame& stackFrame);
 
-        //!
-        //! \brief  TODO
-        //!
-        virtual ~TraceFile() = default;
-
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
 

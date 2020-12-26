@@ -169,8 +169,5 @@ namespace {
         if (swimps::trace::file::finalise(traceFile) != 0) {
             abort();
         }
-
-        // TODO: Is this necessary now?
-        traceFile.close();
     }
 }
