@@ -10,7 +10,6 @@
 #include "swimps-time.h"
 #include "swimps-trace.h"
 
-
 namespace swimps::trace::file {
     constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
     constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
