@@ -39,14 +39,16 @@ namespace swimps::trace::file {
         static TraceFile create(swimps::container::Span<const char> path, Permissions permissions) noexcept;
 
         //!
-        //! \brief  Creates a trace file using an already open file descriptor.
+        //! \brief  Creates a temporary trace file.
         //!
-        //! \param[in]  fileDescriptor  The open file descriptor to read from and write to.
-        //! \param[in]  path            The path that matches the file descriptor.
+        //! \param[in]  pathPrefix   The prefix to add to the temporary file name.
+        //! \param[in]  permissions  The permissions to create the file with.
+        //!
+        //! \returns  The temporary trace file.
         //!
         //! \note  This function is async signal safe.
         //!
-        TraceFile(int fileDescriptor, swimps::container::Span<const char> path) noexcept;
+        static TraceFile create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
 
         //!
         //! \brief  Adds a sample to the trace file.

@@ -51,6 +51,18 @@ namespace swimps::io {
         static File create(Span<const char> path, Permissions permissions) noexcept;
 
         //!
+        //! \brief  Creates a temporary file.
+        //!
+        //! \param[in]  pathPrefix   The prefix to add to the temporary file name.
+        //! \param[in]  permissions  The permissions to create the file with.
+        //!
+        //! \returns  The temporary file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        static File create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
+
+        //!
         //!  \brief  Opens a file.
         //!
         //!  \param[in]  path         Where the file to be opened is.
@@ -183,6 +195,7 @@ namespace swimps::io {
 
     protected:
         void create_internal(Span<const char> path, Permissions permissions) noexcept;
+        void create_temporary_internal(Span<const char> pathPrefix, Permissions permissions) noexcept;
         void open_internal(Span<const char> path, Permissions permissions) noexcept;
         void path_based_internal(Span<const char> path, int flags, int modeFlags) noexcept;
 

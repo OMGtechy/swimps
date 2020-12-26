@@ -4,11 +4,20 @@
 
 using swimps::container::Span;
 using swimps::io::File;
+using swimps::io::format_string;
+using swimps::io::write_to_buffer;
 
 File File::create(const Span<const char> path,
                   const Permissions permissions) noexcept {
     File file;
     file.create_internal(path, permissions);
+    return file;
+}
+
+File File::create_temporary(const Span<const char> pathPrefix,
+                            const Permissions permissions) noexcept {
+    File file;
+    file.create_temporary_internal(pathPrefix, permissions);
     return file;
 }
 
@@ -25,7 +34,7 @@ File::File(const int fileDescriptor) noexcept
 File::File(const int fileDescriptor, Span<const char> path) noexcept
 : m_fileDescriptor(fileDescriptor) {
     swimps_assert(m_fileDescriptor != -1);
-    const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
+    const auto bytesWritten = write_to_buffer(path, m_path);
     m_pathLength = bytesWritten;
     swimps_assert(bytesWritten == path.current_size());
 }
@@ -136,12 +145,18 @@ void File::create_internal(const Span<const char> path, const Permissions permis
     path_based_internal(path, static_cast<decltype(O_RDWR)>(permissions) | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 }
 
+void File::create_temporary_internal(const Span<const char> pathPrefix, const Permissions permissions) noexcept {
+    m_pathLength = format_string("/tmp/%_XXXXXX", m_path, &pathPrefix[0]);
+    m_fileDescriptor = mkostemp(&m_path[0], static_cast<decltype(O_RDWR)>(permissions));
+    swimps_assert(m_fileDescriptor != -1);
+}
+
 void File::open_internal(const Span<const char> path, const Permissions permissions) noexcept {
     path_based_internal(path, static_cast<decltype(O_RDWR)>(permissions), 0);
 }
 
 void File::path_based_internal(const Span<const char> path, const int flags, const int modeFlags) noexcept {
-    const auto bytesWritten = swimps::io::write_to_buffer(path, m_path);
+    const auto bytesWritten = write_to_buffer(path, m_path);
     m_pathLength = bytesWritten;
     swimps_assert(bytesWritten == path.current_size());
 

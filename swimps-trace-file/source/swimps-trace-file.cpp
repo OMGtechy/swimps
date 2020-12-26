@@ -265,14 +265,18 @@ swimps::trace::file::TraceFile swimps::trace::file::TraceFile::create(const swim
     return traceFile;
 }
 
-swimps::trace::file::TraceFile::TraceFile(int fileDescriptor, swimps::container::Span<const char> path) noexcept
-: File(
-    fileDescriptor,
-    path
-  ) {
+swimps::trace::file::TraceFile swimps::trace::file::TraceFile::create_temporary(const swimps::container::Span<const char> pathPrefix, const Permissions permissions) noexcept {
+    TraceFile traceFile;
+    traceFile.create_temporary_internal(
+        pathPrefix,
+        permissions
+    );
+
     // Write out the swimps marker to make such files easily recognisable
-    const auto writeMarkerReturnValue = write_trace_file_marker(*this);
+    const auto writeMarkerReturnValue = write_trace_file_marker(traceFile);
     swimps_assert(writeMarkerReturnValue != -1);
+
+    return traceFile;
 }
 
 size_t swimps::trace::file::generate_name(const char* const programName,
@@ -526,22 +530,7 @@ int swimps::trace::file::finalise(File& traceFile) {
         backtracesSharingStackFrameID.push_back(newBacktrace);
     }
 
-    char tempFileNameBuffer[] = "/tmp/swimps_finalise_temp_file_XXXXXX";
-    const auto tempFileDescriptor = mkstemp(tempFileNameBuffer);
-
-    if (tempFileDescriptor == -1) {
-
-        swimps::log::format_and_write_to_log<512>(
-            swimps::log::LogLevel::Fatal,
-            "Could not create temp file to write finalised trace into, errno % (%).",
-            errno,
-            strerror(errno)
-        );
-
-        return -1;
-    }
-
-    TraceFile tempFile{tempFileDescriptor, tempFileNameBuffer};
+    auto tempFile = TraceFile::create_temporary("swimps_finalise_temp_file_", TraceFile::Permissions::ReadWrite);;
 
     swimps::log::format_and_write_to_log<512>(
         swimps::log::LogLevel::Debug,
@@ -566,9 +555,11 @@ int swimps::trace::file::finalise(File& traceFile) {
         tempFile.add_stack_frame(stackFrame.first);
     }
 
-    const swimps::container::Span<const char> traceFilePath = traceFile.getPath();
+    const auto traceFilePath = traceFile.getPath();
     const std::string traceFilePathString(&traceFilePath[0], traceFilePath.current_size());
-    std::filesystem::copy(tempFileNameBuffer, traceFilePathString, std::filesystem::copy_options::overwrite_existing); 
+    const auto tempFilePath = tempFile.getPath();
+    const std::string tempFilePathString(&tempFilePath[0], tempFilePath.current_size());
+    std::filesystem::copy(tempFilePathString, traceFilePathString, std::filesystem::copy_options::overwrite_existing);
 
     return 0;
 }
