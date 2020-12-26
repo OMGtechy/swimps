@@ -29,14 +29,8 @@ File File::open(const Span<const char> path,
 }
 
 File::File(const int fileDescriptor) noexcept
-: File(fileDescriptor, Span<const char>{m_path, 0}) { }
-
-File::File(const int fileDescriptor, Span<const char> path) noexcept
 : m_fileDescriptor(fileDescriptor) {
     swimps_assert(m_fileDescriptor != -1);
-    const auto bytesWritten = write_to_buffer(path, m_path);
-    m_pathLength = bytesWritten;
-    swimps_assert(bytesWritten == path.current_size());
 }
 
 std::size_t File::read(Span<char> target) noexcept {

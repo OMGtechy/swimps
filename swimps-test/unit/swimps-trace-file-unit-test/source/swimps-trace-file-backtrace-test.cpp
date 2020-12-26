@@ -16,9 +16,7 @@ using swimps::io::File;
 
 SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
     GIVEN("A temp file.") {
-        char targetFileNameBuffer[] = "/tmp/swimps::trace::file::read_backtrace-test-XXXXXX";
-        const int targetFileDescriptor = mkstemp(targetFileNameBuffer);
-        File targetFile{targetFileDescriptor, targetFileNameBuffer};
+        auto targetFile = File::create_temporary("swimps::trace::file::read_backtrace_test_", File::Permissions::ReadWrite);
 
         std::array<char, 2048> data = { };
         auto dataSpan = swimps::container::Span<char>(data);

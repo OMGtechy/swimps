@@ -1,20 +1,20 @@
 #include "swimps-intergration-test.h"
 #include "swimps-io-file.h"
 
+#include <filesystem>
+
 using swimps::io::File;
 using swimps::container::Span;
 
 SCENARIO("swimps::io::File", "[swimp-io]") {
-    GIVEN("A file constructed from a file descriptor.") {
-        char fileNameBuffer[] = "/tmp/swimps::io::File::write-test-XXXXXX";
-        const int fileDescriptor = mkstemp(fileNameBuffer);
-
-        File file(fileDescriptor, fileNameBuffer);
+    GIVEN("A temp file.") {
+        const char prefix[] = "swimps::io::File_test";
+        auto file = File::create_temporary(prefix, File::Permissions::ReadWrite);
 
         WHEN("getPath() is called.") {
             const auto path = file.getPath();
-            THEN("It matches what was provided.") {
-                REQUIRE(strncmp(fileNameBuffer, &path[0], path.current_size()) == 0);
+            THEN("It starts with the prefix requested.") {
+                REQUIRE(std::filesystem::path(std::string(&path[0], path.current_size())).filename().string().starts_with(prefix));
             }
         }
 

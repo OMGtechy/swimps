@@ -84,19 +84,6 @@ namespace swimps::io {
         File(int fileDescriptor) noexcept;
 
         //!
-        //!  \brief  Creates a File instance.
-        //!
-        //!  \param[in]  fileDescriptor  The file descriptor to refer to.
-        //!  \param[in]  path            The path to the file the file descriptor refers to.
-        //!
-        //!  \note  This function is async signal safe.
-        //!
-        //!  \note  TODO: This is too similar to the "create a file" constructor and could be confusing.
-        //!               Make something clearer (static named functions rather than constructors?)
-        //!
-        File(int fileDescriptor, Span<const char> path) noexcept;
-
-        //!
         //!  \brief  Move constructs a File.
         //!
         //!  \param[in,out]  other  The File to move from.
