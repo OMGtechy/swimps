@@ -18,9 +18,6 @@ SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
     GIVEN("A temp file.") {
         auto targetFile = TraceFile::create_temporary("swimps::trace::file::read_backtrace_test_", File::Permissions::ReadWrite);
 
-        std::array<char, 2048> data = { };
-        auto dataSpan = swimps::container::Span<char>(data);
-
         Backtrace writtenBacktrace;
         writtenBacktrace.id = 9;
         writtenBacktrace.stackFrameIDs[0] = 0;
