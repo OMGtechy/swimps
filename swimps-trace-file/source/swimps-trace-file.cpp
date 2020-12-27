@@ -289,21 +289,6 @@ TraceFile TraceFile::open(const Span<const char> path, const Permissions permiss
     return traceFile;
 }
 
-size_t swimps::trace::file::generate_name(const char* const programName,
-                                          const TimeSpecification& time,
-                                          Span<char> target) {
-
-    swimps_assert(programName != NULL);
-
-    return format_string(
-        "swimps_trace_%_%_%",
-        target,
-        programName,
-        time.seconds,
-        time.nanoseconds
-    );
-}
-
 std::size_t swimps::trace::file::TraceFile::add_backtrace(const Backtrace& backtrace) {
     std::size_t bytesWritten = 0;
 

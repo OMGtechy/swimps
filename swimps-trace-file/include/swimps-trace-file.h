@@ -133,21 +133,4 @@ namespace swimps::trace::file {
         TraceFile(const TraceFile&) = delete;
         TraceFile& operator=(const TraceFile&) = delete;
     };
-
-    //!
-    //! \brief  Generates a name for the trace file based upon a program name.
-    //!
-    //! \param[in]   programName       The name of the program the trace file is for.
-    //! \param[in]   time              The timestamp to use when generating the name.
-    //! \param[out]  target            Where to write the generated name.
-    //!
-    //! \returns  The number of bytes written to the target buffer.
-    //!
-    //! \note  This function is async signal safe.
-    //!
-    size_t generate_name(
-         const char* const programName,
-         const swimps::time::TimeSpecification& time,
-         swimps::container::Span<char> target);
-
 }
