@@ -36,6 +36,12 @@ using swimps::trace::Trace;
 namespace {
     using namespace swimps::trace::file;
 
+    constexpr size_t swimps_v1_trace_entry_marker_size = 6;
+    constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
+    constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
+    constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
+    constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
+
     struct Visitor {
         using BacktraceHandler = std::function<void(Backtrace&)>;
         using SampleHandler = std::function<void(Sample&)>;
