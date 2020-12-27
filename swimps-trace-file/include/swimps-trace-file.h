@@ -116,6 +116,17 @@ namespace swimps::trace::file {
         //!
         std::optional<Trace> read_trace() noexcept;
 
+        //!
+        //! \brief  Finalises the trace file.
+        //!
+        //! \returns  Whether finalising was successful or not.
+        //!
+        //! \note  You should not modify the file after finalising it.
+        //!
+        //! \note  This function is *not* async signal safe.
+        //!
+        bool finalise() noexcept;
+
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
 
@@ -139,16 +150,4 @@ namespace swimps::trace::file {
          const swimps::time::TimeSpecification& time,
          swimps::container::Span<char> target);
 
-    //!
-    //! \brief  Finalises an opened trace file.
-    //!
-    //! \param[in]  traceFile          The trace file to finalise.
-    //!
-    //! \returns  0 if successful, -1 otherwise (errno may be set).
-    //!
-    //! \note  You should not modify the file are finalising it.
-    //!
-    //! \note  This function is *not* async signal safe.
-    //!
-    int finalise(TraceFile& traceFile);
 }

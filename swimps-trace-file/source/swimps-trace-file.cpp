@@ -417,9 +417,9 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-int swimps::trace::file::finalise(TraceFile& traceFile) {
-    if (! (goToStartOfFile(traceFile) && isSwimpsTraceFile(traceFile))) {
-        return -1;
+bool swimps::trace::file::TraceFile::finalise() noexcept {
+    if (! goToStartOfFile(*this)) {
+        return false;
     }
 
     struct BacktraceHash {
@@ -482,9 +482,9 @@ int swimps::trace::file::finalise(TraceFile& traceFile) {
     size_t preOptimisationBacktraceCount = 0;
     size_t preOptimisationStackFrameCount = 0;
 
-    for (auto entry = traceFile.read_next_entry();
+    for (auto entry = read_next_entry();
          !stop ;
-         entry = traceFile.read_next_entry()) {
+         entry = read_next_entry()) {
         
         std::visit(
             Visitor{
@@ -576,13 +576,13 @@ int swimps::trace::file::finalise(TraceFile& traceFile) {
         tempFile.add_stack_frame(stackFrame.first);
     }
 
-    const auto traceFilePath = traceFile.getPath();
+    const auto traceFilePath = getPath();
     const std::string traceFilePathString(&traceFilePath[0], traceFilePath.current_size());
     const auto tempFilePath = tempFile.getPath();
     const std::string tempFilePathString(&tempFilePath[0], tempFilePath.current_size());
     std::filesystem::copy(tempFilePathString, traceFilePathString, std::filesystem::copy_options::overwrite_existing);
 
-    return 0;
+    return true;
 }
 
 std::optional<Trace> swimps::trace::file::TraceFile::read_trace() noexcept {

@@ -166,7 +166,7 @@ namespace {
         while (sigprofRunningFlag.test_and_set());
 
         // Tidy up the data in the trace file.
-        if (swimps::trace::file::finalise(traceFile) != 0) {
+        if (! traceFile.finalise()) {
             abort();
         }
     }
