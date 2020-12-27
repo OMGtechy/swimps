@@ -2,17 +2,19 @@
 
 #include <cstddef>
 #include <optional>
+#include <variant>
 
 #include <unistd.h>
 
 #include "swimps-container.h"
+#include "swimps-error.h"
 #include "swimps-io-file.h"
 #include "swimps-time.h"
 #include "swimps-trace.h"
 
 namespace swimps::trace::file {
-    constexpr char swimps_v1_trace_file_marker[] = "swimps_v1_trace_file";
-    constexpr size_t swimps_v1_trace_entry_marker_size  = sizeof "\n__!\n";
+    constexpr size_t swimps_v1_trace_entry_marker_size = 6;
+    constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
@@ -50,6 +52,18 @@ namespace swimps::trace::file {
         static TraceFile create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
 
         //!
+        //!  \brief  Opens a trace file.
+        //!
+        //!  \param[in]  path         Where the trace file to be opened is.
+        //!  \param[in]  permissions  The permissions to open the trace file with.
+        //!
+        //!  \returns  The requested trace file.
+        //!
+        //!  \note  This function is async signal safe.
+        //!
+        static TraceFile open(swimps::container::Span<const char> path, Permissions permissions) noexcept;
+
+        //!
         //! \brief  Adds a sample to the trace file.
         //!
         //! \param[in]  sample  The sample to add.
@@ -81,6 +95,17 @@ namespace swimps::trace::file {
         //! \note  This function is async signal safe.
         //!
         std::size_t add_stack_frame(const StackFrame& stackFrame);
+
+        using Entry = std::variant<Backtrace, Sample, StackFrame, swimps::error::ErrorCode>;
+
+        //!
+        //! \brief  Reads the next entry in the trace file.
+        //!
+        //! \returns  The next entry, or an error code if something went wrong (such as EndOfFile).
+        //!
+        //! \note  This function is *not* async signal safe.
+        //!
+        Entry read_next_entry() noexcept;
 
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
@@ -114,36 +139,7 @@ namespace swimps::trace::file {
     //!
     //! \note  This function is *not* async signal safe.
     //!
-    std::optional<Trace> read(swimps::io::File& sourceFile);
-
-    //!
-    //! \brief  Reads a backtrace from a given file.
-    //!
-    //! \param[in]  fileDescriptor  The file to read from.
-    //!
-    //! \returns  The backtrace if all went well, an empty optional otherwise.
-    //!
-    //! \note  No marker is expected, since the normal use case is to read to marker
-    //!        to determine that it's a backtrace first.
-    //!
-    //! \note  The file descriptor shall be pointing at the data after the backtrace
-    //!        if the read was successful. If it was not, its state is undefined.
-    //!
-    std::optional<swimps::trace::Backtrace> read_backtrace(swimps::io::File& sourceFile);
-
-    //!
-    //! \brief  Reads a stack frame from a given file.
-    //!
-    //! \param[in]  sourceFile  The file to read from.
-    //!
-    //! \returns  The stack frame if all went well, an empty optional otherwise.
-    //!
-    //! \note  No marker is expected.
-    //!
-    //! \note  The file descriptor shall be pointing at the data after the stack frame
-    //!        if the read was successful. If it was not, its state is undefined.
-    //!
-    std::optional<swimps::trace::StackFrame> read_stack_frame(swimps::io::File& sourceFile);
+    std::optional<Trace> read(TraceFile& sourceFile);
 
     //!
     //! \brief  Finalises an opened trace file.
@@ -156,5 +152,5 @@ namespace swimps::trace::file {
     //!
     //! \note  This function is *not* async signal safe.
     //!
-    int finalise(swimps::io::File& traceFile);
+    int finalise(TraceFile& traceFile);
 }

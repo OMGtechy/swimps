@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
         return static_cast<int>(profileResult);
     }
 
-    auto traceFile = swimps::io::File::open(
+    auto traceFile = swimps::trace::file::TraceFile::open(
         { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
         swimps::io::File::Permissions::ReadOnly
     );
