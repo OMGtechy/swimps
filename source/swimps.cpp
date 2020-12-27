@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
         swimps::io::File::Permissions::ReadOnly
     );
 
-    const auto trace = swimps::trace::file::read(traceFile);
+    const auto trace = traceFile.read_trace();
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (const auto& entry : analysis.backtraceFrequency) {

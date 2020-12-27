@@ -585,17 +585,17 @@ int swimps::trace::file::finalise(TraceFile& traceFile) {
     return 0;
 }
 
-std::optional<Trace> swimps::trace::file::read(TraceFile& traceFile) {
-    if (! (goToStartOfFile(traceFile) && isSwimpsTraceFile(traceFile))) {
+std::optional<Trace> swimps::trace::file::TraceFile::read_trace() noexcept {
+    if (! goToStartOfFile(*this)) {
         return {};
     }
 
     Trace trace;
 
     bool stop = false;
-    for (auto entry = traceFile.read_next_entry();
+    for (auto entry = read_next_entry();
          !stop ;
-         entry = traceFile.read_next_entry()) {
+         entry = read_next_entry()) {
 
         std::visit(
             Visitor{

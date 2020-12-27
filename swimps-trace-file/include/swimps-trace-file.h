@@ -107,6 +107,15 @@ namespace swimps::trace::file {
         //!
         Entry read_next_entry() noexcept;
 
+        //!
+        //! \brief  Reads the entire trace from the trace file.
+        //!
+        //! \returns  The trace contained in the file, if successful.
+        //!
+        //! \note  This function is *not* async signal safe.
+        //!
+        std::optional<Trace> read_trace() noexcept;
+
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
 
@@ -129,17 +138,6 @@ namespace swimps::trace::file {
          const char* const programName,
          const swimps::time::TimeSpecification& time,
          swimps::container::Span<char> target);
-
-    //!
-    //! \brief  Reads a trace from a given file.
-    //!
-    //! \param[in]  sourceFile  The file to read from.
-    //!
-    //! \returns  The trace contained in the file.
-    //!
-    //! \note  This function is *not* async signal safe.
-    //!
-    std::optional<Trace> read(TraceFile& sourceFile);
 
     //!
     //! \brief  Finalises an opened trace file.
