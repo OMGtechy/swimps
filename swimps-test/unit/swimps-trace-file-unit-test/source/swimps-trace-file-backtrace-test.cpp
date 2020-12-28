@@ -8,7 +8,6 @@
 #include "swimps-container.h"
 
 using namespace swimps::trace;
-using namespace swimps::trace::file;
 
 using swimps::io::File;
 

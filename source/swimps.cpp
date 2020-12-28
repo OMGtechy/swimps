@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using swimps::trace::TraceFile;
+
 int main(int argc, char** argv) {
     bool exceptionThrown = false;
     swimps::option::Options options;
@@ -50,7 +52,7 @@ int main(int argc, char** argv) {
         return static_cast<int>(profileResult);
     }
 
-    auto traceFile = swimps::trace::file::TraceFile::open(
+    auto traceFile = TraceFile::open(
         { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
         swimps::io::File::Permissions::ReadOnly
     );

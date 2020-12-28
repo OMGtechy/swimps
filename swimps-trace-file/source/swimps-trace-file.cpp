@@ -32,10 +32,9 @@ using swimps::trace::StackFrame;
 using swimps::trace::stack_frame_count_t;
 using swimps::trace::stack_frame_id_t;
 using swimps::trace::Trace;
+using swimps::trace::TraceFile;
 
 namespace {
-    using namespace swimps::trace::file;
-
     constexpr size_t swimps_v1_trace_entry_marker_size = 6;
     constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
@@ -295,7 +294,7 @@ TraceFile TraceFile::open(const Span<const char> path, const Permissions permiss
     return traceFile;
 }
 
-std::size_t swimps::trace::file::TraceFile::add_backtrace(const Backtrace& backtrace) {
+std::size_t TraceFile::add_backtrace(const Backtrace& backtrace) {
     std::size_t bytesWritten = 0;
 
     bytesWritten += write(swimps_v1_trace_symbolic_backtrace_marker);
@@ -331,7 +330,7 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
 }
 
 
-std::size_t swimps::trace::file::TraceFile::add_sample(const Sample& sample) {
+std::size_t TraceFile::add_sample(const Sample& sample) {
     std::size_t bytesWritten = 0;
 
     bytesWritten += write(swimps_v1_trace_sample_marker);
@@ -408,7 +407,7 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-bool swimps::trace::file::TraceFile::finalise() noexcept {
+bool TraceFile::finalise() noexcept {
     if (! goToStartOfFile(*this)) {
         return false;
     }
@@ -576,7 +575,7 @@ bool swimps::trace::file::TraceFile::finalise() noexcept {
     return true;
 }
 
-std::optional<Trace> swimps::trace::file::TraceFile::read_trace() noexcept {
+std::optional<Trace> TraceFile::read_trace() noexcept {
     if (! goToStartOfFile(*this)) {
         return {};
     }

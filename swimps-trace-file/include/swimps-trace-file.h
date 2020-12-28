@@ -12,7 +12,7 @@
 #include "swimps-time.h"
 #include "swimps-trace.h"
 
-namespace swimps::trace::file {
+namespace swimps::trace {
     //!
     //! \brief  Represents a swimps trace file.
     //!
