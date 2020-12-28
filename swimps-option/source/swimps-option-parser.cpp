@@ -11,8 +11,10 @@
 #include "swimps-trace-file.h"
 
 using namespace swimps::option;
-using swimps::log::LogLevel;
+
 using swimps::error::ErrorCode;
+using swimps::io::format_string;
+using swimps::log::LogLevel;
 
 namespace {
     constexpr char helpOptionName[] = "--help";
@@ -190,10 +192,12 @@ Options swimps::option::parse_command_line(
         }
 
         char targetTraceFileBuffer[1024] = { };
-        swimps::trace::file::generate_name(
+        format_string(
+            "swimps_trace_%_%_%",
+            targetTraceFileBuffer,
             std::filesystem::path(options.targetProgram).filename().c_str(),
-            time,
-            targetTraceFileBuffer
+            time.seconds,
+            time.nanoseconds
         );
 
         options.targetTraceFile = targetTraceFileBuffer;

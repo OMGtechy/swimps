@@ -4,7 +4,12 @@
 #include <optional>
 
 #include <linux/limits.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "swimps-assert.h"
 #include "swimps-container.h"
 #include "swimps-io.h"
 
@@ -12,7 +17,7 @@ namespace swimps::io {
     //!
     //!  \brief  Provides an async signal safe type for file operations.
     //!
-    class File final {
+    class File {
     public:
         template <typename T>
         using Span = swimps::container::Span<T>;
@@ -24,40 +29,52 @@ namespace swimps::io {
         //!
         File() = default;
 
-        // TODO: dtor? How should things like STDOUT be handled here?
+        //!
+        //!  \brief  Closes the file.
+        //!
+        virtual ~File();
+
+        enum class Permissions : decltype(O_RDWR) {
+            ReadOnly = O_RDONLY,
+            WriteOnly = O_WRONLY,
+            ReadWrite = O_RDWR
+        };
 
         //!
-        //!  \brief  Creates a File instance.
+        //!  \brief  Creates a File.
         //!
-        //!  \param[in]  path       The path to the file.
-        //!  \param[in]  openFlags  The flags to be passed to the open system call.
-        //!  \param[in]  modeFlags  The mode flags to be passed to the open system call.
+        //!  \param[in]  path         Where the file should be created.
+        //!  \param[in]  permissions  The permissions to create the file with.
+        //!
+        //!  \returns  The requested file.
         //!
         //!  \note  This function is async signal safe.
         //!
-        File(Span<const char> path, int openFlags, int modeFlags) noexcept;
+        static File create(Span<const char> path, Permissions permissions) noexcept;
 
         //!
-        //!  \brief  Creates a File instance.
+        //! \brief  Creates a temporary file.
         //!
-        //!  \param[in]  fileDescriptor  The file descriptor to refer to.
+        //! \param[in]  pathPrefix   The prefix to add to the temporary file name.
+        //! \param[in]  permissions  The permissions to create the file with.
+        //!
+        //! \returns  The temporary file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        static File create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
+
+        //!
+        //!  \brief  Opens a file.
+        //!
+        //!  \param[in]  path         Where the file to be opened is.
+        //!  \param[in]  permissions  The permissions to open the file with.
+        //!
+        //!  \returns  The requested file.
         //!
         //!  \note  This function is async signal safe.
         //!
-        File(int fileDescriptor) noexcept;
-
-        //!
-        //!  \brief  Creates a File instance.
-        //!
-        //!  \param[in]  fileDescriptor  The file descriptor to refer to.
-        //!  \param[in]  path            The path to the file the file descriptor refers to.
-        //!
-        //!  \note  This function is async signal safe.
-        //!
-        //!  \note  TODO: This is too similar to the "create a file" constructor and could be confusing.
-        //!               Make something clearer (static named functions rather than constructors?)
-        //!
-        File(int fileDescriptor, Span<const char> path) noexcept;
+        static File open(Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //!  \brief  Move constructs a File.
@@ -68,7 +85,7 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        File(File&& other) = default;
+        File(File&& other);
 
         //!
         //!  \brief  Move assigns a File.
@@ -81,7 +98,7 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        File& operator=(File&& other) = default;
+        File& operator=(File&& other);
 
         //!
         //!  \brief  Tries to fill the target with data from the file.
@@ -95,7 +112,7 @@ namespace swimps::io {
         std::size_t read(Span<char> target) noexcept;
 
         //!
-        //!  \brief  Writes the provided data to the file specified.
+        //!  \brief  Writes the provided data to the file.
         //!
         //!  \param[in]  dataSource  The data to be written to the file.
         //!
@@ -132,18 +149,38 @@ namespace swimps::io {
         //!
         bool remove() noexcept;
 
-    private:
-        // Non-copyable.
-        // One person might expect the same file to be referred to.
-        // Another might expect a copy of file under another name.
-        File(const File&) = delete;
-        File& operator=(const File&);
+        //!
+        //!  \brief  Gets the path to the file, if there is one.
+        //!
+        //!  \returns  A span covering the path data.
+        //!            If there is no path, the span will be empty.
+        //!
+        //!  \note  This function is async signal safe.
+        //!
+        Span<const char> getPath() const noexcept;
 
-        // It's not clear what equality means for files.
-        // Same file name, same descriptor, same contents?
+        //!
+        //!  \brief  Non-copyable.
+        //!          One person might expect the same file to be referred to.
+        //!          Another might expect a copy of file under another name.
+        //!
+        File(const File&) = delete;
+        File& operator=(const File&) = delete;
+
+        //!
+        //!  \brief  It's not clear what equality means for files.
+        //!          Same file name, same descriptor, same contents?
+        //!
         bool operator==(const File&) = delete;
 
+    protected:
+        void create_internal(Span<const char> path, Permissions permissions) noexcept;
+        void create_temporary_internal(Span<const char> pathPrefix, Permissions permissions) noexcept;
+        void open_internal(Span<const char> path, Permissions permissions) noexcept;
+        void path_based_internal(Span<const char> path, int flags, int modeFlags) noexcept;
+
         int m_fileDescriptor = -1;
-        char m_path[PATH_MAX + 1 /* null terminator */] = {};
+        std::array<char, PATH_MAX + 1 /* null terminator */> m_path = {};
+        std::size_t m_pathLength = 0;
     };
 }

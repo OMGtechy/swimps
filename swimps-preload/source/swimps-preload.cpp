@@ -15,14 +15,14 @@
 #include <signal.h>
 #include <limits.h>
 
-using swimps::io::File;
+using swimps::trace::TraceFile;
 
 namespace {
 
     constexpr clockid_t clockID = CLOCK_MONOTONIC;
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
-    File traceFile;
+    TraceFile traceFile;
     std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
@@ -48,7 +48,7 @@ namespace {
             }
         }
 
-        swimps::trace::file::add_sample(traceFile, sample);
+        traceFile.add_sample(sample);
 
         {
             const auto result = swimps::preload::get_backtrace(
@@ -61,17 +61,10 @@ namespace {
             const auto& stackFrames = std::get<1>(result);
 
             for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-                const auto& stackFrame = stackFrames[i];
-                swimps::trace::file::add_stack_frame(
-                    traceFile,
-                    stackFrame
-                );
+                traceFile.add_stack_frame(stackFrames[i]);
             }
 
-            swimps::trace::file::add_backtrace(
-                traceFile,
-                backtrace
-            );
+            traceFile.add_backtrace(backtrace);
         }
 
     swimps_preload_sigprof_cleanup:
@@ -79,10 +72,10 @@ namespace {
     }
 
     template <std::size_t TraceFilePathSize>
-    File swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
+    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
         swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
-        return swimps::trace::file::create({ traceFilePath.data(), pathLength });
+        return TraceFile::create({ traceFilePath.data(), pathLength }, TraceFile::Permissions::ReadWrite);
     }
 
     int swimps_preload_setup_signal_handler() {
@@ -173,12 +166,8 @@ namespace {
         while (sigprofRunningFlag.test_and_set());
 
         // Tidy up the data in the trace file.
-        // TODO: What happens if the trace file fails to be created properly?
-        if (swimps::trace::file::finalise(traceFile, traceFilePath.data(), strnlen(traceFilePath.data(), sizeof traceFilePath)) != 0) {
+        if (! traceFile.finalise()) {
             abort();
         }
-
-        // TODO: Is this necessary now?
-        traceFile.close();
     }
 }

@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using swimps::trace::TraceFile;
+
 int main(int argc, char** argv) {
     bool exceptionThrown = false;
     swimps::option::Options options;
@@ -50,9 +52,12 @@ int main(int argc, char** argv) {
         return static_cast<int>(profileResult);
     }
 
-    swimps::io::File traceFile{{ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, O_RDONLY, 0};
+    auto traceFile = TraceFile::open(
+        { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
+        swimps::io::File::Permissions::ReadOnly
+    );
 
-    const auto trace = swimps::trace::file::read(traceFile);
+    const auto trace = traceFile.read_trace();
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (const auto& entry : analysis.backtraceFrequency) {

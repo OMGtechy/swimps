@@ -2,6 +2,7 @@
 
 #include "swimps-time.h"
 
+#include <array>
 #include <vector>
 #include <cstring>
 
@@ -55,7 +56,7 @@ namespace swimps::trace {
 
     struct Backtrace {
         backtrace_id_t id = std::numeric_limits<backtrace_id_t>::min();
-        stack_frame_id_t stackFrameIDs[64] = { };
+        std::array<stack_frame_id_t, 64> stackFrameIDs = { };
         stack_frame_count_t stackFrameIDCount = 0;
     };
 

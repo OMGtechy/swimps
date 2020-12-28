@@ -13,8 +13,8 @@ add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -g3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined -g3")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fno-omit-frame-pointer -g3")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined -fno-omit-frame-pointer -g3")
 
 option(SWIMPS_ENABLE_COVERAGE "Enable code coverage flags." OFF)
 if(SWIMPS_ENABLE_COVERAGE)

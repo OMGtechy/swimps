@@ -6,6 +6,8 @@
 
 #include "swimps-io-file.h"
 
+using swimps::io::write_to_file_descriptor;
+
 namespace {
     static swimps::log::LogLevel logLevelFilter = swimps::log::LogLevel::Debug;
 }
@@ -94,5 +96,5 @@ size_t swimps::log::write_to_log(
         break;
     }
 
-    return swimps::io::File(targetFileDescriptor).write({ targetBuffer, bytesWritten });
+    return write_to_file_descriptor(targetFileDescriptor, { targetBuffer, bytesWritten });
 }
