@@ -2,30 +2,43 @@
 
 #include <functional>
 
-swimps::analysis::Analysis swimps::analysis::analyse(const swimps::trace::Trace& trace) {
-    Analysis analysis;
+using swimps::analysis::Analysis;
+using swimps::trace::Trace;
 
-    for (const auto& sample : trace.samples) {
-        auto existingIter = std::find_if(
-            analysis.backtraceFrequency.begin(),
-            analysis.backtraceFrequency.end(),
-            [sample](auto entry) {
-                return entry.second == sample.backtraceID;
+namespace {
+    Analysis::BacktraceFrequency get_backtrace_frequency(const Trace& trace) {
+        Analysis::BacktraceFrequency backtraceFrequency;
+
+        for (const auto& sample : trace.samples) {
+            auto existingIter = std::find_if(
+                backtraceFrequency.begin(),
+                backtraceFrequency.end(),
+                [sample](auto entry) {
+                    return entry.second == sample.backtraceID;
+                }
+            );
+
+            if (existingIter != backtraceFrequency.end()) {
+                existingIter->first += 1;
+            } else {
+                backtraceFrequency.emplace_back(1, sample.backtraceID);
             }
+        }
+
+        std::sort(
+            backtraceFrequency.begin(),
+            backtraceFrequency.end(),
+            std::greater<>{}
         );
 
-        if (existingIter != analysis.backtraceFrequency.end()) {
-            existingIter->first += 1;
-        } else {
-            analysis.backtraceFrequency.emplace_back(1, sample.backtraceID);
-        }
+        return backtraceFrequency;
     }
+}
 
-    std::sort(
-        analysis.backtraceFrequency.begin(),
-        analysis.backtraceFrequency.end(),
-        std::greater<>{}
-    );
+Analysis swimps::analysis::analyse(const Trace& trace) {
+    Analysis analysis;
+
+    analysis.backtraceFrequency = get_backtrace_frequency(trace);
 
     return analysis;
 }
