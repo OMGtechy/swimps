@@ -46,7 +46,7 @@ File& File::operator=(File&& other) {
     m_pathLength = other.m_pathLength;
 
     // Make debugging easier if something is used after a move.
-    write_to_buffer("Moved from!", m_path);
+    write_to_buffer("Moved from!", other.m_path);
 
     return *this;
 }

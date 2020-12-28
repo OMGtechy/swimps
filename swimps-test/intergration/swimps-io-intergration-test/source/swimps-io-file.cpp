@@ -37,4 +37,24 @@ SCENARIO("swimps::io::File", "[swimp-io]") {
             }
         }
     }
+
+    GIVEN("A temp file.") {
+        auto tempFile = File::create_temporary("swimps::io::File_test", File::Permissions::ReadWrite);
+
+        WHEN("Its path is queried.") {
+            const auto tempFilePathSpan = tempFile.getPath();
+            const auto tempFilePath = std::string(&tempFilePathSpan[0], tempFilePathSpan.current_size());
+
+            AND_WHEN("It is moved from.") {
+                auto moveTarget = std::move(tempFile);
+
+                THEN("The moved to file has the same path.") {
+                    const auto moveTargetPathSpan = moveTarget.getPath();
+                    const auto moveTargetPath = std::string(&moveTargetPathSpan[0], moveTargetPathSpan.current_size());
+
+                    REQUIRE(moveTargetPath == tempFilePath);
+                }
+            }
+        }
+    }
 }
