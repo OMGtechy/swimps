@@ -13,7 +13,14 @@ namespace swimps::analysis {
             >
         >;
 
+        struct CallTreeNode {
+            swimps::trace::sample_count_t frequency;
+            swimps::trace::stack_frame_id_t stackFrameID;
+            std::vector<CallTreeNode> children;
+        };
+
         BacktraceFrequency backtraceFrequency;
+        std::vector<CallTreeNode> callTree;
     };
 
     //!
