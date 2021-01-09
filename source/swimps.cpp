@@ -5,11 +5,13 @@
 #include "swimps-trace-file.h"
 #include "swimps-assert.h"
 
+#include <functional>
 #include <iostream>
 
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using CallTreeNode = swimps::analysis::Analysis::CallTreeNode;
 using swimps::trace::TraceFile;
 
 int main(int argc, char** argv) {
@@ -58,13 +60,15 @@ int main(int argc, char** argv) {
     );
 
     const auto trace = traceFile.read_trace();
+    const auto& stackFrames = trace->stackFrames;
+
     const auto analysis = swimps::analysis::analyse(*trace);
 
     for (const auto& entry : analysis.backtraceFrequency) {
         const auto sampleCount = entry.first;
         const auto backtraceID = entry.second;
 
-        const auto& stackFrames = trace->stackFrames;
+
         const auto& backtraces = trace->backtraces;
         const auto& backtraceIter = std::find_if(
             backtraces.cbegin(),
@@ -90,6 +94,35 @@ int main(int argc, char** argv) {
         }
 
         std::cout << std::endl;
+    }
+
+    {
+        std::function<void(const CallTreeNode&, std::size_t)> printNode;
+        printNode = [&printNode, &stackFrames](const CallTreeNode& node, const std::size_t desiredIndent){
+            for (std::size_t currentIndent = 0; currentIndent < desiredIndent; ++currentIndent) {
+                std::cout << "-";
+            }
+
+            std::cout << "> ";
+
+            const auto stackFrameIter = std::find_if(
+                stackFrames.cbegin(),
+                stackFrames.cend(),
+                [&node](const auto& stackFrame) { return stackFrame.id == node.stackFrameID; }
+            );
+
+            swimps_assert(stackFrameIter != stackFrames.cend());
+
+            std::cout << stackFrameIter->mangledFunctionName << "+" << stackFrameIter->offset << " (" << node.frequency << " hits in this branch)" << std::endl;
+            for (const auto& child : node.children) {
+                printNode(child, desiredIndent + 1);
+            }
+        };
+
+        for (const auto& root : analysis.callTree) {
+            printNode(root, 0);
+            std::cout << "#################################################################" << std::endl;
+        }
     }
 
     return static_cast<int>(swimps::error::ErrorCode::None);
