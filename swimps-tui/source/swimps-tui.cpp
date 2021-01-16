@@ -41,14 +41,14 @@ namespace {
 
         if (currentLine >= linesToSkip) {
             for(std::size_t i = 0; i < indentation; ++i) {
-                wprintw(window, "-");
+                wprintw(window, "    ");
             }
 
             const auto* const stackFrame = lookup_stack_frame(trace, rootNode.stackFrameID);
             wprintw(
                 window,
-                "%c %s %s\n",
-                selectedLine == currentLine ? '>' : ' ',
+                "%s %s %s\n",
+                selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
                 stackFrame != nullptr ? stackFrame->mangledFunctionName : "?"
             );
