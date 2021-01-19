@@ -73,6 +73,29 @@ namespace {
             }
         }
     }
+
+    void print_call_tree(WINDOW* const window,
+                         const Trace& trace,
+                         const std::vector<CallTreeNode>& rootNodes,
+                         expansion_state_t& expansionState,
+                         line_mappings_t& lineMappings,
+                         const line_t selectedLine,
+                         const line_t linesToSkip,
+                         line_t& currentLine) {
+        for(const auto& root : rootNodes) {
+            print_node(
+                window,
+                trace,
+                root,
+                expansionState,
+                lineMappings,
+                selectedLine,
+                linesToSkip,
+                currentLine,
+                0
+            );
+        }
+    }
 }
 
 ErrorCode swimps::tui::run(const Trace& trace, const Analysis& analysis) {
@@ -86,29 +109,25 @@ ErrorCode swimps::tui::run(const Trace& trace, const Analysis& analysis) {
     line_t selectedLine = 0;
     line_t currentLine = 0;
 
-    const auto printCallTree = [window, &currentLine, &lineMappings, &selectedLine, &expansionState, &trace, &analysis](const stack_frame_count_t linesToSkip){
-        for(const auto& rootNode : analysis.callTree) {
-            print_node(
-                window,
-                trace,
-                rootNode,
-                expansionState,
-                lineMappings,
-                selectedLine,
-                linesToSkip,
-                currentLine,
-                0
-            );
-        }
-    };
 
     line_t callTreeOffset = 0;
 
     bool quit = false;
     while(!quit) {
         werase(window);
-        currentLine = 0;
-        printCallTree(callTreeOffset);
+        currentLine = 0
+;
+        print_call_tree(
+            window,
+            trace,
+            analysis.callTree,
+            expansionState,
+            lineMappings,
+            selectedLine,
+            callTreeOffset,
+            currentLine
+        );
+
         wrefresh(window);
         const int input = wgetch(window);
         switch(input) {
