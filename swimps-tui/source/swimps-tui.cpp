@@ -133,8 +133,7 @@ ErrorCode swimps::tui::run(const Trace& trace, const Analysis& analysis) {
     bool quit = false;
     while(!quit) {
         werase(window);
-        currentLine = 0
-;
+        currentLine = 0;
         print_call_tree(
             window,
             trace,
