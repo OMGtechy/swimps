@@ -65,10 +65,11 @@ namespace {
 
             wprintw(
                 window,
-                "%s %s %s\n",
+                "%s %s %s (offset 0x%.8X)\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
-                demangleFailed ? mangledFunctionName : demangledFunctionName.get()
+                demangleFailed ? mangledFunctionName : demangledFunctionName.get(),
+                stackFrame == nullptr ? -1 : stackFrame->offset
             );
         }
 
