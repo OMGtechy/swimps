@@ -3,6 +3,9 @@
 #include <optional>
 #include <limits>
 #include <map>
+#include <memory>
+
+#include <cxxabi.h>
 
 #include <ncurses.h>
 
@@ -45,12 +48,27 @@ namespace {
             }
 
             const auto* const stackFrame = lookup_stack_frame(trace, rootNode.stackFrameID);
+            const char* mangledFunctionName = stackFrame == nullptr ? "?" : stackFrame->mangledFunctionName;
+
+            int demangleStatus = 0;
+            const std::unique_ptr<const char, void(*)(const char*)> demangledFunctionName(
+                abi::__cxa_demangle(
+                    stackFrame == nullptr ? "?" : mangledFunctionName,
+                    nullptr,
+                    nullptr,
+                    &demangleStatus
+                ),
+                [](const char* ptr) { free(reinterpret_cast<void*>(const_cast<char*>(ptr))); }
+            );
+
+            const bool demangleFailed = demangledFunctionName == nullptr || demangleStatus != 0;
+
             wprintw(
                 window,
                 "%s %s %s\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
-                stackFrame != nullptr ? stackFrame->mangledFunctionName : "?"
+                demangleFailed ? mangledFunctionName : demangledFunctionName.get()
             );
         }
 
