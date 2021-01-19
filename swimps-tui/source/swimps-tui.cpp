@@ -158,7 +158,7 @@ ErrorCode swimps::tui::run(const Trace& trace, const Analysis& analysis) {
             break;
         case 's':
         case KEY_DOWN:
-            if (selectedLine < std::numeric_limits<decltype(selectedLine)>::max()) {
+            if (selectedLine < std::numeric_limits<line_t>::max()) {
                 selectedLine += 1;
             }
             break;
