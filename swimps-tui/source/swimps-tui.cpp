@@ -65,11 +65,12 @@ namespace {
 
             wprintw(
                 window,
-                "%s %s %s (offset 0x%.8X)\n",
+                "%s %s %s (offset 0x%.8X, hit %s times)\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
                 demangleFailed ? mangledFunctionName : demangledFunctionName.get(),
-                stackFrame == nullptr ? -1 : stackFrame->offset
+                stackFrame == nullptr ? -1 : stackFrame->offset,
+                stackFrame == nullptr ? "?" : std::to_string(rootNode.frequency).c_str()
             );
         }
 
