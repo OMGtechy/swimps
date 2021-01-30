@@ -15,6 +15,8 @@
 #include <signal.h>
 #include <limits.h>
 
+using swimps::io::File;
+using swimps::io::write_to_buffer;
 using swimps::preload::get_proc_maps;
 using swimps::option::Options;
 using swimps::trace::TraceFile;
@@ -25,6 +27,7 @@ namespace {
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
     TraceFile traceFile;
+    std::array<char, PATH_MAX> targetProgram = { };
     std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
@@ -119,6 +122,10 @@ namespace {
     void swimps_preload_constructor() {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
+        write_to_buffer(
+            { options.targetProgram.c_str(), options.targetProgram.length() },
+            targetProgram
+        );
 
         traceFile = swimps_preload_create_trace_file(traceFilePath, options);
         traceFile.set_proc_maps(get_proc_maps());
@@ -168,8 +175,12 @@ namespace {
         // Wait until the all in-progress samples are finished.
         while (sigprofRunningFlag.test_and_set());
 
-        // Tidy up the data in the trace file.
-        if (! traceFile.finalise()) {
+        auto executable = File::open(
+            { targetProgram.data(), strnlen(targetProgram.data(), targetProgram.size()) },
+            File::Permissions::ReadOnly
+        );
+
+        if (! traceFile.finalise(std::move(executable))) {
             abort();
         }
     }

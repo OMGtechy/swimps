@@ -127,13 +127,15 @@ namespace swimps::trace {
         //!
         //! \brief  Finalises the trace file.
         //!
+        //! \param[in]  executable  The traced executable. Must be open with read permissions.
+        //!
         //! \returns  Whether finalising was successful or not.
         //!
         //! \note  You should not modify the file after finalising it.
         //!
         //! \note  This function is *not* async signal safe.
         //!
-        bool finalise() noexcept;
+        bool finalise(File executable) noexcept;
 
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;

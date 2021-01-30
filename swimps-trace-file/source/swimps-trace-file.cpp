@@ -482,7 +482,7 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-bool TraceFile::finalise() noexcept {
+bool TraceFile::finalise(File executable) noexcept {
     if (! goToStartOfFile(*this)) {
         return false;
     }
@@ -644,7 +644,7 @@ bool TraceFile::finalise() noexcept {
         tempFile.add_backtrace(backtrace);
     }
 
-    swimps::dwarf::DwarfInfo dwarfInfo(File::open("/home/jgerrard/Source/swimps/build/debug/swimps-test/system/swimps-dummy", File::Permissions::ReadOnly));
+    swimps::dwarf::DwarfInfo dwarfInfo(std::move(executable));
     const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
 
     for(const auto& stackFramePair : stackFrameMap) {
