@@ -26,7 +26,6 @@ ProcMaps swimps::preload::get_proc_maps() {
 
     do {
         std::string rangeString;
-        std::string offsetString;
         std::string dummy;
 
         procMapsFile >> rangeString;
