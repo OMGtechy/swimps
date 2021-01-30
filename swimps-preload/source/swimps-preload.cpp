@@ -15,6 +15,7 @@
 #include <signal.h>
 #include <limits.h>
 
+using swimps::preload::get_proc_maps;
 using swimps::trace::TraceFile;
 
 namespace {
@@ -119,6 +120,7 @@ namespace {
         swimps::log::setLevelToLog(options.logLevel);
 
         traceFile = swimps_preload_create_trace_file(traceFilePath, options);
+        traceFile.set_proc_maps(get_proc_maps());
 
         if (swimps_preload_setup_signal_handler() == -1) {
             swimps::log::format_and_write_to_log<1024>(

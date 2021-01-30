@@ -26,9 +26,12 @@ namespace swimps::trace {
     // If someone has a (mangled) function name longer than ~2^31 characters ... well, we don't support that.
     using mangled_function_name_length_t = int32_t;
 
+    // In theory the instruction pointer could be pretty much anywhere in the address space. 
+    using address_t = uint64_t;
+
     // Chances are it'll never even come close to needing this many bits, but I haven't done much research on this,
     // so for now it's safer to be too big than too small.
-    using offset_t = int64_t;
+    using offset_t = address_t;
 
     // 2^63 unique stack frames, if each backtrace has 256 of them, sampled every nanosecond should cover over a year of runtime.
     using stack_frame_id_t = int64_t;
@@ -36,9 +39,12 @@ namespace swimps::trace {
     struct StackFrame {
         stack_frame_id_t id = std::numeric_limits<stack_frame_id_t>::min();
 
+        // TODO: could we get rid of all this extra info
+        //       and just use the instruction pointer now?
         char mangledFunctionName[256] = { };
         mangled_function_name_length_t mangledFunctionNameLength = 0;
         offset_t offset = 0;
+        address_t instructionPointer = 0;
 
         constexpr bool isSameAs(const StackFrame& other) const noexcept {
             return id == other.id && isEquivalentTo(other);
@@ -46,6 +52,7 @@ namespace swimps::trace {
 
         constexpr bool isEquivalentTo(const StackFrame& other) const noexcept {
             return offset == other.offset
+                && instructionPointer == other.instructionPointer
                 && 0 == strncmp(&mangledFunctionName[0],
                                 &other.mangledFunctionName[0],
                                 sizeof mangledFunctionName);
@@ -65,9 +72,27 @@ namespace swimps::trace {
         swimps::time::TimeSpecification timestamp;
     };
 
+    //!
+    //! \note  This is *not* async signal safe.
+    //!
+    struct ProcMaps {
+        struct Entry {
+            struct Range {
+                address_t start;
+                address_t end;
+            };
+
+            Range range;
+        };
+
+        std::vector<Entry> entries;
+        using entry_count_t = int64_t;
+    };
+
     struct Trace {
         std::vector<Sample> samples;
         std::vector<Backtrace> backtraces;
         std::vector<StackFrame> stackFrames;
+        ProcMaps procMaps;
     };
 }

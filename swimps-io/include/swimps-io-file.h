@@ -160,6 +160,13 @@ namespace swimps::io {
         Span<const char> getPath() const noexcept;
 
         //!
+        //!  \brief  Gets the file descriptor of the file.
+        //!
+        //!  \returns  The file descriptor for the file.
+        //!
+        int getFileDescriptor() const noexcept;
+
+        //!
         //!  \brief  Non-copyable.
         //!          One person might expect the same file to be referred to.
         //!          Another might expect a copy of file under another name.

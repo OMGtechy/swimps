@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(swimps-preload VERSION 0.0.1 LANGUAGES CXX)
 
-add_library(swimps-preload SHARED source/swimps-preload.cpp source/swimps-preload-backtrace.cpp)
+add_library(swimps-preload SHARED source/swimps-preload.cpp source/swimps-preload-backtrace.cpp source/swimps-preload-procmaps.cpp)
 target_include_directories(swimps-preload SYSTEM BEFORE PUBLIC ${LIBUNWIND_INCLUDE})
 target_link_directories(swimps-preload BEFORE PUBLIC ${LIBUNWIND_LIB})
 

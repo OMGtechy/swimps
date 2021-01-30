@@ -36,6 +36,7 @@ add_subdirectory(swimps-time)
 add_subdirectory(swimps-trace)
 add_subdirectory(swimps-trace-file)
 add_subdirectory(swimps-tui)
+add_subdirectory(swimps-dwarf)
 add_subdirectory(swimps-assert)
 
 add_executable(swimps source/swimps.cpp)

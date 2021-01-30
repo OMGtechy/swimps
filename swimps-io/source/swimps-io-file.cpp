@@ -128,6 +128,10 @@ Span<const char> File::getPath() const noexcept {
     return { m_path.data(), m_pathLength };
 }
 
+int File::getFileDescriptor() const noexcept {
+    return m_fileDescriptor;
+}
+
 void File::create_internal(const Span<const char> path, const Permissions permissions) noexcept {
     path_based_internal(path, static_cast<decltype(O_RDWR)>(permissions) | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 }
