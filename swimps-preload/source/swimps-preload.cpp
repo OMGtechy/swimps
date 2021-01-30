@@ -16,6 +16,7 @@
 #include <limits.h>
 
 using swimps::preload::get_proc_maps;
+using swimps::option::Options;
 using swimps::trace::TraceFile;
 
 namespace {
@@ -73,7 +74,7 @@ namespace {
     }
 
     template <std::size_t TraceFilePathSize>
-    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
+    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
         swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
         return TraceFile::create({ traceFilePath.data(), pathLength }, TraceFile::Permissions::ReadWrite);
@@ -110,8 +111,8 @@ namespace {
         return timer_settime(timer, 0, &timerSpec, NULL);
     }
 
-    swimps::option::Options load_options() {
-        return swimps::option::Options::fromString(std::getenv("SWIMPS_OPTIONS"));
+    Options load_options() {
+        return Options::fromString(std::getenv("SWIMPS_OPTIONS"));
     }
 
     __attribute__((constructor))
