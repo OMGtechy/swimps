@@ -30,7 +30,7 @@ namespace {
         const auto& stackFrames = trace.stackFrames;
         const auto iter = std::find_if(stackFrames.cbegin(), stackFrames.cend(), [id](const auto& stackFrame) { return stackFrame.id == id; });
         return iter != stackFrames.cend() ? &(*iter) : nullptr;
-    };
+    }
 
     void print_node(WINDOW* const window,
                     const Trace& trace,
