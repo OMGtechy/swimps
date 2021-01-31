@@ -21,6 +21,7 @@ using swimps::error::ErrorCode;
 using swimps::container::Span;
 using swimps::io::File;
 using swimps::io::format_string;
+using swimps::io::write_to_buffer;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
@@ -296,6 +297,19 @@ namespace {
             return {};
         }
 
+        if (traceFile.read(stackFrame.lineNumber) != sizeof(stackFrame.lineNumber)) {
+            return {};
+        }
+
+        if (traceFile.read(stackFrame.sourceFilePathLength) != sizeof(stackFrame.sourceFilePathLength)) {
+            return {};
+        }
+
+        if (traceFile.read({ stackFrame.sourceFilePath,
+                             stackFrame.sourceFilePathLength }) != stackFrame.sourceFilePathLength) {
+            return {};
+        }
+
         return stackFrame;
     }
 }
@@ -379,6 +393,10 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     const auto& offset = stackFrame.offset;
     const auto& instructionPointer = stackFrame.instructionPointer;
 
+    const auto& lineNumber = stackFrame.lineNumber;
+    const auto& sourceFilePath = stackFrame.sourceFilePath;
+    const auto  sourceFilePathLength = stackFrame.sourceFilePathLength;
+
     swimps_assert(mangledFunctionNameLength >= 0);
 
     bytesWritten += write(id);
@@ -386,6 +404,9 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     bytesWritten += write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
     bytesWritten += write(offset);
     bytesWritten += write(instructionPointer);
+    bytesWritten += write(lineNumber);
+    bytesWritten += write(sourceFilePathLength);
+    bytesWritten += write({ sourceFilePath, static_cast<size_t>(sourceFilePathLength) });
 
     return bytesWritten;
 }
@@ -648,7 +669,7 @@ bool TraceFile::finalise(File executable) noexcept {
     const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
 
     for(const auto& stackFramePair : stackFrameMap) {
-        const auto stackFrame = stackFramePair.first;
+        auto stackFrame = stackFramePair.first;
         const auto instructionPointer = stackFrame.instructionPointer;
 
         const auto procMapEntryIter = std::find_if(
@@ -672,15 +693,19 @@ bool TraceFile::finalise(File executable) noexcept {
         );
 
         if (dwarfLineInfoIter != dwarfLineInfos.cend()) {
-            format_and_write_to_log<512>(
-                LogLevel::Info,
-                "% % %:% %",
-                stackFrame.mangledFunctionName,
-                stackFrame.offset,
-                dwarfLineInfoIter->getSourceFile()->c_str(),
-                *dwarfLineInfoIter->getLineNumber(),
-                *dwarfLineInfoIter->getAddress()
-            );
+            if (dwarfLineInfoIter->getSourceFile()) {
+                const std::string sourceFile = *dwarfLineInfoIter->getSourceFile();
+                const auto bytesWritten = write_to_buffer(
+                    { sourceFile.c_str(), sourceFile.length() },
+                    stackFrame.sourceFilePath
+                );
+
+                stackFrame.sourceFilePathLength = bytesWritten;
+            }
+
+            if (dwarfLineInfoIter->getLineNumber()) {
+                stackFrame.lineNumber = *dwarfLineInfoIter->getLineNumber();
+            }
         }
 
         tempFile.add_stack_frame(stackFrame);

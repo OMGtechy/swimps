@@ -1,10 +1,11 @@
 #pragma once
 
-#include "swimps-time.h"
-
 #include <array>
 #include <vector>
 #include <cstring>
+
+#include "swimps-dwarf.h"
+#include "swimps-time.h"
 
 namespace swimps::trace {
     // Signed integers chosen because it's easier to spot errors when they overflow.
@@ -36,6 +37,14 @@ namespace swimps::trace {
     // 2^63 unique stack frames, if each backtrace has 256 of them, sampled every nanosecond should cover over a year of runtime.
     using stack_frame_id_t = int64_t;
 
+    // Some build systems combine multiple source files int one giant one,
+    // so ~2^31 could happen. 2^63 though, should cover anything.
+    using line_number_t = int64_t;
+
+    // I've seen some reports that file names / paths can go past PATH_MAX.
+    using file_path_length_t = uint32_t;
+    static_assert(PATH_MAX < std::numeric_limits<file_path_length_t>::max());
+
     struct StackFrame {
         stack_frame_id_t id = std::numeric_limits<stack_frame_id_t>::min();
 
@@ -45,6 +54,9 @@ namespace swimps::trace {
         mangled_function_name_length_t mangledFunctionNameLength = 0;
         offset_t offset = 0;
         address_t instructionPointer = 0;
+        line_number_t lineNumber = -1;
+        char sourceFilePath[PATH_MAX + 1 /* null terminator */] = { };
+        file_path_length_t sourceFilePathLength = 0;
 
         constexpr bool isSameAs(const StackFrame& other) const noexcept {
             return id == other.id && isEquivalentTo(other);

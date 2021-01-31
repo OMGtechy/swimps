@@ -63,14 +63,30 @@ namespace {
 
             const bool demangleFailed = demangledFunctionName == nullptr || demangleStatus != 0;
 
+            const char* const sourceFilePath = 
+                (stackFrame == nullptr || stackFrame->sourceFilePathLength == 0)
+                    ? nullptr
+                    : stackFrame->sourceFilePath;
+
+            const std::string lineNumberString =
+                (stackFrame == nullptr || stackFrame->lineNumber == -1)
+                    ? "?"
+                    : std::to_string(stackFrame->lineNumber);
+
+            const std::string sourceInfo =
+                sourceFilePath == nullptr
+                    ? ""
+                    : (std::string(" | ") + std::string(sourceFilePath) + ":" + lineNumberString);
+
             wprintw(
                 window,
-                "%s %s %s (offset 0x%.8X, hit %s times)\n",
+                "%s %s %s (offset 0x%.8X, hit %s times)%s\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
                 demangleFailed ? mangledFunctionName : demangledFunctionName.get(),
                 stackFrame == nullptr ? -1 : stackFrame->offset,
-                stackFrame == nullptr ? "?" : std::to_string(rootNode.frequency).c_str()
+                stackFrame == nullptr ? "?" : std::to_string(rootNode.frequency).c_str(),
+                sourceInfo.c_str()
             );
         }
 
