@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Install packages
-      run: sudo apt install gcc-10 g++-10 libunwind-dev lcov
+      run: sudo apt install gcc-10 g++-10 libunwind-dev libdwarf-dev libelf-dev lcov
 
     - uses: actions/checkout@v2
 

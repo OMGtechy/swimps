@@ -58,6 +58,20 @@ namespace swimps::trace {
         static TraceFile open(swimps::container::Span<const char> path, Permissions permissions) noexcept;
 
         //!
+        //! \brief  Sets the proc maps.
+        //!
+        //! \param[in]  procMaps  The proc maps to set.
+        //!
+        //! \returns  The number of bytes written to the file.
+        //!
+        //! \note  This function is *not* async signal safe.
+        //!
+        //! \note  This function is only expected to be called once for each trace file.
+        //!        The behaviour is undefined if it is called more than once.
+        //!
+        std::size_t set_proc_maps(const ProcMaps& procMaps);
+
+        //!
         //! \brief  Adds a sample to the trace file.
         //!
         //! \param[in]  sample  The sample to add.
@@ -90,7 +104,7 @@ namespace swimps::trace {
         //!
         std::size_t add_stack_frame(const StackFrame& stackFrame);
 
-        using Entry = std::variant<Backtrace, Sample, StackFrame, swimps::error::ErrorCode>;
+        using Entry = std::variant<ProcMaps, Backtrace, Sample, StackFrame, swimps::error::ErrorCode>;
 
         //!
         //! \brief  Reads the next entry in the trace file.
@@ -113,13 +127,15 @@ namespace swimps::trace {
         //!
         //! \brief  Finalises the trace file.
         //!
+        //! \param[in]  executable  The traced executable. Must be open with read permissions.
+        //!
         //! \returns  Whether finalising was successful or not.
         //!
         //! \note  You should not modify the file after finalising it.
         //!
         //! \note  This function is *not* async signal safe.
         //!
-        bool finalise() noexcept;
+        bool finalise(File executable) noexcept;
 
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;

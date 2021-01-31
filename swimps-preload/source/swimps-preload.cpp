@@ -15,6 +15,10 @@
 #include <signal.h>
 #include <limits.h>
 
+using swimps::io::File;
+using swimps::io::write_to_buffer;
+using swimps::preload::get_proc_maps;
+using swimps::option::Options;
 using swimps::trace::TraceFile;
 
 namespace {
@@ -23,6 +27,7 @@ namespace {
 
     std::atomic_flag sigprofRunningFlag = ATOMIC_FLAG_INIT;
     TraceFile traceFile;
+    std::array<char, PATH_MAX> targetProgram = { };
     std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
@@ -72,7 +77,7 @@ namespace {
     }
 
     template <std::size_t TraceFilePathSize>
-    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const swimps::option::Options& options) {
+    TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
         swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
         return TraceFile::create({ traceFilePath.data(), pathLength }, TraceFile::Permissions::ReadWrite);
@@ -109,16 +114,21 @@ namespace {
         return timer_settime(timer, 0, &timerSpec, NULL);
     }
 
-    swimps::option::Options load_options() {
-        return swimps::option::Options::fromString(std::getenv("SWIMPS_OPTIONS"));
+    Options load_options() {
+        return Options::fromString(std::getenv("SWIMPS_OPTIONS"));
     }
 
     __attribute__((constructor))
     void swimps_preload_constructor() {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
+        write_to_buffer(
+            { options.targetProgram.c_str(), options.targetProgram.length() },
+            targetProgram
+        );
 
         traceFile = swimps_preload_create_trace_file(traceFilePath, options);
+        traceFile.set_proc_maps(get_proc_maps());
 
         if (swimps_preload_setup_signal_handler() == -1) {
             swimps::log::format_and_write_to_log<1024>(
@@ -165,8 +175,12 @@ namespace {
         // Wait until the all in-progress samples are finished.
         while (sigprofRunningFlag.test_and_set());
 
-        // Tidy up the data in the trace file.
-        if (! traceFile.finalise()) {
+        auto executable = File::open(
+            { targetProgram.data(), strnlen(targetProgram.data(), targetProgram.size()) },
+            File::Permissions::ReadOnly
+        );
+
+        if (! traceFile.finalise(std::move(executable))) {
             abort();
         }
     }

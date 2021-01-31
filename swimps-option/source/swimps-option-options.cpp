@@ -6,6 +6,7 @@
 
 namespace {
     const std::string stringOptionsHelpLabel = "help ";
+    const std::string stringOptionsTUILabel = "tui ";
     const std::string stringOptionsLogLevelLabel = "log-level ";
     const std::string stringOptionsSamplesPerSecondLabel = "samples-per-second ";
     const std::string stringOptionsTargetTraceFileLabel = "target-trace-file ";
@@ -28,6 +29,12 @@ Options swimps::option::Options::fromString(std::string string) {
     string = chompPrefix(string, stringOptionsHelpLabel);
     swimps_assert(string.length() >= 1);
     result.help = string[0] == '1';
+    string = chompPrefix(string.substr(1), "|");
+
+    // tui
+    string = chompPrefix(string, stringOptionsTUILabel);
+    swimps_assert(string.length() >= 1);
+    result.tui = string [0] == '1';
     string = chompPrefix(string.substr(1), "|");
 
     // log level
@@ -89,6 +96,9 @@ std::string swimps::option::Options::toString() const {
 
     // help
     stringStream << stringOptionsHelpLabel << (help ? "1" : "0") << "|";
+
+    // tui
+    stringStream << stringOptionsTUILabel << (tui ? "1" : "0") << "|";
 
     // log level
     stringStream << stringOptionsLogLevelLabel;

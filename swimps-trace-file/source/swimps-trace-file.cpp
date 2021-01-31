@@ -13,6 +13,7 @@
 #include <fcntl.h>
 
 #include "swimps-assert.h"
+#include "swimps-dwarf.h"
 #include "swimps-io.h"
 #include "swimps-log.h"
 
@@ -20,6 +21,7 @@ using swimps::error::ErrorCode;
 using swimps::container::Span;
 using swimps::io::File;
 using swimps::io::format_string;
+using swimps::io::write_to_buffer;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
@@ -27,6 +29,7 @@ using swimps::time::TimeSpecification;
 using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
 using swimps::trace::mangled_function_name_length_t;
+using swimps::trace::ProcMaps;
 using swimps::trace::Sample;
 using swimps::trace::StackFrame;
 using swimps::trace::stack_frame_count_t;
@@ -37,6 +40,7 @@ using swimps::trace::TraceFile;
 namespace {
     constexpr size_t swimps_v1_trace_entry_marker_size = 6;
     constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
+    constexpr char swimps_v1_trace_proc_maps_marker[swimps_v1_trace_entry_marker_size] = "\npm!\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
@@ -45,9 +49,10 @@ namespace {
         using BacktraceHandler = std::function<void(Backtrace&)>;
         using SampleHandler = std::function<void(Sample&)>;
         using StackFrameHandler = std::function<void(StackFrame&)>;
+        using ProcMapsHandler = std::function<void(ProcMaps&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame, ProcMapsHandler onProcMaps)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame), m_onProcMaps(onProcMaps) {
 
         }
 
@@ -55,6 +60,11 @@ namespace {
         BacktraceHandler m_onBacktrace;
         SampleHandler m_onSample;
         StackFrameHandler m_onStackFrame;
+        ProcMapsHandler m_onProcMaps;
+
+        void operator()(ProcMaps& procMaps) const {
+            m_onProcMaps(procMaps);
+        }
 
         void operator()(Sample& sample) const {
             m_onSample(sample);
@@ -88,6 +98,7 @@ namespace {
     enum class EntryKind : int {
         Unknown,
         EndOfFile,
+        ProcMaps,
         Sample,
         SymbolicBacktrace,
         StackFrame
@@ -156,6 +167,10 @@ namespace {
             return read_next_entry_kind(traceFile);
         }
 
+        if (memcmp(buffer, swimps_v1_trace_proc_maps_marker, sizeof swimps_v1_trace_proc_maps_marker) == 0) {
+            return EntryKind::ProcMaps;
+        }
+
         if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
             return EntryKind::Sample;
         }
@@ -169,6 +184,31 @@ namespace {
         }
 
         return EntryKind::Unknown;
+    }
+
+    std::optional<ProcMaps> read_proc_maps(TraceFile& traceFile) {
+        ProcMaps::entry_count_t entryCount;
+
+        if (! traceFile.read(entryCount)) {
+            return {};
+        }
+
+        ProcMaps procMaps;
+        procMaps.entries.resize(entryCount);
+
+        for (ProcMaps::entry_count_t i = 0; i < entryCount; ++i) {
+            auto& entry = procMaps.entries[i];
+
+            if (! traceFile.read(entry.range.start)) {
+                return {};
+            }
+
+            if (! traceFile.read(entry.range.end)) {
+                return {};
+            }
+        }
+
+        return procMaps;
     }
 
     std::optional<Sample> read_sample(TraceFile& traceFile) {
@@ -253,6 +293,23 @@ namespace {
             return {};
         }
 
+        if (traceFile.read(stackFrame.instructionPointer) != sizeof(stackFrame.instructionPointer)) {
+            return {};
+        }
+
+        if (traceFile.read(stackFrame.lineNumber) != sizeof(stackFrame.lineNumber)) {
+            return {};
+        }
+
+        if (traceFile.read(stackFrame.sourceFilePathLength) != sizeof(stackFrame.sourceFilePathLength)) {
+            return {};
+        }
+
+        if (traceFile.read({ stackFrame.sourceFilePath,
+                             stackFrame.sourceFilePathLength }) != stackFrame.sourceFilePathLength) {
+            return {};
+        }
+
         return stackFrame;
     }
 }
@@ -294,6 +351,22 @@ TraceFile TraceFile::open(const Span<const char> path, const Permissions permiss
     return traceFile;
 }
 
+std::size_t TraceFile::set_proc_maps(const ProcMaps& procMaps) {
+    std::size_t bytesWritten = 0;
+
+    const auto entryCount = static_cast<ProcMaps::entry_count_t>(procMaps.entries.size());
+
+    bytesWritten += write(swimps_v1_trace_proc_maps_marker);    
+    bytesWritten += write(entryCount);
+
+    for(const auto& entry : procMaps.entries) {
+        bytesWritten += write(entry.range.start);
+        bytesWritten += write(entry.range.end);
+    };
+
+    return bytesWritten;
+}
+
 std::size_t TraceFile::add_backtrace(const Backtrace& backtrace) {
     std::size_t bytesWritten = 0;
 
@@ -318,6 +391,11 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     const auto  mangledFunctionNameLength = static_cast<mangled_function_name_length_t>(strnlen(&mangledFunctionName[0], sizeof mangledFunctionName));
 
     const auto& offset = stackFrame.offset;
+    const auto& instructionPointer = stackFrame.instructionPointer;
+
+    const auto& lineNumber = stackFrame.lineNumber;
+    const auto& sourceFilePath = stackFrame.sourceFilePath;
+    const auto  sourceFilePathLength = stackFrame.sourceFilePathLength;
 
     swimps_assert(mangledFunctionNameLength >= 0);
 
@@ -325,6 +403,10 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     bytesWritten += write(mangledFunctionNameLength);
     bytesWritten += write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
     bytesWritten += write(offset);
+    bytesWritten += write(instructionPointer);
+    bytesWritten += write(lineNumber);
+    bytesWritten += write(sourceFilePathLength);
+    bytesWritten += write({ sourceFilePath, static_cast<size_t>(sourceFilePathLength) });
 
     return bytesWritten;
 }
@@ -351,6 +433,20 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     );
 
     switch(entryKind) {
+    case EntryKind::ProcMaps:
+        {
+            const auto procMaps = read_proc_maps(*this);
+            if (! procMaps) {
+                write_to_log(
+                    LogLevel::Fatal,
+                    "Reading proc maps failed."
+                );
+
+                return ErrorCode::ReadProcMapsFailed;
+            }
+
+            return *procMaps;
+        }
     case EntryKind::Sample:
         {
             const auto sample = read_sample(*this);
@@ -407,7 +503,7 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-bool TraceFile::finalise() noexcept {
+bool TraceFile::finalise(File executable) noexcept {
     if (! goToStartOfFile(*this)) {
         return false;
     }
@@ -472,6 +568,8 @@ bool TraceFile::finalise() noexcept {
     size_t preOptimisationBacktraceCount = 0;
     size_t preOptimisationStackFrameCount = 0;
 
+    ProcMaps procMaps;
+
     for (auto entry = read_next_entry();
          !stop ;
          entry = read_next_entry()) {
@@ -490,6 +588,9 @@ bool TraceFile::finalise() noexcept {
                 [&stackFrameMap, &preOptimisationStackFrameCount](auto& stackFrame){
                     ++preOptimisationStackFrameCount;
                     stackFrameMap[stackFrame].insert(stackFrame.id);
+                },
+                [&procMaps](auto& readProcMaps) {
+                    procMaps = readProcMaps;
                 }
             },
             entry
@@ -554,6 +655,8 @@ bool TraceFile::finalise() noexcept {
         stackFrameMap.size()
     );
 
+    tempFile.set_proc_maps(procMaps);
+
     for(const auto& sample : samplesSharingBacktraceID) {
         tempFile.add_sample(sample);
     }
@@ -562,8 +665,50 @@ bool TraceFile::finalise() noexcept {
         tempFile.add_backtrace(backtrace);
     }
 
-    for(const auto& stackFrame: stackFrameMap) {
-        tempFile.add_stack_frame(stackFrame.first);
+    swimps::dwarf::DwarfInfo dwarfInfo(std::move(executable));
+    const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
+
+    for(const auto& stackFramePair : stackFrameMap) {
+        auto stackFrame = stackFramePair.first;
+        const auto instructionPointer = stackFrame.instructionPointer;
+
+        const auto procMapEntryIter = std::find_if(
+            procMaps.entries.cbegin(),
+            procMaps.entries.cend(),
+            [instructionPointer](const auto& entry){
+                return instructionPointer >= entry.range.start && instructionPointer <= entry.range.end;
+            }
+        );
+
+        swimps_assert(procMapEntryIter != procMaps.entries.cend());
+
+        const auto adjustedInstructionPointer = instructionPointer - procMapEntryIter->range.start;
+
+        const auto dwarfLineInfoIter = std::find_if(
+            dwarfLineInfos.cbegin(),
+            dwarfLineInfos.cend(),
+            [adjustedInstructionPointer](const auto& dwarfLineInfo){
+                return adjustedInstructionPointer == dwarfLineInfo.getAddress();
+            }
+        );
+
+        if (dwarfLineInfoIter != dwarfLineInfos.cend()) {
+            if (dwarfLineInfoIter->getSourceFile()) {
+                const std::string sourceFile = *dwarfLineInfoIter->getSourceFile();
+                const auto bytesWritten = write_to_buffer(
+                    { sourceFile.c_str(), sourceFile.length() },
+                    stackFrame.sourceFilePath
+                );
+
+                stackFrame.sourceFilePathLength = bytesWritten;
+            }
+
+            if (dwarfLineInfoIter->getLineNumber()) {
+                stackFrame.lineNumber = *dwarfLineInfoIter->getLineNumber();
+            }
+        }
+
+        tempFile.add_stack_frame(stackFrame);
     }
 
     const auto traceFilePath = getPath();
@@ -592,7 +737,8 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 stop,
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
-                [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); }
+                [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
+                [&trace](auto& procMaps){ trace.procMaps = procMaps; }
             },
             entry
         );

@@ -28,4 +28,13 @@ namespace swimps::preload {
         ucontext_t* context,
         swimps::trace::backtrace_id_t& nextBacktraceID,
         swimps::trace::stack_frame_id_t& nextStackFrameID);
+
+    //!
+    //! \brief  Gets the proc map for the current process.
+    //!
+    //! \returns  The proc map for the current process.
+    //!
+    //! \note  This is *not* async signal safe.
+    //!
+    swimps::trace::ProcMaps get_proc_maps();
 }

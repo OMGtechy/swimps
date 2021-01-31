@@ -11,6 +11,7 @@ namespace swimps::option {
     //!
     struct Options {
         bool help = false;
+        bool tui = true;
         swimps::log::LogLevel logLevel = swimps::log::LogLevel::Info;
         double samplesPerSecond = 1.0;
         std::string targetTraceFile;

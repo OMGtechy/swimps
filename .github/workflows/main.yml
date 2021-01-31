@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - name: Install packages
-      run: sudo apt install gcc-10 g++-10 clang libunwind-dev
+      run: sudo apt install gcc-10 g++-10 clang libunwind-dev libdwarf-dev libelf-dev
 
     - uses: actions/checkout@v2
 

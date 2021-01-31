@@ -8,6 +8,8 @@
 
 #pragma message "libunwind version: " S(UNW_VERSION_MAJOR) "." S(UNW_VERSION_MINOR) "." S(UNW_VERSION_EXTRA)
 
+using swimps::trace::address_t;
+
 swimps::preload::get_backtrace_result_t swimps::preload::get_backtrace(ucontext_t* context, swimps::trace::backtrace_id_t& nextBacktraceID, swimps::trace::stack_frame_id_t& nextStackFrameID) {
     unw_context_t unwindContext;
 
@@ -64,6 +66,10 @@ swimps::preload::get_backtrace_result_t swimps::preload::get_backtrace(ucontext_
         backtrace.stackFrameIDCount += 1;
         stackFrame.offset = getProcNameResult == 0 ? static_cast<int64_t>(offset) : 0;
         stackFrame.mangledFunctionNameLength = getProcNameResult == 0 ? strnlen(stackFrame.mangledFunctionName, maxMangledFunctionNameLength) : 0;
+
+        unw_word_t instructionPointer = 0;
+        unw_get_reg(&unwindCursor, UNW_REG_IP, &instructionPointer);
+        stackFrame.instructionPointer = static_cast<address_t>(instructionPointer);
 
         thereIsAnotherStackFrame = unw_step(&unwindCursor) == 1;
     }
