@@ -20,7 +20,7 @@ namespace {
 
         // If the value is a negative, write '-' into the target buffer.
         if (value < 0) {
-            assert(target.current_size() != 0);
+            swimps_assert(target.current_size() != 0);
             target[0] = '-';
             bytesWritten += 1;
 
@@ -44,7 +44,7 @@ namespace {
         const unsigned int numberOfDigitsInValue = std::floor(std::log10(absValue)) + 1;
         unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
 
-        assert(target.current_size() != 0);
+        swimps_assert(target.current_size() != 0);
 
         // Ensure that we do not write to memory we do not own.
         while (target.current_size() <= numberOfDigitsInValueLeft - 1)
@@ -101,7 +101,7 @@ namespace swimps::io {
         );
 
         {
-            assert(formatCharacterTarget == NULL || *(formatCharacterTarget - 1) == '%');
+            swimps_assert(formatCharacterTarget == NULL || *(formatCharacterTarget - 1) == '%');
             const bool foundAPercentSign =
                 formatCharacterTarget != NULL;
 

@@ -33,7 +33,7 @@ size_t swimps::log::format_message(
     default:                             logLevelString = &"SWIMPS: ??? - "; break;
     }
 
-    assert(logLevelString != nullptr);
+    swimps_assert(logLevelString != nullptr);
 
     size_t totalBytesWritten = 0;
     size_t newBytesWritten = 0;

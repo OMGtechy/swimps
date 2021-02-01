@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cstddef>
-#include <cassert>
 #include <array>
 #include <type_traits>
+
+#include "swimps-assert.h"
 
 namespace swimps::container {
     //!
@@ -67,7 +68,7 @@ namespace swimps::container {
               m_bufferCurrent(buffer),
               m_originalSize(sizeInElements),
               m_remainingElements(sizeInElements) {
-            assert(buffer != nullptr);
+            swimps_assert(buffer != nullptr);
         }
 
         //!
@@ -132,8 +133,7 @@ namespace swimps::container {
         //!           Essentially, the buffer moves along by one with the size adjusted accordingly.
         //!
         Span& operator++ () noexcept {
-            // TODO: add option to enable these assertions in release mode?
-            assert(m_remainingElements != 0);
+            swimps_assert(m_remainingElements != 0);
 
             ++m_bufferCurrent;
             --m_remainingElements;
@@ -163,7 +163,7 @@ namespace swimps::container {
         //!           Essentially, the buffer moves back by one with the size adjusted accordingly.
         //!
         Span& operator-- () noexcept {
-            assert(m_bufferCurrent != m_bufferStart);
+            swimps_assert(m_bufferCurrent != m_bufferStart);
 
             --m_bufferCurrent;
             ++m_remainingElements;
@@ -193,7 +193,7 @@ namespace swimps::container {
         //!
         constexpr Span& operator+= (const size_t offset) noexcept {
             // Make sure remaining elements isn't going to go below 0.
-            assert(m_remainingElements >= offset);
+            swimps_assert(m_remainingElements >= offset);
             m_remainingElements -= offset;
             m_bufferCurrent += offset;
             return *this;
@@ -209,7 +209,7 @@ namespace swimps::container {
         constexpr Span& operator-= (const size_t offset) noexcept {
             m_remainingElements += offset;
             m_bufferCurrent -= offset;
-            assert(m_bufferCurrent >= m_bufferStart);
+            swimps_assert(m_bufferCurrent >= m_bufferStart);
             return *this;
         }
 
@@ -221,7 +221,7 @@ namespace swimps::container {
         //! \returns  A non-const reference to the element at the index requested.
         //!
         constexpr T& operator[] (const size_t index) noexcept {
-            assert(m_remainingElements >= index);
+            swimps_assert(m_remainingElements >= index);
             return *(m_bufferCurrent + index);
         }
 

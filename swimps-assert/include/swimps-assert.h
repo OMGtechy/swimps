@@ -8,7 +8,8 @@
 #define swimps_assert(assertion) \
 do { \
     if (!(assertion)) { \
-        /* Block out all signals to we can use non-async-signal-safe functions. */ \
+        /* Block out all signals so it's saf*er* to use non-async-signal-safe functions. \
+           It's still not safe, but we're about to abort anyway so let's just go for it. */ \
         sigset_t signalsToBlock; \
         sigset_t oldSignalsToBlock; \
         sigfillset(&signalsToBlock); \
