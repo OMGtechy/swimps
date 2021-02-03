@@ -74,9 +74,9 @@ DwarfInfo::DwarfLineInfo::DwarfLineInfo(Dwarf_Line& dwarfLine) {
     Dwarf_Error dwarfError;
 
     {
-        char* fileName = nullptr;
-        if (dwarf_linesrc(dwarfLine, &fileName, &dwarfError) == DW_DLV_OK) {
-            m_sourceFile = fileName;
+        char* sourceFilePath = nullptr;
+        if (dwarf_linesrc(dwarfLine, &sourceFilePath, &dwarfError) == DW_DLV_OK) {
+            m_sourceFilePath = sourceFilePath;
             // The documentation says not to free the char*
         }
     }
@@ -106,6 +106,6 @@ DwarfInfo::DwarfLineInfo::DwarfLineInfo(Dwarf_Line& dwarfLine) {
 std::optional<DwarfInfo::DwarfLineInfo::line_number_t> DwarfInfo::DwarfLineInfo::getLineNumber() const { return m_lineNumber; }
 std::optional<DwarfInfo::DwarfLineInfo::address_t> DwarfInfo::DwarfLineInfo::getAddress() const { return m_address; }
 std::optional<DwarfInfo::DwarfLineInfo::offset_t> DwarfInfo::DwarfLineInfo::getOffset() const { return m_offset; }
-std::optional<std::string> DwarfInfo::DwarfLineInfo::getSourceFile() const { return m_sourceFile; }
+std::optional<std::filesystem::path> DwarfInfo::DwarfLineInfo::getSourceFilePath() const { return m_sourceFilePath; }
 
 const std::vector<DwarfInfo::DwarfLineInfo>& DwarfInfo::getLineInfos() const { return m_lineInfos; }

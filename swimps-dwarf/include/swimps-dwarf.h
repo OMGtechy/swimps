@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
+#include <filesystem>
 #include <vector>
 
 #include <libdwarf/libdwarf.h>
@@ -32,13 +32,13 @@ namespace swimps::dwarf {
             std::optional<line_number_t> getLineNumber() const;
             std::optional<address_t> getAddress() const;
             std::optional<offset_t> getOffset() const;
-            std::optional<std::string> getSourceFile() const;
+            std::optional<std::filesystem::path> getSourceFilePath() const;
 
         private:
             std::optional<line_number_t> m_lineNumber;
             std::optional<address_t> m_address;
             std::optional<offset_t> m_offset;
-            std::optional<std::string> m_sourceFile;
+            std::optional<std::filesystem::path> m_sourceFilePath;
         };
 
         const std::vector<DwarfLineInfo>& getLineInfos() const;

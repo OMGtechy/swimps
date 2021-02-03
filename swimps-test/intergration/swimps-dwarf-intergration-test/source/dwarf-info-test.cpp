@@ -44,9 +44,7 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter != lineInfos.cend());
                 REQUIRE(lineInfoIter->getAddress() == 0x000009dc);
                 REQUIRE(lineInfoIter->getLineNumber() == 5);
-
-                // TODO: should probably just change DwarfLineInfo::getSourceFile to return a path
-                REQUIRE(std::filesystem::path(*lineInfoIter->getSourceFile()).filename() == "cu-a.cpp");
+                REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-a.cpp");
             }
 
             THEN("Debug info from cu-b.cpp can be found.") {
@@ -57,9 +55,7 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter != lineInfos.cend());
                 REQUIRE(lineInfoIter->getAddress() == 0x00000a2c);
                 REQUIRE(lineInfoIter->getLineNumber() == 7);
-
-                // TODO: should probably just change DwarfLineInfo::getSourceFile to return a path
-                REQUIRE(std::filesystem::path(*lineInfoIter->getSourceFile()).filename() == "cu-b.cpp");
+                REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-b.cpp");
             }
 
             THEN("Debug info from cu-c.cpp can be found.") {
@@ -70,9 +66,7 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter != lineInfos.cend());
                 REQUIRE(lineInfoIter->getAddress() == 0x00000acc);
                 REQUIRE(lineInfoIter->getLineNumber() == 5);
-
-                // TODO: should probably just change DwarfLineInfo::getSourceFile to return a path
-                REQUIRE(std::filesystem::path(*lineInfoIter->getSourceFile()).filename() == "cu-c.cpp");
+                REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-c.cpp");
             }
         }
     }

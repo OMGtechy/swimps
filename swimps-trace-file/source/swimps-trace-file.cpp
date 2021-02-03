@@ -693,10 +693,10 @@ bool TraceFile::finalise(File executable) noexcept {
         );
 
         if (dwarfLineInfoIter != dwarfLineInfos.cend()) {
-            if (dwarfLineInfoIter->getSourceFile()) {
-                const std::string sourceFile = *dwarfLineInfoIter->getSourceFile();
+            if (dwarfLineInfoIter->getSourceFilePath()) {
+                const auto sourceFilePath = dwarfLineInfoIter->getSourceFilePath()->string();
                 const auto bytesWritten = write_to_buffer(
-                    { sourceFile.c_str(), sourceFile.length() },
+                    { sourceFilePath.c_str(), sourceFilePath.length() },
                     stackFrame.sourceFilePath
                 );
 
