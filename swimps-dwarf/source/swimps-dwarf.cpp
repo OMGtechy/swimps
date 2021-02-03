@@ -1,29 +1,19 @@
 #include "swimps-dwarf.h"
 
-#include  <libelf.h>
+#include "swimps-dwarf-debug-raii.h"
 
 using swimps::dwarf::DwarfInfo;
 using swimps::io::File;
 
-DwarfInfo::DwarfInfo(File&& executableFile)
-: m_executableFile(std::move(executableFile)) {
-    Dwarf_Error dwarfError{};
+DwarfInfo::DwarfInfo(File&& executableFile) {
+    DwarfDebugRAII dwarfDebugRAII(executableFile);
 
-    const auto initReturnValue = dwarf_init(
-        m_executableFile.getFileDescriptor(),
-        DW_DLC_READ,
-        [](Dwarf_Error, Dwarf_Ptr){ swimps_assert(false); },
-        nullptr,
-        &m_dwarfDebug,
-        &dwarfError
-    );
-
-    if (initReturnValue != DW_DLV_OK) {
+    if (! dwarfDebugRAII.get_initialised()) {
         return;
     }
 
-    Dwarf_Die currentDwarfDie = NULL;
-    Dwarf_Die nextDwarfDie = NULL;
+    Dwarf_Debug& dwarfDebug = dwarfDebugRAII.get_dwarf_debug();
+    Dwarf_Error dwarfError{};
 
     Dwarf_Unsigned cuLength;
     Dwarf_Half cuVersion;
@@ -35,58 +25,49 @@ DwarfInfo::DwarfInfo(File&& executableFile)
     Dwarf_Unsigned typeOffset;
     Dwarf_Unsigned cuNextOffset;
 
-    // TODO: make this work for multiple CUs
+    int nextCUHeaderReturnValue = DW_DLV_OK;
+    do {
+        nextCUHeaderReturnValue = dwarf_next_cu_header_c(
+            dwarfDebug,
+            1 /* 1 == search the .debug_info section, 0 == search the .debug_types section */,
+            &cuLength,
+            &cuVersion,
+            &cuAbbrevOffset,
+            &cuPointerSize,
+            &cuOffsetSize,
+            &cuExtensionSize,
+            &typeSignature,
+            &typeOffset,
+            &cuNextOffset,
+            &dwarfError
+        );
 
-    const auto nextCUHeaderReturnValue = dwarf_next_cu_header_c(
-        m_dwarfDebug,
-        1 /* 1 == search the .debug_info section, 0 == search the .debug_types section */,
-        &cuLength,
-        &cuVersion,
-        &cuAbbrevOffset,
-        &cuPointerSize,
-        &cuOffsetSize,
-        &cuExtensionSize,
-        &typeSignature,
-        &typeOffset,
-        &cuNextOffset,
-        &dwarfError
-    );
+        Dwarf_Die currentDwarfDie = NULL;
+        Dwarf_Die nextDwarfDie = NULL;
 
-    if (nextCUHeaderReturnValue != DW_DLV_OK) {
-        return;
-    }
+        int siblingOfReturnValue = DW_DLV_OK;
+        do {
+            siblingOfReturnValue =
+                dwarf_siblingof(dwarfDebug, currentDwarfDie, &nextDwarfDie, &dwarfError);
 
-    // TODO: do we want to check each sibling?
+            currentDwarfDie = nextDwarfDie;
+            Dwarf_Line* dwarfLines;
+            Dwarf_Signed dwarfNumberOfLines;
 
-    while (dwarf_siblingof(m_dwarfDebug, currentDwarfDie, &nextDwarfDie, &dwarfError) == DW_DLV_OK) {
-        currentDwarfDie = nextDwarfDie;
-    }
+            const auto srcLinesReturnValue = dwarf_srclines(
+                currentDwarfDie,
+                &dwarfLines,
+                &dwarfNumberOfLines,
+                &dwarfError
+            );
 
-    Dwarf_Line* dwarfLines;
-    Dwarf_Signed dwarfNumberOfLines;
-
-    const auto srcLinesReturnValue = dwarf_srclines(
-        currentDwarfDie,
-        &dwarfLines,
-        &dwarfNumberOfLines,
-        &dwarfError
-    );
-
-    for (Dwarf_Signed i = 0; i < dwarfNumberOfLines; ++i) {
-        m_lineInfos.emplace_back(dwarfLines[i]);
-    }
-
-    if (srcLinesReturnValue != DW_DLV_OK) {
-        return;
-    }
-}
-
-DwarfInfo::~DwarfInfo() {
-    Dwarf_Error dwarfError;
-    Elf* elf = nullptr;
-    dwarf_get_elf(m_dwarfDebug, &elf, &dwarfError);
-    dwarf_finish(m_dwarfDebug, &dwarfError);
-    elf_end(elf);
+            if (srcLinesReturnValue == DW_DLV_OK) {
+                for (Dwarf_Signed i = 0; i < dwarfNumberOfLines; ++i) {
+                    m_lineInfos.emplace_back(dwarfLines[i]);
+                }
+            }
+        } while(siblingOfReturnValue == DW_DLV_OK);
+    } while (nextCUHeaderReturnValue == DW_DLV_OK);
 }
 
 DwarfInfo::DwarfLineInfo::DwarfLineInfo(Dwarf_Line& dwarfLine) {

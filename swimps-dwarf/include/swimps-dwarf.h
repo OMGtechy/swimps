@@ -21,8 +21,6 @@ namespace swimps::dwarf {
         //!
         DwarfInfo(swimps::io::File&& executableFile);
 
-        ~DwarfInfo();
-
         class DwarfLineInfo final {
         public:
             DwarfLineInfo(Dwarf_Line&);
@@ -47,8 +45,6 @@ namespace swimps::dwarf {
 
     private:
         std::vector<DwarfLineInfo> m_lineInfos;
-        swimps::io::File m_executableFile;
-        Dwarf_Debug m_dwarfDebug;
     };
 }
 
