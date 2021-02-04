@@ -36,12 +36,15 @@ int main(int argc, char** argv) {
     std::chrono::time_point<std::chrono::steady_clock> currentTime;
 
     int32_t result = 0;
+    uint64_t iterations = 0;
 
     do {
         result = compute(result);
+        iterations += 1;
         currentTime = std::chrono::steady_clock::now();
     } while((currentTime - startTime) < std::chrono::seconds(delay));
 
     std::cout << "Result: " << result << std::endl;
+    std::cout << "Completed " << iterations << " iterations." << std::endl;
     std::cout << "Ending test program." << std::endl;
 }
