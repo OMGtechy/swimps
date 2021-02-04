@@ -1,4 +1,4 @@
-#include "swimps-unit-test.h"
+#include "swimps-intergration-test.h"
 
 #include <cstdio>
 #include <array>
@@ -11,9 +11,9 @@ using namespace swimps::trace;
 
 using swimps::io::File;
 
-// TODO: this is more of an intergration test than unit ... make a folder for such things and move it there.
-
-SCENARIO("swimps::trace::file::read_backtrace", "[swimps-trace-file]") {
+SCENARIO("swimps::trace::TraceFile::read_backtrace, "
+         "TraceFile::create_temporary, "
+         "swimps::trace::Backtrace", "[swimps-trace-file]") {
     GIVEN("A temp file.") {
         auto targetFile = TraceFile::create_temporary("swimps::trace::file::read_backtrace_test_", File::Permissions::ReadWrite);
 

@@ -18,7 +18,6 @@ add_executable(
     swimps-io-unit-test/source/swimps-format-string-test.cpp
     swimps-log-unit-test/source/swimps-format-log-message-test.cpp
     swimps-option-unit-test/source/swimps-parse-command-line.cpp
-    swimps-trace-file-unit-test/source/swimps-trace-file-backtrace-test.cpp
 )
 
 target_include_directories(swimps-unit-test PUBLIC include)

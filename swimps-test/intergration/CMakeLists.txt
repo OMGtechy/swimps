@@ -16,6 +16,7 @@ add_executable(
     swimps-dwarf-intergration-test/source/dwarf-info-test.cpp
     swimps-io-intergration-test/source/swimps-io-file.cpp
     swimps-option-intergration-test/source/swimps-option-stringify.cpp
+    swimps-trace-file-intergration-test/source/swimps-trace-file-backtrace-test.cpp
 )
 
 target_include_directories(swimps-intergration-test PUBLIC include)
