@@ -21,12 +21,13 @@ namespace swimps::dwarf {
         //!
         DwarfInfo(swimps::io::File&& executableFile);
 
+        using address_t = uint64_t;
+
         class DwarfLineInfo final {
         public:
             DwarfLineInfo(Dwarf_Line&);
 
             using line_number_t = int64_t;
-            using address_t = uint64_t;
             using offset_t = int64_t;
 
             std::optional<line_number_t> getLineNumber() const;
@@ -41,10 +42,26 @@ namespace swimps::dwarf {
             std::optional<std::filesystem::path> m_sourceFilePath;
         };
 
+        class DwarfFunctionInfo final {
+        public:
+            DwarfFunctionInfo(Dwarf_Addr lowPC, Dwarf_Addr highPC, std::string name);
+
+            address_t getLowPC() const;
+            address_t getHighPC() const;
+            std::string getName() const;
+
+        private:
+            address_t m_lowPC;
+            address_t m_highPC;
+            std::string m_name;
+        };
+
         const std::vector<DwarfLineInfo>& getLineInfos() const;
+        const std::vector<DwarfFunctionInfo>& getFunctionInfos() const;
 
     private:
         std::vector<DwarfLineInfo> m_lineInfos;
+        std::vector<DwarfFunctionInfo> m_functionInfos;
     };
 }
 
