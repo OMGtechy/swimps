@@ -46,26 +46,8 @@ swimps::preload::get_backtrace_result_t swimps::preload::get_backtrace(ucontext_
 
         auto& stackFrame = stackFrames[stackFrameIndex];
         stackFrame.id = nextStackFrameID++;
-
-        unw_word_t offset = 0;
-
-        constexpr auto maxMangledFunctionNameLength = sizeof stackFrame.mangledFunctionName - 1;
-
-        const auto getProcNameResult = unw_get_proc_name(
-            &unwindCursor,
-            &stackFrame.mangledFunctionName[0],
-            maxMangledFunctionNameLength,
-            &offset
-        );
-
-        if (getProcNameResult != 0) {
-            stackFrame.mangledFunctionName[0] = '\0';
-        }
-
         backtrace.stackFrameIDs[stackFrameIndex] = stackFrame.id;
         backtrace.stackFrameIDCount += 1;
-        stackFrame.offset = getProcNameResult == 0 ? static_cast<int64_t>(offset) : 0;
-        stackFrame.mangledFunctionNameLength = getProcNameResult == 0 ? strnlen(stackFrame.mangledFunctionName, maxMangledFunctionNameLength) : 0;
 
         unw_word_t instructionPointer = 0;
         unw_get_reg(&unwindCursor, UNW_REG_IP, &instructionPointer);

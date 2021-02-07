@@ -24,8 +24,8 @@ namespace swimps::trace {
     using backtrace_id_t = sample_count_t;
     using backtrace_count_t = sample_count_t;
 
-    // If someone has a (mangled) function name longer than ~2^31 characters ... well, we don't support that.
-    using mangled_function_name_length_t = int32_t;
+    // If someone has a function name longer than ~2^31 characters ... well, we don't support that.
+    using function_name_length_t = int32_t;
 
     // In theory the instruction pointer could be pretty much anywhere in the address space. 
     using address_t = uint64_t;
@@ -50,8 +50,8 @@ namespace swimps::trace {
 
         // TODO: could we get rid of all this extra info
         //       and just use the instruction pointer now?
-        char mangledFunctionName[256] = { };
-        mangled_function_name_length_t mangledFunctionNameLength = 0;
+        char functionName[256] = { };
+        function_name_length_t functionNameLength = 0;
         offset_t offset = 0;
         address_t instructionPointer = 0;
         line_number_t lineNumber = -1;
@@ -65,9 +65,9 @@ namespace swimps::trace {
         constexpr bool isEquivalentTo(const StackFrame& other) const noexcept {
             return offset == other.offset
                 && instructionPointer == other.instructionPointer
-                && 0 == strncmp(&mangledFunctionName[0],
-                                &other.mangledFunctionName[0],
-                                sizeof mangledFunctionName);
+                && 0 == strncmp(&functionName[0],
+                                &other.functionName[0],
+                                sizeof functionName);
         }
 
         bool operator==(const StackFrame& other) = delete;

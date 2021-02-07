@@ -35,8 +35,9 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
             // dwarfdump found in the file.
 
             const auto lineInfos = dwarfInfo.getLineInfos();
+            const auto functionInfos = dwarfInfo.getFunctionInfos();
 
-            THEN("Debug info from cu-a.cpp can be found.") {
+            THEN("Line info from cu-a.cpp can be found.") {
                 const auto lineInfoIter = std::find_if(lineInfos.cbegin(), lineInfos.cend(), [](const auto& lineInfo){
                     return lineInfo.getAddress() == 0x000009dc;
                 });
@@ -47,7 +48,18 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-a.cpp");
             }
 
-            THEN("Debug info from cu-b.cpp can be found.") {
+            THEN("Function info from cu-a.cpp can be found.") {
+                const auto functionInfoIter = std::find_if(functionInfos.cbegin(), functionInfos.cend(), [](const auto& functionInfo){
+                    return functionInfo.getName() == "main"; 
+                });
+
+                REQUIRE(functionInfoIter != functionInfos.cend());
+                REQUIRE(functionInfoIter->getName() == "main");
+                REQUIRE(functionInfoIter->getLowPC() == 0x000009d4);
+                REQUIRE(functionInfoIter->getHighPC() == 0x000009d4 + 28);
+            }
+
+            THEN("Line info from cu-b.cpp can be found.") {
                 const auto lineInfoIter = std::find_if(lineInfos.cbegin(), lineInfos.cend(), [](const auto& lineInfo){
                     return lineInfo.getAddress() == 0x00000a2c;
                 });
@@ -58,7 +70,18 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-b.cpp");
             }
 
-            THEN("Debug info from cu-c.cpp can be found.") {
+            THEN("Function info from cu-b.cpp can be found.") {
+                const auto functionInfoIter = std::find_if(functionInfos.cbegin(), functionInfos.cend(), [](const auto& functionInfo){
+                    return functionInfo.getName() == "f"; 
+                });
+
+                REQUIRE(functionInfoIter != functionInfos.cend());
+                REQUIRE(functionInfoIter->getName() == "f");
+                REQUIRE(functionInfoIter->getLowPC() == 0x00000a2c);
+                REQUIRE(functionInfoIter->getHighPC() == 0x00000a2c + 24);
+            }
+
+            THEN("Line info from cu-c.cpp can be found.") {
                 const auto lineInfoIter = std::find_if(lineInfos.cbegin(), lineInfos.cend(), [](const auto& lineInfo){
                     return lineInfo.getAddress() == 0x00000acc;
                 });
@@ -67,6 +90,17 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
                 REQUIRE(lineInfoIter->getAddress() == 0x00000acc);
                 REQUIRE(lineInfoIter->getLineNumber() == 5);
                 REQUIRE(lineInfoIter->getSourceFilePath()->filename() == "cu-c.cpp");
+            }
+
+            THEN("Function info from cu-c.cpp can be found.") {
+                const auto functionInfoIter = std::find_if(functionInfos.cbegin(), functionInfos.cend(), [](const auto& functionInfo){
+                    return functionInfo.getName() == "h"; 
+                });
+
+                REQUIRE(functionInfoIter != functionInfos.cend());
+                REQUIRE(functionInfoIter->getName() == "h");
+                REQUIRE(functionInfoIter->getLowPC() == 0x00000ac0);
+                REQUIRE(functionInfoIter->getHighPC() == 0x00000ac0 + 24);
             }
         }
     }

@@ -12,6 +12,9 @@
 
 #include <fcntl.h>
 
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+
 #include "swimps-assert.h"
 #include "swimps-dwarf.h"
 #include "swimps-io.h"
@@ -28,7 +31,7 @@ using swimps::log::write_to_log;
 using swimps::time::TimeSpecification;
 using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
-using swimps::trace::mangled_function_name_length_t;
+using swimps::trace::function_name_length_t;
 using swimps::trace::ProcMaps;
 using swimps::trace::Sample;
 using swimps::trace::StackFrame;
@@ -271,18 +274,18 @@ namespace {
             return {};
         }
 
-        if (! traceFile.read(stackFrame.mangledFunctionNameLength)) {
+        if (! traceFile.read(stackFrame.functionNameLength)) {
             return {};
         }
 
         {
             const auto bytesToWrite = std::min(
-                static_cast<size_t>(stackFrame.mangledFunctionNameLength),
-                sizeof StackFrame::mangledFunctionName
+                static_cast<size_t>(stackFrame.functionNameLength),
+                sizeof StackFrame::functionName
             );
 
             if (traceFile.read({
-                    stackFrame.mangledFunctionName,
+                    stackFrame.functionName,
                     bytesToWrite
                 }) != bytesToWrite) {
                 return {};
@@ -387,8 +390,8 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     bytesWritten += write(swimps_v1_trace_stack_frame_marker);
 
     const auto  id = stackFrame.id;
-    const auto& mangledFunctionName = stackFrame.mangledFunctionName;
-    const auto  mangledFunctionNameLength = static_cast<mangled_function_name_length_t>(strnlen(&mangledFunctionName[0], sizeof mangledFunctionName));
+    const auto& functionName = stackFrame.functionName;
+    const auto  functionNameLength = static_cast<function_name_length_t>(strnlen(&functionName[0], sizeof functionName));
 
     const auto& offset = stackFrame.offset;
     const auto& instructionPointer = stackFrame.instructionPointer;
@@ -397,11 +400,11 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     const auto& sourceFilePath = stackFrame.sourceFilePath;
     const auto  sourceFilePathLength = stackFrame.sourceFilePathLength;
 
-    swimps_assert(mangledFunctionNameLength >= 0);
+    swimps_assert(functionNameLength >= 0);
 
     bytesWritten += write(id);
-    bytesWritten += write(mangledFunctionNameLength);
-    bytesWritten += write({ &mangledFunctionName[0], static_cast<size_t>(mangledFunctionNameLength) });
+    bytesWritten += write(functionNameLength);
+    bytesWritten += write({ &functionName[0], static_cast<size_t>(functionNameLength) });
     bytesWritten += write(offset);
     bytesWritten += write(instructionPointer);
     bytesWritten += write(lineNumber);
@@ -536,7 +539,7 @@ bool TraceFile::finalise(File executable) noexcept {
 
     struct StackFrameHash {
         size_t operator() (const StackFrame& stackFrame) const {
-            return std::hash<const char*>{}(stackFrame.mangledFunctionNameLength == 0 ? nullptr : &stackFrame.mangledFunctionName[0]);
+            return std::hash<const char*>{}(stackFrame.functionNameLength == 0 ? nullptr : &stackFrame.functionName[0]);
         }
     };
 
@@ -667,6 +670,7 @@ bool TraceFile::finalise(File executable) noexcept {
 
     swimps::dwarf::DwarfInfo dwarfInfo(std::move(executable));
     const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
+    const auto& dwarfFunctionInfos = dwarfInfo.getFunctionInfos();
 
     for(const auto& stackFramePair : stackFrameMap) {
         auto stackFrame = stackFramePair.first;
@@ -706,6 +710,46 @@ bool TraceFile::finalise(File executable) noexcept {
             if (dwarfLineInfoIter->getLineNumber()) {
                 stackFrame.lineNumber = *dwarfLineInfoIter->getLineNumber();
             }
+
+            if (dwarfLineInfoIter->getOffset()) {
+                stackFrame.offset = *dwarfLineInfoIter->getOffset();
+            }
+
+            const auto functionInfoIter = std::find_if(
+                dwarfFunctionInfos.cbegin(),
+                dwarfFunctionInfos.cend(),
+                [adjustedInstructionPointer](const auto& functionInfo){
+                    return adjustedInstructionPointer >= functionInfo.getLowPC()
+                        && adjustedInstructionPointer <  functionInfo.getHighPC();
+                }
+            );
+
+            if (functionInfoIter != dwarfFunctionInfos.cend()) {
+                const auto& name = functionInfoIter->getName();
+                stackFrame.functionNameLength = write_to_buffer(
+                    { name.c_str(), name.length() },
+                    stackFrame.functionName
+                );
+            }
+        }
+
+        if (stackFrame.functionNameLength == 0) {
+            // Couldn't find it in debug info,
+            // see if libunwind can work it out.
+            unw_context_t unwindContext{};
+
+            #ifdef __clang__
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wgnu-statement-expression"
+            #endif
+            unw_getcontext(&unwindContext);
+            #ifdef __clang__
+            #pragma clang diagnostic pop
+            #endif
+            unw_cursor_t unwindCursor{};
+            unw_init_local(&unwindCursor, &unwindContext);
+            unw_set_reg(&unwindCursor, UNW_REG_IP, instructionPointer);
+            unw_get_proc_name(&unwindCursor, &stackFrame.functionName[0], std::size(stackFrame.functionName), &stackFrame.offset);
         }
 
         tempFile.add_stack_frame(stackFrame);

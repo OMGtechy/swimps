@@ -48,12 +48,12 @@ namespace {
             }
 
             const auto* const stackFrame = lookup_stack_frame(trace, rootNode.stackFrameID);
-            const char* mangledFunctionName = stackFrame == nullptr ? "?" : stackFrame->mangledFunctionName;
+            const char* functionName = stackFrame == nullptr ? "?" : stackFrame->functionName;
 
             int demangleStatus = 0;
             const std::unique_ptr<const char, void(*)(const char*)> demangledFunctionName(
                 abi::__cxa_demangle(
-                    stackFrame == nullptr ? "?" : mangledFunctionName,
+                    stackFrame == nullptr ? "?" : functionName,
                     nullptr,
                     nullptr,
                     &demangleStatus
@@ -83,7 +83,7 @@ namespace {
                 "%s %s %s (offset 0x%.8X, hit %s times)%s\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
-                demangleFailed ? mangledFunctionName : demangledFunctionName.get(),
+                demangleFailed ? functionName : demangledFunctionName.get(),
                 stackFrame == nullptr ? -1 : stackFrame->offset,
                 stackFrame == nullptr ? "?" : std::to_string(rootNode.frequency).c_str(),
                 sourceInfo.c_str()
