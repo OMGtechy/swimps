@@ -17,6 +17,8 @@
 
 using swimps::io::File;
 using swimps::io::write_to_buffer;
+using swimps::log::LogLevel;
+using swimps::log::write_to_log;
 using swimps::preload::get_proc_maps;
 using swimps::option::Options;
 using swimps::trace::TraceFile;
@@ -122,6 +124,7 @@ namespace {
     void swimps_preload_constructor() {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
+        write_to_log(LogLevel::Debug, "Preload ctor running.");
         write_to_buffer(
             { options.targetProgram.c_str(), options.targetProgram.length() },
             targetProgram
@@ -164,10 +167,14 @@ namespace {
 
             abort();
         }
+
+        write_to_log(LogLevel::Debug, "Preload ctor finished.");
     }
 
     __attribute__((destructor))
     void swimps_preload_destructor() {
+        write_to_log(LogLevel::Debug, "Preload dtor running.");
+
         // Disable the signal handler so that non-async signal safe code can be used.
         // TODO: is this safe if the timer fails to get created properly?
         swimps_preload_stop_timer(sampleTimer);
@@ -183,5 +190,7 @@ namespace {
         if (! traceFile.finalise(std::move(executable))) {
             abort();
         }
+
+        write_to_log(LogLevel::Debug, "Preload dtor finished.");
     }
 }
