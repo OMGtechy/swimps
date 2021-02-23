@@ -37,4 +37,15 @@ namespace swimps::preload {
     //! \note  This is *not* async signal safe.
     //!
     swimps::trace::ProcMaps get_proc_maps();
+
+    //!
+    //! \brief  The sampling signal handler.
+    //!
+    //! \param[in]  unused   Unused.
+    //! \param[in]  unused   Unused.
+    //! \param[in]  context  Signal context information.
+    //!
+    //! \note  This function is async signal safe.
+    //!
+    void sigprof_handler(const int, siginfo_t*, void* context);
 }

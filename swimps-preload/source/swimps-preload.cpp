@@ -35,49 +35,6 @@ namespace {
     swimps::trace::backtrace_id_t nextBacktraceID = 1;
     swimps::trace::stack_frame_id_t nextStackFrameID = 1;
 
-    void swimps_preload_sigprof_handler(const int, siginfo_t*, void* context) {
-        if (sigprofRunningFlag.test_and_set()) {
-            // Drop samples that occur when a sample is already being taken.
-            return;
-        }
-
-        swimps::trace::Sample sample;
-        sample.backtraceID = nextBacktraceID;
-
-        {
-            if (swimps::time::now(clockID, sample.timestamp) != 0) {
-                swimps::log::write_to_log(
-                    swimps::log::LogLevel::Error,
-                    "swimps::time::now failed whilst taking sample."
-                );
-
-                goto swimps_preload_sigprof_cleanup;
-            }
-        }
-
-        traceFile.add_sample(sample);
-
-        {
-            const auto result = swimps::preload::get_backtrace(
-                static_cast<ucontext_t*>(context),
-                nextBacktraceID,
-                nextStackFrameID
-            );
-
-            const auto& backtrace = std::get<0>(result);
-            const auto& stackFrames = std::get<1>(result);
-
-            for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-                traceFile.add_stack_frame(stackFrames[i]);
-            }
-
-            traceFile.add_backtrace(backtrace);
-        }
-
-    swimps_preload_sigprof_cleanup:
-        sigprofRunningFlag.clear();
-    }
-
     template <std::size_t TraceFilePathSize>
     TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
@@ -87,7 +44,7 @@ namespace {
 
     int swimps_preload_setup_signal_handler() {
         struct sigaction action;
-        action.sa_sigaction = swimps_preload_sigprof_handler;
+        action.sa_sigaction = swimps::preload::sigprof_handler;
         action.sa_flags = SA_SIGINFO | SA_RESTART;
         sigemptyset(&action.sa_mask);
 
@@ -193,4 +150,47 @@ namespace {
 
         write_to_log(LogLevel::Debug, "Preload dtor finished.");
     }
+}
+
+void swimps::preload::sigprof_handler(const int, siginfo_t*, void* context) {
+    if (sigprofRunningFlag.test_and_set()) {
+        // Drop samples that occur when a sample is already being taken.
+        return;
+    }
+
+    swimps::trace::Sample sample;
+    sample.backtraceID = nextBacktraceID;
+
+    {
+        if (swimps::time::now(clockID, sample.timestamp) != 0) {
+            swimps::log::write_to_log(
+                swimps::log::LogLevel::Error,
+                "swimps::time::now failed whilst taking sample."
+            );
+
+            goto swimps_preload_sigprof_cleanup;
+        }
+    }
+
+    traceFile.add_sample(sample);
+
+    {
+        const auto result = swimps::preload::get_backtrace(
+            static_cast<ucontext_t*>(context),
+            nextBacktraceID,
+            nextStackFrameID
+        );
+
+        const auto& backtrace = std::get<0>(result);
+        const auto& stackFrames = std::get<1>(result);
+
+        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
+            traceFile.add_stack_frame(stackFrames[i]);
+        }
+
+        traceFile.add_backtrace(backtrace);
+    }
+
+swimps_preload_sigprof_cleanup:
+    sigprofRunningFlag.clear();
 }
