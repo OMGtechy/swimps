@@ -16,6 +16,7 @@ namespace swimps::error {
         ReadProcMapsFailed,
         ReadSampleFailed,
         ReadBacktraceFailed,
+        ReadRawStackFrameFailed,
         ReadStackFrameFailed,
         UnknownEntryKind,
         EndOfFile

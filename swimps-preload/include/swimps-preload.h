@@ -10,7 +10,7 @@
 namespace swimps::preload {
     using get_backtrace_result_t =
             std::tuple<swimps::trace::Backtrace,
-                       std::array<swimps::trace::StackFrame, 64>>;
+                       std::array<swimps::trace::RawStackFrame, 64>>;
 
     //!
     //! \brief  Gets a backtrace from the currently running program.

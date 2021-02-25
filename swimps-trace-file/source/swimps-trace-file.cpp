@@ -34,6 +34,7 @@ using swimps::trace::backtrace_id_t;
 using swimps::trace::function_name_length_t;
 using swimps::trace::ProcMaps;
 using swimps::trace::Sample;
+using swimps::trace::RawStackFrame;
 using swimps::trace::StackFrame;
 using swimps::trace::stack_frame_count_t;
 using swimps::trace::stack_frame_id_t;
@@ -47,15 +48,17 @@ namespace {
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
+    constexpr char swimps_v1_trace_raw_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nrf!\n";
 
     struct Visitor {
         using BacktraceHandler = std::function<void(Backtrace&)>;
         using SampleHandler = std::function<void(Sample&)>;
         using StackFrameHandler = std::function<void(StackFrame&)>;
+        using RawStackFrameHandler = std::function<void(RawStackFrame&)>;
         using ProcMapsHandler = std::function<void(ProcMaps&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame, ProcMapsHandler onProcMaps)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame), m_onProcMaps(onProcMaps) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame, RawStackFrameHandler onRawStackFrameHandler, ProcMapsHandler onProcMaps)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame), m_onRawStackFrame(onRawStackFrameHandler), m_onProcMaps(onProcMaps) {
 
         }
 
@@ -63,6 +66,7 @@ namespace {
         BacktraceHandler m_onBacktrace;
         SampleHandler m_onSample;
         StackFrameHandler m_onStackFrame;
+        RawStackFrameHandler m_onRawStackFrame;
         ProcMapsHandler m_onProcMaps;
 
         void operator()(ProcMaps& procMaps) const {
@@ -79,6 +83,10 @@ namespace {
 
         void operator()(StackFrame& stackFrame) const {
             m_onStackFrame(stackFrame);
+        }
+
+        void operator()(RawStackFrame& rawStackFrame) const {
+            m_onRawStackFrame(rawStackFrame);
         }
 
         void operator()(ErrorCode errorCode) const {
@@ -104,7 +112,8 @@ namespace {
         ProcMaps,
         Sample,
         SymbolicBacktrace,
-        StackFrame
+        StackFrame,
+        RawStackFrame
     };
 
     int read_trace_file_marker(TraceFile& traceFile) {
@@ -184,6 +193,10 @@ namespace {
 
         if (memcmp(buffer, swimps_v1_trace_stack_frame_marker, sizeof swimps_v1_trace_stack_frame_marker) == 0) {
             return EntryKind::StackFrame;
+        }
+
+        if (memcmp(buffer, swimps_v1_trace_raw_stack_frame_marker, sizeof swimps_v1_trace_raw_stack_frame_marker) == 0) {
+            return EntryKind::RawStackFrame;
         }
 
         return EntryKind::Unknown;
@@ -315,6 +328,20 @@ namespace {
 
         return stackFrame;
     }
+
+    std::optional<RawStackFrame> read_raw_stack_frame(TraceFile& traceFile) {
+        RawStackFrame rawStackFrame;
+
+        if (! traceFile.read(rawStackFrame.id)) {
+            return {};
+        }
+
+        if (! traceFile.read(rawStackFrame.instructionPointer)) {
+            return {};
+        }
+
+        return rawStackFrame;
+    }
 }
 
 TraceFile TraceFile::create(const Span<const char> path, const Permissions permissions) noexcept {
@@ -414,6 +441,15 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     return bytesWritten;
 }
 
+std::size_t TraceFile::add_raw_stack_frame(const RawStackFrame& stackFrame) {
+    std::size_t bytesWritten = 0;
+
+    bytesWritten += write(swimps_v1_trace_raw_stack_frame_marker);
+    bytesWritten += write(stackFrame.id);
+    bytesWritten += write(stackFrame.instructionPointer);
+
+    return bytesWritten;
+}
 
 std::size_t TraceFile::add_sample(const Sample& sample) {
     std::size_t bytesWritten = 0;
@@ -493,6 +529,20 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
 
             return *stackFrame;
         }
+    case EntryKind::RawStackFrame:
+        {
+            const auto rawStackFrame = read_raw_stack_frame(*this);
+            if (!rawStackFrame) {
+                write_to_log(
+                    LogLevel::Fatal,
+                    "Reading raw stack frame failed."
+                );
+
+                return ErrorCode::ReadRawStackFrameFailed;
+            }
+
+            return *rawStackFrame;
+        }
     case EntryKind::EndOfFile:
         return ErrorCode::EndOfFile;
     case EntryKind::Unknown:
@@ -539,7 +589,7 @@ bool TraceFile::finalise(File executable) noexcept {
 
     struct StackFrameHash {
         size_t operator() (const StackFrame& stackFrame) const {
-            return std::hash<const char*>{}(stackFrame.functionNameLength == 0 ? nullptr : &stackFrame.functionName[0]);
+            return stackFrame.instructionPointer;
         }
     };
 
@@ -591,6 +641,10 @@ bool TraceFile::finalise(File executable) noexcept {
                 [&stackFrameMap, &preOptimisationStackFrameCount](auto& stackFrame){
                     ++preOptimisationStackFrameCount;
                     stackFrameMap[stackFrame].insert(stackFrame.id);
+                },
+                [&stackFrameMap, &preOptimisationStackFrameCount](auto& rawStackFrame){
+                    ++preOptimisationStackFrameCount;
+                    stackFrameMap[StackFrame(rawStackFrame)].insert(rawStackFrame.id);
                 },
                 [&procMaps](auto& readProcMaps) {
                     procMaps = readProcMaps;
@@ -782,6 +836,7 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
                 [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
+                [&trace](auto& rawStackFrame){ trace.stackFrames.emplace_back(rawStackFrame); },
                 [&trace](auto& procMaps){ trace.procMaps = procMaps; }
             },
             entry

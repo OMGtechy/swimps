@@ -185,7 +185,7 @@ void swimps::preload::sigprof_handler(const int, siginfo_t*, void* context) {
         const auto& stackFrames = std::get<1>(result);
 
         for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-            traceFile.add_stack_frame(stackFrames[i]);
+            traceFile.add_raw_stack_frame(stackFrames[i]);
         }
 
         traceFile.add_backtrace(backtrace);
