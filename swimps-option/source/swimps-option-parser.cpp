@@ -19,6 +19,7 @@ using swimps::log::LogLevel;
 namespace {
     constexpr char helpOptionName[] = "--help";
     constexpr char noTUIOptionName[] = "--no-tui";
+    constexpr char loadOptionName[] = "--load";
     constexpr char targetTraceFileOptionName[] = "--target-trace-file";
     constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
     constexpr char logLevelOptionName[] = "--log-level";
@@ -143,6 +144,8 @@ Options swimps::option::parse_command_line(
 
     while(argc > 0) {
         swimps_assert(argv != nullptr);
+        format_and_write_to_log<512>(LogLevel::Debug, "argv: %", *argv);
+
         const auto currentArg = std::string(*argv);
 
         if (currentArg == logLevelOptionName) {
@@ -174,6 +177,13 @@ Options swimps::option::parse_command_line(
             continue;
         }
 
+        if (currentArg == loadOptionName) {
+            options.load = true;
+            --argc;
+            ++argv;
+            continue;
+        }
+
         if (currentArg.compare(0, 1, "-") == 0) {
             // This helps catch trailing args that haven't been processed.
             throw ParseException(std::string("Invalid option: ") + currentArg);
@@ -194,6 +204,10 @@ Options swimps::option::parse_command_line(
     }
 
     if (options.targetTraceFile.empty()) {
+        if (options.load) {
+            throw ParseException("You must specify a target trace file to load.");
+        }
+
         swimps::time::TimeSpecification time;
         if (swimps::time::now(CLOCK_MONOTONIC, time) == -1) {
             throw ParseException("Could not get time to generate default trace file name.");
@@ -231,6 +245,8 @@ void swimps::option::print_help() {
               << "    --samples-per-second  How many samples to take per second when profiling.\n"
               << "\n"
               << "    --target-trace-file   Where to write the trace data.\n"
+              << "\n"
+              << "    --load                Load the target trace file instead of creating a new one.\n"
               << "\n"
               << "    --help                Shows this help message.\n"
               << std::endl;
