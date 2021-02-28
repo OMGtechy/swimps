@@ -12,6 +12,7 @@ namespace {
     const std::string stringOptionsTargetTraceFileLabel = "target-trace-file ";
     const std::string stringOptionsTargetProgramLabel = "target-program ";
     const std::string stringOptionsTargetProgramArgsLabel = "target-program-args ";
+    const std::string stringOptionsLoadLabel = "load ";
 
     std::string chompPrefix(std::string string, std::string prefix) {
         swimps_assert(string.starts_with(prefix));
@@ -35,6 +36,12 @@ Options swimps::option::Options::fromString(std::string string) {
     string = chompPrefix(string, stringOptionsTUILabel);
     swimps_assert(string.length() >= 1);
     result.tui = string [0] == '1';
+    string = chompPrefix(string.substr(1), "|");
+
+    // load
+    string = chompPrefix(string, stringOptionsLoadLabel);
+    swimps_assert(string.length() >= 1);
+    result.load = string[0] == '1';
     string = chompPrefix(string.substr(1), "|");
 
     // log level
@@ -99,6 +106,9 @@ std::string swimps::option::Options::toString() const {
 
     // tui
     stringStream << stringOptionsTUILabel << (tui ? "1" : "0") << "|";
+
+    // load
+    stringStream << stringOptionsLoadLabel << (load ? "1" : "0") << "|";
 
     // log level
     stringStream << stringOptionsLogLevelLabel;
