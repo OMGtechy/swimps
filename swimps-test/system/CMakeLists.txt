@@ -34,4 +34,10 @@ add_test(NAME swimps-system-test-help
 add_test(NAME swimps-system-test-relative-path
          COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/source/swimps-system-test.py zero traces ${swimps_BINARY_DIR}/swimps --no-tui ./swimps-dummy 0)
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/swimps_trace_swimps-dummy_1289386_91242411
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
+
+add_test(NAME swimps-system-test-load-profile
+         COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/source/swimps-system-test.py zero traces ${swimps_BINARY_DIR}/swimps --load --target-trace-file ${CMAKE_CURRENT_BINARY_DIR}/data/swimps_trace_swimps-dummy_1289386_91242411 --no-tui)
+
 add_executable(swimps-dummy source/swimps-dummy.cpp)
