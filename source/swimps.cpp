@@ -1,10 +1,10 @@
-#include "swimps-profile.h"
-#include "swimps-option-parser.h"
-#include "swimps-log.h"
-#include "swimps-analysis.h"
-#include "swimps-trace-file.h"
-#include "swimps-tui.h"
-#include "swimps-assert.h"
+#include "swimps-profile/swimps-profile.h"
+#include "swimps-option/swimps-option-parser.h"
+#include "swimps-log/swimps-log.h"
+#include "swimps-analysis/swimps-analysis.h"
+#include "swimps-trace-file/swimps-trace-file.h"
+#include "swimps-tui/swimps-tui.h"
+#include "swimps-assert/swimps-assert.h"
 
 #include <functional>
 #include <iostream>

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "swimps-log.h"
+#include "swimps-log/swimps-log.h"
 
 namespace swimps::option {
     //!

@@ -1,5 +1,5 @@
 #include "swimps-unit-test.h"
-#include "swimps-io.h"
+#include "swimps-io/swimps-io.h"
 
 SCENARIO("swimps::io::write_to_buffer", "[swimps-io]") {
     GIVEN("A zero-initialised target buffer of 8 bytes.") {

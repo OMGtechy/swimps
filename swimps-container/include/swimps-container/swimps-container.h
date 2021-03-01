@@ -4,7 +4,7 @@
 #include <array>
 #include <type_traits>
 
-#include "swimps-assert.h"
+#include "swimps-assert/swimps-assert.h"
 
 namespace swimps::container {
     //!

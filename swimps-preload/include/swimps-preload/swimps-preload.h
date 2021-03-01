@@ -1,6 +1,6 @@
 #pragma once
 
-#include "swimps-trace.h"
+#include "swimps-trace/swimps-trace.h"
 
 #include <tuple>
 #include <array>

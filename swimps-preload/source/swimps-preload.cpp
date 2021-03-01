@@ -1,9 +1,9 @@
-#include "swimps-time.h"
-#include "swimps-log.h"
-#include "swimps-trace-file.h"
-#include "swimps-io.h"
-#include "swimps-preload.h"
-#include "swimps-option-options.h"
+#include "swimps-time/swimps-time.h"
+#include "swimps-log/swimps-log.h"
+#include "swimps-trace-file/swimps-trace-file.h"
+#include "swimps-io/swimps-io.h"
+#include "swimps-preload/swimps-preload.h"
+#include "swimps-option/swimps-option-options.h"
 
 #include <atomic>
 #include <cerrno>

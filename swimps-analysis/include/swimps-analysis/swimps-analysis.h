@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "swimps-trace.h"
+#include "swimps-trace/swimps-trace.h"
 
 namespace swimps::analysis {
     struct Analysis {

@@ -1,5 +1,5 @@
 #include "swimps-benchmark-test.h"
-#include "swimps-preload.h"
+#include "swimps-preload/swimps-preload.h"
 
 #include "libunwind.h"
 

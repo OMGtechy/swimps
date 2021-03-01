@@ -1,4 +1,4 @@
-#include "swimps-trace-file.h"
+#include "swimps-trace-file/swimps-trace-file.h"
 
 #include <cstring>
 #include <cerrno>
@@ -15,10 +15,10 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
-#include "swimps-assert.h"
-#include "swimps-dwarf.h"
-#include "swimps-io.h"
-#include "swimps-log.h"
+#include "swimps-assert/swimps-assert.h"
+#include "swimps-dwarf/swimps-dwarf.h"
+#include "swimps-io/swimps-io.h"
+#include "swimps-log/swimps-log.h"
 
 using swimps::error::ErrorCode;
 using swimps::container::Span;

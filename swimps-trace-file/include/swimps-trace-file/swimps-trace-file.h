@@ -6,11 +6,11 @@
 
 #include <unistd.h>
 
-#include "swimps-container.h"
-#include "swimps-error.h"
-#include "swimps-io-file.h"
-#include "swimps-time.h"
-#include "swimps-trace.h"
+#include "swimps-container/swimps-container.h"
+#include "swimps-error/swimps-error.h"
+#include "swimps-io/swimps-io-file.h"
+#include "swimps-time/swimps-time.h"
+#include "swimps-trace/swimps-trace.h"
 
 namespace swimps::trace {
     //!

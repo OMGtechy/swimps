@@ -9,9 +9,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "swimps-assert.h"
-#include "swimps-container.h"
-#include "swimps-io.h"
+#include "swimps-assert/swimps-assert.h"
+#include "swimps-container/swimps-container.h"
+#include "swimps-io/swimps-io.h"
 
 namespace swimps::io {
     //!

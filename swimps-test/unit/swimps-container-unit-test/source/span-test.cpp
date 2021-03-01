@@ -1,5 +1,5 @@
 #include "swimps-unit-test.h"
-#include "swimps-container.h"
+#include "swimps-container/swimps-container.h"
 
 SCENARIO("swimps::container::span", "[swimps-container]") {
     GIVEN("A target buffer of 7 bytes, where each byte is initialised as its index.") {

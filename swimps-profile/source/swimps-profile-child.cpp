@@ -1,4 +1,4 @@
-#include "swimps-profile.h"
+#include "swimps-profile/swimps-profile.h"
 
 #include <cstdio>
 #include <cstring>
@@ -10,8 +10,8 @@
 #include <sys/ptrace.h>
 #include <linux/limits.h>
 
-#include "swimps-log.h"
-#include "swimps-option-parser.h"
+#include "swimps-log/swimps-log.h"
+#include "swimps-option/swimps-option-parser.h"
 
 extern char** environ;
 

@@ -1,4 +1,4 @@
-#include "swimps-time.h"
+#include "swimps-time/swimps-time.h"
 
 #include <signal.h>
 
