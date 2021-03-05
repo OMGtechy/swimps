@@ -1,6 +1,6 @@
 #pragma once
 
-#include "swimps-error.h"
+#include "swimps-error/swimps-error.h"
 
 #include <unistd.h>
 

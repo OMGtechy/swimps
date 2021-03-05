@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "swimps-log.h"
-#include "swimps-option-options.h"
+#include "swimps-log/swimps-log.h"
+#include "swimps-option/swimps-option-options.h"
 
 namespace swimps::option {
     //!

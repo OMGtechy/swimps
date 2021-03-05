@@ -6,7 +6,7 @@
 
 #include <libdwarf/libdwarf.h>
 
-#include "swimps-io-file.h"
+#include "swimps-io/swimps-io-file.h"
 
 namespace swimps::dwarf {
     //!

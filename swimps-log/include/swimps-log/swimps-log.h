@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "swimps-io.h"
+#include "swimps-io/swimps-io.h"
 
 namespace swimps::log {
 

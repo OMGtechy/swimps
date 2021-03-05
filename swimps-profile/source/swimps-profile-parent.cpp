@@ -1,6 +1,6 @@
-#include "swimps-profile.h"
-#include "swimps-io.h"
-#include "swimps-log.h"
+#include "swimps-profile/swimps-profile.h"
+#include "swimps-io/swimps-io.h"
+#include "swimps-log/swimps-log.h"
 
 #include <cerrno>
 #include <cstring>

@@ -1,10 +1,10 @@
-#include "swimps-dwarf.h"
+#include "swimps-dwarf/swimps-dwarf.h"
 
 #include <functional>
 
 #include <libdwarf/dwarf.h>
 
-#include "swimps-dwarf-debug-raii.h"
+#include "swimps-dwarf/swimps-dwarf-debug-raii.h"
 
 using swimps::dwarf::DwarfInfo;
 using swimps::io::File;

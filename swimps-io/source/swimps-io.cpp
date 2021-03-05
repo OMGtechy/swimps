@@ -1,4 +1,4 @@
-#include "swimps-io.h"
+#include "swimps-io/swimps-io.h"
 
 #include <algorithm>
 #include <cassert>
@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 
-#include "swimps-assert.h"
+#include "swimps-assert/swimps-assert.h"
 
 using swimps::container::Span;
 

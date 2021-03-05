@@ -1,5 +1,5 @@
 #include "swimps-intergration-test.h"
-#include "swimps-option-options.h"
+#include "swimps-option/swimps-option-options.h"
 
 SCENARIO("swimps::option::Options::toString, swimps::option::Options::fromString", "[swimps-option]") {
 

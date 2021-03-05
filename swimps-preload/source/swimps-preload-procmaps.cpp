@@ -1,4 +1,4 @@
-#include "swimps-preload.h"
+#include "swimps-preload/swimps-preload.h"
 
 #include <fstream>
 #include <string>
@@ -6,8 +6,8 @@
 #include <linux/limits.h>
 #include <unistd.h>
 
-#include "swimps-assert.h"
-#include "swimps-io.h"
+#include "swimps-assert/swimps-assert.h"
+#include "swimps-io/swimps-io.h"
 
 using swimps::io::format_string;
 using swimps::trace::ProcMaps;

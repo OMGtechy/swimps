@@ -1,4 +1,4 @@
-#include "swimps-tui.h"
+#include "swimps-tui/swimps-tui.h"
 
 #include <optional>
 #include <limits>
@@ -9,7 +9,7 @@
 
 #include <ncurses.h>
 
-#include "swimps-assert.h"
+#include "swimps-assert/swimps-assert.h"
 
 using swimps::analysis::Analysis;
 using CallTreeNode = Analysis::CallTreeNode;

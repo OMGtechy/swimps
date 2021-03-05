@@ -1,4 +1,4 @@
-#include "swimps-analysis.h"
+#include "swimps-analysis/swimps-analysis.h"
 
 #include <functional>
 

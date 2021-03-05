@@ -1,10 +1,10 @@
-#include "swimps-log.h"
+#include "swimps-log/swimps-log.h"
 
 #include <cstring>
 
 #include <unistd.h>
 
-#include "swimps-io-file.h"
+#include "swimps-io/swimps-io-file.h"
 
 using swimps::io::write_to_file_descriptor;
 

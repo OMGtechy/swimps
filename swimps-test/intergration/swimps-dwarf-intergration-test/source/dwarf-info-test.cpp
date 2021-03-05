@@ -2,8 +2,8 @@
 
 #include <filesystem>
 
-#include "swimps-dwarf.h"
-#include "swimps-io-file.h"
+#include "swimps-dwarf/swimps-dwarf.h"
+#include "swimps-io/swimps-io-file.h"
 
 using swimps::dwarf::DwarfInfo;
 using swimps::io::File;

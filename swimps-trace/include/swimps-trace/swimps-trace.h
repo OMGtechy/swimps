@@ -4,8 +4,8 @@
 #include <vector>
 #include <cstring>
 
-#include "swimps-dwarf.h"
-#include "swimps-time.h"
+#include "swimps-dwarf/swimps-dwarf.h"
+#include "swimps-time/swimps-time.h"
 
 namespace swimps::trace {
     // Signed integers chosen because it's easier to spot errors when they overflow.

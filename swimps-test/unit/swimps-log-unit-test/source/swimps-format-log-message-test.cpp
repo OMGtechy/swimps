@@ -1,5 +1,5 @@
 #include "swimps-unit-test.h"
-#include "swimps-log.h"
+#include "swimps-log/swimps-log.h"
 
 #include <cstring>
 

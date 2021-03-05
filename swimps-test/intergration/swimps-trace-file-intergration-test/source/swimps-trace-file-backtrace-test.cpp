@@ -3,9 +3,9 @@
 #include <cstdio>
 #include <array>
 
-#include "swimps-io.h"
-#include "swimps-trace-file.h"
-#include "swimps-container.h"
+#include "swimps-io/swimps-io.h"
+#include "swimps-trace-file/swimps-trace-file.h"
+#include "swimps-container/swimps-container.h"
 
 using namespace swimps::trace;
 

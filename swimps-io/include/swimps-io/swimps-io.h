@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <concepts>
 
-#include "swimps-container.h"
+#include "swimps-container/swimps-container.h"
 
 namespace swimps::io {
     //!
@@ -73,4 +73,4 @@ namespace swimps::io {
     std::size_t write_to_file_descriptor(int fileDescriptor, swimps::container::Span<const char> dataToWrite);
 }
 
-#include "swimps-io.impl"
+#include "swimps-io/swimps-io.impl"

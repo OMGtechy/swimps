@@ -1,6 +1,6 @@
-#include "swimps-option-options.h"
+#include "swimps-option/swimps-option-options.h"
 
-#include "swimps-assert.h"
+#include "swimps-assert/swimps-assert.h"
 
 #include <sstream>
 

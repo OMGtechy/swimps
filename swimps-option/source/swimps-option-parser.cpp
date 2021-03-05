@@ -1,14 +1,14 @@
-#include "swimps-option-parser.h"
+#include "swimps-option/swimps-option-parser.h"
 
 #include <iostream>
 #include <filesystem>
 #include <functional>
 #include <string>
 
-#include "swimps-assert.h"
-#include "swimps-error.h"
-#include "swimps-time.h"
-#include "swimps-trace-file.h"
+#include "swimps-assert/swimps-assert.h"
+#include "swimps-error/swimps-error.h"
+#include "swimps-time/swimps-time.h"
+#include "swimps-trace-file/swimps-trace-file.h"
 
 using namespace swimps::option;
 

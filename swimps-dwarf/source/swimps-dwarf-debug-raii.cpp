@@ -1,4 +1,4 @@
-#include "swimps-dwarf-debug-raii.h"
+#include "swimps-dwarf/swimps-dwarf-debug-raii.h"
 
 #include  <libelf.h>
 
