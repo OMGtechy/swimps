@@ -34,6 +34,7 @@ namespace {
 
     void print_node(WINDOW* const window,
                     const Trace& trace,
+                    const CallTreeNode* parentNode,
                     const CallTreeNode& rootNode,
                     expansion_state_t& expansionState,
                     line_mappings_t& lineMappings,
@@ -78,14 +79,20 @@ namespace {
                     ? ""
                     : (std::string(" | ") + std::string(sourceFilePath) + ":" + lineNumberString);
 
+            const std::string percentageOfParent =
+                parentNode == nullptr
+                    ? ""
+                    : ", " + std::to_string((rootNode.frequency / static_cast<float>(parentNode->frequency)) * 100) + "% of parent";
+
             wprintw(
                 window,
-                "%s %s %s (offset 0x%.8X, hit %s times)%s\n",
+                "%s %s %s (offset 0x%.8X, hit %s times%s)%s\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
                 demangleFailed ? functionName : demangledFunctionName.get(),
                 stackFrame == nullptr ? -1 : stackFrame->offset,
                 stackFrame == nullptr ? "?" : std::to_string(rootNode.frequency).c_str(),
+                percentageOfParent.c_str(),
                 sourceInfo.c_str()
             );
         }
@@ -98,6 +105,7 @@ namespace {
                 print_node(
                     window,
                     trace,
+                    &rootNode,
                     childNode,
                     expansionState,
                     lineMappings,
@@ -122,6 +130,7 @@ namespace {
             print_node(
                 window,
                 trace,
+                nullptr,
                 root,
                 expansionState,
                 lineMappings,
