@@ -14,7 +14,7 @@ Were you profiling something, building the code, seeing how high you could crank
 Did an error message appear? Were the results wrong? What didn't act as you expected?
 
 **What you expected to happen**
-No crash? Successfuly compilation? Some parameter to do something different?
+No crash? Successful compilation? Some parameter to do something different?
 
 **Reproduction steps**
 For example:
