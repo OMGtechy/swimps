@@ -1,6 +1,6 @@
 ---
 name: Feature suggestion
-about: Standard bug report template
+about: Standard feature suggestion template
 title: ''
 labels: enhancement
 assignees: OMGtechy
