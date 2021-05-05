@@ -1,0 +1,41 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        c-compiler: [gcc-10, clang]
+        cxx-compiler: [g++-10, clang++]
+        cmake-build-type: [DEBUG, RELEASE]
+        exclude:
+          - { c-compiler: clang, cxx-compiler: g++-10 }
+          - { c-compiler: gcc-10, cxx-compiler: clang++  }
+
+    steps:
+    - name: Install packages
+      run: sudo apt install gcc-10 g++-10 clang libunwind-dev libdwarf-dev libelf-dev
+
+    - uses: actions/checkout@v2
+
+    - name: build
+      uses: lukka/run-cmake@v2.5
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeBuildType: ${{ matrix.cmake-build.type }}
+        buildDirectory: ${{ github.workspace }}/build
+      env:
+        CC:   ${{ matrix.c-compiler }}
+        CXX:  ${{ matrix.cxx-compiler }}
+        
+    - name: test
+      working-directory: ${{ github.workspace }}/build
+      run: ctest -VV
