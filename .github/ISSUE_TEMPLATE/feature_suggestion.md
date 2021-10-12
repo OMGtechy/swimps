@@ -11,10 +11,10 @@ assignees: OMGtechy
 Were you profiling something, building the code, seeing how high you could crank the sample rate ... ?
 
 **How you can currently achieve it**
-Did an error message appear? Were the results wrong? What didn't act as you expected?
+Can you do what you want without this feature? Is it a convoluted process? Is it just not possible without a new feature?
 
 **What you would like instead**
-No crash? Successfuly compilation? Some parameter to do something different?
+A cool new function / class? A guide on how to do it on your own?
 
 **An example workflow**
 For example:
