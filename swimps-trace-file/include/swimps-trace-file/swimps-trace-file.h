@@ -6,6 +6,8 @@
 
 #include <unistd.h>
 
+#include <signalsafe/file.hpp>
+
 #include "swimps-container/swimps-container.h"
 #include "swimps-error/swimps-error.h"
 #include "swimps-io/swimps-io-file.h"
@@ -146,7 +148,7 @@ namespace swimps::trace {
         //!
         //! \note  This function is *not* async signal safe.
         //!
-        bool finalise(File executable) noexcept;
+        bool finalise(signalsafe::File executable) noexcept;
 
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;

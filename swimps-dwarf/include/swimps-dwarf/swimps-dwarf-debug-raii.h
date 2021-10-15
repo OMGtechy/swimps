@@ -2,12 +2,14 @@
 
 #include <libdwarf/libdwarf.h>
 
-#include "swimps-io/swimps-io-file.h"
+namespace signalsafe {
+    class File;
+}
 
 namespace swimps::dwarf {
     class DwarfDebugRAII final {
     public:
-        DwarfDebugRAII(swimps::io::File& executableFile);
+        DwarfDebugRAII(signalsafe::File& executableFile);
         ~DwarfDebugRAII();
 
         Dwarf_Debug& get_dwarf_debug() noexcept;

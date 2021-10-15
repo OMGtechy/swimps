@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstring>
 
+#include <linux/limits.h>
+
 #include "swimps-dwarf/swimps-dwarf.h"
 #include "swimps-time/swimps-time.h"
 

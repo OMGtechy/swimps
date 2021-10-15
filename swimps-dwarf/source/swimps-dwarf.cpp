@@ -4,10 +4,13 @@
 
 #include <libdwarf/dwarf.h>
 
+#include <signalsafe/file.hpp>
+
 #include "swimps-dwarf/swimps-dwarf-debug-raii.h"
 
+using signalsafe::File;
+
 using swimps::dwarf::DwarfInfo;
-using swimps::io::File;
 
 DwarfInfo::DwarfInfo(File&& executableFile) {
     DwarfDebugRAII dwarfDebugRAII(executableFile);

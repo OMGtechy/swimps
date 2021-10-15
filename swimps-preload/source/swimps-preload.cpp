@@ -16,7 +16,10 @@
 #include <signal.h>
 #include <limits.h>
 
-using swimps::io::File;
+#include <signalsafe/file.hpp>
+
+using signalsafe::File;
+
 using swimps::io::write_to_buffer;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
@@ -140,7 +143,7 @@ namespace {
         // Wait until the all in-progress samples are finished.
         while (sigprofRunningFlag.test_and_set());
 
-        auto executable = File::open(
+        auto executable = File::open_existing(
             { targetProgram.data(), strnlen(targetProgram.data(), targetProgram.size()) },
             File::Permissions::ReadOnly
         );

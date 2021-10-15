@@ -22,7 +22,6 @@
 
 using swimps::error::ErrorCode;
 using swimps::container::Span;
-using swimps::io::File;
 using swimps::io::format_string;
 using swimps::io::write_to_buffer;
 using swimps::log::format_and_write_to_log;
@@ -556,7 +555,7 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-bool TraceFile::finalise(File executable) noexcept {
+bool TraceFile::finalise(signalsafe::File executable) noexcept {
     if (! goToStartOfFile(*this)) {
         return false;
     }

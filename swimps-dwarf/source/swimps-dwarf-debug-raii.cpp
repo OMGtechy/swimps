@@ -2,14 +2,19 @@
 
 #include  <libelf.h>
 
+#include <signalsafe/file.hpp>
+
+#include "swimps-assert/swimps-assert.h"
+
+using signalsafe::File;
+
 using swimps::dwarf::DwarfDebugRAII;
-using swimps::io::File;
 
 DwarfDebugRAII::DwarfDebugRAII(File& executableFile) {
     Dwarf_Error dwarfError;
 
     m_initialised = DW_DLV_OK == dwarf_init(
-        executableFile.getFileDescriptor(),
+        executableFile.get_file_descriptor(),
         DW_DLC_READ,
         [](Dwarf_Error, Dwarf_Ptr){ swimps_assert(false); },
         nullptr,

@@ -2,14 +2,17 @@
 
 #include <filesystem>
 
+#include <signalsafe/file.hpp>
+
 #include "swimps-dwarf/swimps-dwarf.h"
 #include "swimps-io/swimps-io-file.h"
 
+using signalsafe::File;
+
 using swimps::dwarf::DwarfInfo;
-using swimps::io::File;
 using swimps::io::format_string;
 
-SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File", "[swimps-dwarf]") {
+SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string", "[swimps-dwarf]") {
     GIVEN("An executable with debug information across multiple CUs in it.") {
         char procExeBuffer[PATH_MAX + 1 /* null terminator */] = { };
         format_string("/proc/%/exe", procExeBuffer, getpid());
@@ -26,7 +29,7 @@ SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string, swimps::io::File"
 
         const auto testDataPath = thisExecutablePath.parent_path().string() + "/swimps-dwarf-intergration-test/data/cu-test";
 
-        auto executableFile = File::open({ testDataPath.c_str(), testDataPath.length() }, File::Permissions::ReadOnly);
+        auto executableFile = File::open_existing({ testDataPath.c_str(), testDataPath.length() }, File::Permissions::ReadOnly);
 
         WHEN("Its debug information is loaded.") {
             DwarfInfo dwarfInfo(std::move(executableFile));

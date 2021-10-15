@@ -23,6 +23,15 @@ if(SWIMPS_ENABLE_COVERAGE)
     link_libraries(gcov)
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+    libsignalsafe
+    GIT_REPOSITORY https://github.com/OMGtechy/libsignalsafe.git
+    GIT_TAG 95d86a8db75ffc892385d390229adaacde81fd9c
+)
+
+FetchContent_MakeAvailable(libsignalsafe)
+
 add_subdirectory(swimps-test)
 add_subdirectory(swimps-analysis)
 add_subdirectory(swimps-option)

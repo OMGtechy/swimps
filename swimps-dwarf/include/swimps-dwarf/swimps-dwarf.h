@@ -2,11 +2,14 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <vector>
 
 #include <libdwarf/libdwarf.h>
 
-#include "swimps-io/swimps-io-file.h"
+namespace signalsafe {
+    class File;
+}
 
 namespace swimps::dwarf {
     //!
@@ -19,7 +22,7 @@ namespace swimps::dwarf {
         //!
         //! \param[in]  executableFile  The executable to extract debug information of.
         //!
-        DwarfInfo(swimps::io::File&& executableFile);
+        DwarfInfo(signalsafe::File&& executableFile);
 
         using address_t = uint64_t;
 
