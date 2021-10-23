@@ -4,8 +4,6 @@
 
 #include <unistd.h>
 
-#include "swimps-io/swimps-io-file.h"
-
 using swimps::io::write_to_file_descriptor;
 
 namespace {

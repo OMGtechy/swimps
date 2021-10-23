@@ -10,7 +10,6 @@
 
 #include "swimps-container/swimps-container.h"
 #include "swimps-error/swimps-error.h"
-#include "swimps-io/swimps-io-file.h"
 #include "swimps-time/swimps-time.h"
 #include "swimps-trace/swimps-trace.h"
 

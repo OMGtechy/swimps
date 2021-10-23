@@ -2,10 +2,12 @@
 
 #include <filesystem>
 
+#include <unistd.h>
+
 #include <signalsafe/file.hpp>
 
+#include "swimps-io/swimps-io.h"
 #include "swimps-dwarf/swimps-dwarf.h"
-#include "swimps-io/swimps-io-file.h"
 
 using signalsafe::File;
 

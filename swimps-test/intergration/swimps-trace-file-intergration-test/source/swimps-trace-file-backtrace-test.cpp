@@ -9,8 +9,6 @@
 
 using namespace swimps::trace;
 
-using swimps::io::File;
-
 SCENARIO("swimps::trace::TraceFile::read_backtrace, "
          "TraceFile::create_temporary, "
          "swimps::trace::Backtrace", "[swimps-trace-file]") {
