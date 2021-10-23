@@ -58,9 +58,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    auto traceFile = TraceFile::open(
+    auto traceFile = TraceFile::open_existing(
         { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
-        swimps::io::File::Permissions::ReadOnly
+        TraceFile::Permissions::ReadOnly
     );
 
     const auto trace = traceFile.read_trace();

@@ -18,7 +18,7 @@ namespace swimps::trace {
     //!
     //! \brief  Represents a swimps trace file.
     //!
-    class TraceFile : public swimps::io::File {
+    class TraceFile : public signalsafe::File {
     public:
         //!
         //! \brief  Creates an empty trace file instance.
@@ -33,19 +33,16 @@ namespace swimps::trace {
         //!
         //! \note  This function is async signal safe.
         //!
-        static TraceFile create(swimps::container::Span<const char> path, Permissions permissions) noexcept;
+        static TraceFile create_and_open(swimps::container::Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Creates a temporary trace file.
-        //!
-        //! \param[in]  pathPrefix   The prefix to add to the temporary file name.
-        //! \param[in]  permissions  The permissions to create the file with.
         //!
         //! \returns  The temporary trace file.
         //!
         //! \note  This function is async signal safe.
         //!
-        static TraceFile create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
+        static TraceFile create_temporary() noexcept;
 
         //!
         //!  \brief  Opens a trace file.
@@ -57,7 +54,7 @@ namespace swimps::trace {
         //!
         //!  \note  This function is async signal safe.
         //!
-        static TraceFile open(swimps::container::Span<const char> path, Permissions permissions) noexcept;
+        static TraceFile open_existing(swimps::container::Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Sets the proc maps.

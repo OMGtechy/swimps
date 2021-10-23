@@ -50,19 +50,16 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        static File create(Span<const char> path, Permissions permissions) noexcept;
+        static File create_and_open(Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Creates a temporary file.
-        //!
-        //! \param[in]  pathPrefix   The prefix to add to the temporary file name.
-        //! \param[in]  permissions  The permissions to create the file with.
         //!
         //! \returns  The temporary file.
         //!
         //! \note  This function is async signal safe.
         //!
-        static File create_temporary(swimps::container::Span<const char> pathPrefix, Permissions permissions) noexcept;
+        static File create_and_open_temporary() noexcept;
 
         //!
         //!  \brief  Opens a file.
@@ -74,7 +71,7 @@ namespace swimps::io {
         //!
         //!  \note  This function is async signal safe.
         //!
-        static File open(Span<const char> path, Permissions permissions) noexcept;
+        static File open_existing(Span<const char> path, Permissions permissions) noexcept;
 
         //!
         //!  \brief  Move constructs a File.

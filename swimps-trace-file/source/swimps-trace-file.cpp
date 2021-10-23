@@ -116,16 +116,16 @@ namespace {
     };
 
     int read_trace_file_marker(TraceFile& traceFile) {
-        char buffer[sizeof swimps_v1_trace_file_marker];
+        std::array<std::byte, sizeof swimps_v1_trace_file_marker> buffer;
         if (! traceFile.read(buffer)) {
             return -1;
         }
 
-        return memcmp(buffer, swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
+        return memcmp(buffer.data(), swimps_v1_trace_file_marker, sizeof swimps_v1_trace_file_marker) == 0 ? 0 : -1;
     }
 
     bool goToStartOfFile(TraceFile& file) {
-        if (! file.seekToStart()) {
+        if (file.seek(0, TraceFile::OffsetInterpretation::Absolute) != 0) {
             format_and_write_to_log<512>(
                 LogLevel::Fatal,
                 "Could not lseek to start of trace file to begin finalising, errno % (%).",
@@ -343,10 +343,10 @@ namespace {
     }
 }
 
-TraceFile TraceFile::create(const Span<const char> path, const Permissions permissions) noexcept {
+TraceFile TraceFile::create_and_open(const Span<const char> path, const Permissions permissions) noexcept {
     TraceFile traceFile;
-    traceFile.create_internal(
-        path,
+    traceFile.create_and_open_internal(
+        { &path[0], path.current_size() },
         permissions
     );
 
@@ -357,12 +357,9 @@ TraceFile TraceFile::create(const Span<const char> path, const Permissions permi
     return traceFile;
 }
 
-TraceFile TraceFile::create_temporary(const Span<const char> pathPrefix, const Permissions permissions) noexcept {
+TraceFile TraceFile::create_temporary() noexcept {
     TraceFile traceFile;
-    traceFile.create_temporary_internal(
-        pathPrefix,
-        permissions
-    );
+    traceFile.create_and_open_temporary_internal();
 
     // Write out the swimps marker to make such files easily recognisable
     const auto writeMarkerReturnValue = write_trace_file_marker(traceFile);
@@ -371,9 +368,9 @@ TraceFile TraceFile::create_temporary(const Span<const char> pathPrefix, const P
     return traceFile;
 }
 
-TraceFile TraceFile::open(const Span<const char> path, const Permissions permissions) noexcept {
+TraceFile TraceFile::open_existing(const Span<const char> path, const Permissions permissions) noexcept {
     TraceFile traceFile;
-    traceFile.open_internal(path, permissions);
+    traceFile.open_existing_internal({ &path[0], path.current_size() }, permissions);
 
     swimps_assert(isSwimpsTraceFile(traceFile));
 
@@ -698,7 +695,9 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
         backtracesSharingStackFrameID.push_back(newBacktrace);
     }
 
-    auto tempFile = TraceFile::create_temporary("swimps_finalise_temp_file_", TraceFile::Permissions::ReadWrite);;
+    const auto traceFilePath = get_path();
+    const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
+    auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
 
     format_and_write_to_log<512>(
         LogLevel::Debug,
@@ -808,11 +807,7 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
         tempFile.add_stack_frame(stackFrame);
     }
 
-    const auto traceFilePath = getPath();
-    const std::string traceFilePathString(&traceFilePath[0], traceFilePath.current_size());
-    const auto tempFilePath = tempFile.getPath();
-    const std::string tempFilePathString(&tempFilePath[0], tempFilePath.current_size());
-    std::filesystem::copy(tempFilePathString, traceFilePathString, std::filesystem::copy_options::overwrite_existing);
+    std::filesystem::copy(tempFilePath, traceFilePath, std::filesystem::copy_options::overwrite_existing);
 
     return true;
 }

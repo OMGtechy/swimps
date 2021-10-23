@@ -13,22 +13,21 @@ File::~File() {
     }
 }
 
-File File::create(const Span<const char> path,
-                  const Permissions permissions) noexcept {
+File File::create_and_open(const Span<const char> path,
+                           const Permissions permissions) noexcept {
     File file;
     file.create_internal(path, permissions);
     return file;
 }
 
-File File::create_temporary(const Span<const char> pathPrefix,
-                            const Permissions permissions) noexcept {
+File File::create_and_open_temporary() noexcept {
     File file;
-    file.create_temporary_internal(pathPrefix, permissions);
+    file.create_temporary_internal("swimps-temp", Permissions::ReadWrite);
     return file;
 }
 
-File File::open(const Span<const char> path,
-                const Permissions permissions) noexcept {
+File File::open_existing(const Span<const char> path,
+                         const Permissions permissions) noexcept {
     File file;
     file.open_internal(path, permissions);
     return file;

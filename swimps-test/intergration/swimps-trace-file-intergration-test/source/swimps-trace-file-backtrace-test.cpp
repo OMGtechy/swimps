@@ -15,7 +15,7 @@ SCENARIO("swimps::trace::TraceFile::read_backtrace, "
          "TraceFile::create_temporary, "
          "swimps::trace::Backtrace", "[swimps-trace-file]") {
     GIVEN("A temp file.") {
-        auto targetFile = TraceFile::create_temporary("swimps::trace::file::read_backtrace_test_", File::Permissions::ReadWrite);
+        auto targetFile = TraceFile::create_temporary();
 
         Backtrace writtenBacktrace;
         writtenBacktrace.id = 9;
@@ -28,7 +28,7 @@ SCENARIO("swimps::trace::TraceFile::read_backtrace, "
             targetFile.add_backtrace(writtenBacktrace);
 
             AND_WHEN("It is read back.") {
-                REQUIRE(targetFile.seekToStart());
+                REQUIRE(targetFile.seek(0, TraceFile::OffsetInterpretation::Absolute) == 0);
 
                 const auto entry = targetFile.read_next_entry();
 
