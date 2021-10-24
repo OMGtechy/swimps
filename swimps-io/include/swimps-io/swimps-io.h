@@ -56,21 +56,6 @@ namespace swimps::io {
         swimps::container::Span<const char> format,
         swimps::container::Span<char> target,
         const ArgTypes ... args);
-
-    //!
-    //!  \brief  Writes the provided data to the file specified.
-    //!
-    //!  \param[in]  fileDescriptor  The file descriptor to write the data to.
-    //!  \param[in]  dataToWrite     The data to be written to the file.
-    //!
-    //!  \returns  The number of bytes written to the file.
-    //!
-    //!  \note  This function is async signal safe.
-    //!
-    //!  \note  This is only meant for things like STDOUT and STDERR,
-    //!         if you want to write to a proper file take a look at swimps::io::File::write.
-    //!
-    std::size_t write_to_file_descriptor(int fileDescriptor, swimps::container::Span<const char> dataToWrite);
 }
 
 #include "swimps-io/swimps-io.impl"

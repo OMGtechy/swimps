@@ -4,7 +4,9 @@
 
 #include <unistd.h>
 
-using swimps::io::write_to_file_descriptor;
+#include <signalsafe/file.hpp>
+
+using signalsafe::File;
 
 namespace {
     static swimps::log::LogLevel logLevelFilter = swimps::log::LogLevel::Debug;
@@ -81,18 +83,16 @@ size_t swimps::log::write_to_log(
         targetBuffer
     );
 
-    int targetFileDescriptor;
+    File& targetFile = [](const swimps::log::LogLevel ll) -> File& {
+        switch(ll) {
+        case swimps::log::LogLevel::Fatal:
+        case swimps::log::LogLevel::Error:
+        case swimps::log::LogLevel::Warning:
+            return signalsafe::standard_error();
+        default:
+            return signalsafe::standard_output();
+        }
+    }(logLevel);
 
-    switch(logLevel) {
-    case swimps::log::LogLevel::Fatal:
-    case swimps::log::LogLevel::Error:
-    case swimps::log::LogLevel::Warning:
-        targetFileDescriptor = STDERR_FILENO;
-        break;
-    default:
-        targetFileDescriptor = STDOUT_FILENO;
-        break;
-    }
-
-    return write_to_file_descriptor(targetFileDescriptor, { targetBuffer, bytesWritten });
+    return targetFile.write({ targetBuffer, bytesWritten });
 }
