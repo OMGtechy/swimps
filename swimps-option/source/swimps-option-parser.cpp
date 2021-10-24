@@ -232,7 +232,7 @@ void swimps::option::print_help() {
     std::cout << "swimps: an open-source performance analysis tool.\n"
               << "\n"
               << "  Usage:   swimps [options]          [program]   [program arguments]\n"
-              << "  Example: swimps --log--level debug ./myprogram --program-specific-argument\n"
+              << "  Example: swimps --log-level debug ./myprogram --program-specific-argument\n"
               << "\n"
               << "  Options:\n"
               << "\n"
