@@ -5,8 +5,10 @@
 #include <unistd.h>
 
 #include <signalsafe/file.hpp>
+#include <signalsafe/memory.hpp>
 
 using signalsafe::File;
+using signalsafe::memory::copy_no_overlap;
 
 namespace {
     static swimps::log::LogLevel logLevelFilter = swimps::log::LogLevel::Debug;
@@ -38,26 +40,26 @@ size_t swimps::log::format_message(
     size_t totalBytesWritten = 0;
     size_t newBytesWritten = 0;
 
-    newBytesWritten = swimps::io::write_to_buffer(
-        { *logLevelString, sizeof(*logLevelString) - 1 },
-        target
+    newBytesWritten = copy_no_overlap(
+        std::span<const char>{ *logLevelString, sizeof(*logLevelString) - 1 },
+        std::span<char>{ &target[0], target.current_size() }
     );
 
     totalBytesWritten += newBytesWritten;
     target += newBytesWritten;
 
-    newBytesWritten = swimps::io::write_to_buffer(
-        message,
-        target
+    newBytesWritten = copy_no_overlap(
+        std::span<const char>{ &message[0], message.current_size() },
+        std::span<char>{ &target[0], target.current_size() }
     );
 
     totalBytesWritten += newBytesWritten;
     target += newBytesWritten;
 
     const char newLine[] = { '\n' };
-    newBytesWritten = swimps::io::write_to_buffer(
-        newLine,
-        target
+    newBytesWritten = copy_no_overlap(
+        std::span<const char>(newLine),
+        std::span<char>{ &target[0], target.current_size() }
     );
 
     totalBytesWritten += newBytesWritten;

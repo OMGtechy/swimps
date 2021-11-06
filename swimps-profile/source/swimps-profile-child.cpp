@@ -10,8 +10,12 @@
 #include <sys/ptrace.h>
 #include <linux/limits.h>
 
+#include <signalsafe/memory.hpp>
+
 #include "swimps-log/swimps-log.h"
 #include "swimps-option/swimps-option-parser.h"
+
+using signalsafe::memory::copy_no_overlap;
 
 extern char** environ;
 
@@ -125,9 +129,9 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         char targetBuffer[2048] = { };
         swimps::container::Span<char> targetSpan(targetBuffer);
 
-        targetSpan += swimps::io::write_to_buffer(
-            { options.targetProgram.c_str(), options.targetProgram.length() },
-            targetSpan
+        targetSpan += copy_no_overlap(
+            std::span<const char>{ options.targetProgram.c_str(), options.targetProgram.length() },
+            std::span<char>(&targetSpan[0], targetSpan.current_size())
         );
 
         for (auto& arg : options.targetProgramArgs) {

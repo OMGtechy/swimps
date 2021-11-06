@@ -17,10 +17,11 @@
 #include <limits.h>
 
 #include <signalsafe/file.hpp>
+#include <signalsafe/memory.hpp>
 
 using signalsafe::File;
+using signalsafe::memory::copy_no_overlap;
 
-using swimps::io::write_to_buffer;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
 using swimps::preload::get_proc_maps;
@@ -42,7 +43,7 @@ namespace {
     template <std::size_t TraceFilePathSize>
     TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const Options& options) {
         const size_t pathLength = std::min(options.targetTraceFile.size(), TraceFilePathSize);
-        swimps::io::write_to_buffer({ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
+        copy_no_overlap(std::span<const char>{ options.targetTraceFile.c_str(), options.targetTraceFile.size() }, traceFilePath);
         return TraceFile::create_and_open({ traceFilePath.data(), pathLength }, TraceFile::Permissions::ReadWrite);
     }
 
@@ -86,8 +87,8 @@ namespace {
         const auto options = load_options();
         swimps::log::setLevelToLog(options.logLevel);
         write_to_log(LogLevel::Debug, "Preload ctor running.");
-        write_to_buffer(
-            { options.targetProgram.c_str(), options.targetProgram.length() },
+        copy_no_overlap(
+            std::span<const char>{ options.targetProgram.c_str(), options.targetProgram.length() },
             targetProgram
         );
 

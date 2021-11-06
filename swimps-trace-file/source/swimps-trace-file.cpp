@@ -15,15 +15,18 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
+#include <signalsafe/memory.hpp>
+
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-dwarf/swimps-dwarf.h"
 #include "swimps-io/swimps-io.h"
 #include "swimps-log/swimps-log.h"
 
+using signalsafe::memory::copy_no_overlap;
+
 using swimps::error::ErrorCode;
 using swimps::container::Span;
 using swimps::io::format_string;
-using swimps::io::write_to_buffer;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
@@ -751,8 +754,8 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
         if (dwarfLineInfoIter != dwarfLineInfos.cend()) {
             if (dwarfLineInfoIter->getSourceFilePath()) {
                 const auto sourceFilePath = dwarfLineInfoIter->getSourceFilePath()->string();
-                const auto bytesWritten = write_to_buffer(
-                    { sourceFilePath.c_str(), sourceFilePath.length() },
+                const auto bytesWritten = copy_no_overlap(
+                    std::span<const char>{ sourceFilePath.c_str(), sourceFilePath.length() },
                     stackFrame.sourceFilePath
                 );
 
@@ -778,8 +781,8 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
 
             if (functionInfoIter != dwarfFunctionInfos.cend()) {
                 const auto& name = functionInfoIter->getName();
-                stackFrame.functionNameLength = write_to_buffer(
-                    { name.c_str(), name.length() },
+                stackFrame.functionNameLength = copy_no_overlap(
+                    std::span<const char>{ name.c_str(), name.length() },
                     stackFrame.functionName
                 );
             }
