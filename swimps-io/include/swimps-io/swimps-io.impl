@@ -4,6 +4,10 @@
 
 #include <tuple>
 
+#include <signalsafe/memory.hpp>
+
+using signalsafe::memory::copy_no_overlap;
+
 namespace {
     template <typename T>
     constexpr inline std::tuple<std::span<char>, size_t> format_integer(
@@ -138,13 +142,13 @@ namespace swimps::io {
                 bytesWritten += std::get<size_t>(formatResult);
 
             } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
-                const char* const value = firstArg;
-                for (size_t index = 0; value[index] != '\0' && target.size() != 0; ++index)
-                {
-                    target[0] = value[index];
-                    target = target.last(target.size() - 1);
-                    bytesWritten += 1;
-                }
+                const auto newBytesWritten = copy_no_overlap(
+                    std::span<const char>(firstArg, strlen(firstArg)),
+                    target
+                );
+
+                target = target.last(target.size() - newBytesWritten);
+                bytesWritten += newBytesWritten;
             } else {
                 // The first parameter here nudges compilers into printing the offending type.
                 static_assert(std::is_same_v<T, void>, "Formatting this type is not supported.");
