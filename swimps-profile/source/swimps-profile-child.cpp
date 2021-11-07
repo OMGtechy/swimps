@@ -12,7 +12,6 @@
 
 #include <signalsafe/memory.hpp>
 
-#include "swimps-container/swimps-container.h"
 #include "swimps-log/swimps-log.h"
 #include "swimps-option/swimps-option-parser.h"
 
@@ -128,24 +127,24 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
 
     {
         char targetBuffer[2048] = { };
-        swimps::container::Span<char> targetSpan(targetBuffer);
+        std::span<char> targetSpan(targetBuffer);
 
-        targetSpan += copy_no_overlap(
+        targetSpan = targetSpan.last(targetSpan.size() - copy_no_overlap(
             std::span<const char>{ options.targetProgram.c_str(), options.targetProgram.length() },
-            std::span<char>(&targetSpan[0], targetSpan.current_size())
-        );
+            targetSpan
+        ));
 
         for (auto& arg : options.targetProgramArgs) {
-            targetSpan += swimps::io::format_string(
+            targetSpan = targetSpan.last(targetSpan.size() - swimps::io::format_string(
                 " %",
-                std::span<char>(&targetSpan[0], targetSpan.current_size()),
+                targetSpan,
                 arg.c_str()
-            );
+            ));
         }
 
         swimps::log::write_to_log(
             swimps::log::LogLevel::Info,
-            { targetBuffer, targetSpan.original_size() - targetSpan.current_size() }
+            { targetBuffer, sizeof(targetBuffer) - targetSpan.size() }
         );
     }
 
