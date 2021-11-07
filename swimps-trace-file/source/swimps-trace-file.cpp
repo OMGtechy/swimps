@@ -346,6 +346,13 @@ namespace {
 }
 
 TraceFile TraceFile::create_and_open(std::string_view path, const Permissions permissions) noexcept {
+    format_and_write_to_log<128>(
+        LogLevel::Debug,
+        "%: creating %",
+        __func__,
+        path.data()
+    );
+
     TraceFile traceFile;
     traceFile.create_and_open_internal(
         path,
@@ -371,6 +378,13 @@ TraceFile TraceFile::create_temporary() noexcept {
 }
 
 TraceFile TraceFile::open_existing(std::string_view path, const Permissions permissions) noexcept {
+    format_and_write_to_log<128>(
+        LogLevel::Debug,
+        "%: opening %",
+        __func__,
+        path.data()
+    );
+
     TraceFile traceFile;
     traceFile.open_existing_internal(path, permissions);
 
