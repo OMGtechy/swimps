@@ -7,6 +7,7 @@
 namespace {
     const std::string stringOptionsHelpLabel = "help ";
     const std::string stringOptionsTUILabel = "tui ";
+    const std::string stringOptionsPtraceLabel = "ptrace ";
     const std::string stringOptionsLogLevelLabel = "log-level ";
     const std::string stringOptionsSamplesPerSecondLabel = "samples-per-second ";
     const std::string stringOptionsTargetTraceFileLabel = "target-trace-file ";
@@ -36,6 +37,12 @@ Options swimps::option::Options::fromString(std::string string) {
     string = chompPrefix(string, stringOptionsTUILabel);
     swimps_assert(string.length() >= 1);
     result.tui = string [0] == '1';
+    string = chompPrefix(string.substr(1), "|");
+
+    // ptrace
+    string = chompPrefix(string, stringOptionsPtraceLabel);
+    swimps_assert(string.length() >= 1);
+    result.ptrace = string [0] == '1';
     string = chompPrefix(string.substr(1), "|");
 
     // load
@@ -106,6 +113,9 @@ std::string swimps::option::Options::toString() const {
 
     // tui
     stringStream << stringOptionsTUILabel << (tui ? "1" : "0") << "|";
+
+    // ptrace
+    stringStream << stringOptionsPtraceLabel << (tui ? "1" : "0") << "|";
 
     // load
     stringStream << stringOptionsLoadLabel << (load ? "1" : "0") << "|";

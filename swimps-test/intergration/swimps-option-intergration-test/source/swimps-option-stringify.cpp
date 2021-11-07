@@ -23,6 +23,7 @@ SCENARIO("swimps::option::Options::toString, swimps::option::Options::fromString
             true,
             false,
             false,
+            false,
             swimps::log::LogLevel::Debug,
             42,
             "amazing-swimps-trace-name",

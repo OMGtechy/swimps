@@ -19,6 +19,7 @@ using swimps::log::LogLevel;
 namespace {
     constexpr char helpOptionName[] = "--help";
     constexpr char noTUIOptionName[] = "--no-tui";
+    constexpr char noPtraceOptionName[] = "--no-ptrace";
     constexpr char loadOptionName[] = "--load";
     constexpr char targetTraceFileOptionName[] = "--target-trace-file";
     constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
@@ -165,6 +166,13 @@ Options swimps::option::parse_command_line(
 
         if (currentArg == noTUIOptionName) {
             options.tui = false;
+            --argc;
+            ++argv;
+            continue;
+        }
+
+        if (currentArg == noPtraceOptionName) {
+            options.ptrace = false;
             --argc;
             ++argv;
             continue;

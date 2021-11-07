@@ -31,15 +31,22 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     }
 
     // Enable tracing of the program we're about to exec into
-    if (ptrace(PTRACE_TRACEME) == -1) {
-        swimps::log::format_and_write_to_log<128>(
-            swimps::log::LogLevel::Fatal,
-            "ptrace(PTRACE_TRACEME) failed, errno % (%).",
-            errno,
-            strerror(errno)
+    if (options.ptrace) {
+        swimps::log::write_to_log(
+            swimps::log::LogLevel::Debug,
+            "Running ptrace(PTRACE_TRACEME)."
         );
 
-        return swimps::error::ErrorCode::PtraceFailed;
+        if (ptrace(PTRACE_TRACEME) == -1) {
+            swimps::log::format_and_write_to_log<128>(
+                swimps::log::LogLevel::Fatal,
+                "ptrace(PTRACE_TRACEME) failed, errno % (%).",
+                errno,
+                strerror(errno)
+            );
+
+            return swimps::error::ErrorCode::PtraceFailed;
+        }
     }
 
     // Work out how big the environment is

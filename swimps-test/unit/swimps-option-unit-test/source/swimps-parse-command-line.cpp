@@ -170,6 +170,25 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
 
     }
 
+    GIVEN("A no ptrace option.") {
+        MockArguments<3> args({
+            "/fake/path/swimps",
+            "--no-ptrace",
+            "dummy"
+        });
+
+        WHEN("It is parsed.") {
+            const auto options = option::parse_command_line(
+                args.argc(),
+                args.argv()
+            );
+
+            THEN("The ptrace option is set accordingly.") {
+                REQUIRE(! options.ptrace);
+            }
+        }
+    }
+
     GIVEN("An invalid option value." ) {
         MockArguments<3> args({
             "/fake/path/swimps",
