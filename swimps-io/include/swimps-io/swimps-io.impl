@@ -139,7 +139,7 @@ namespace swimps::io {
 
             } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
                 const char* const value = firstArg;
-                for (size_t index = 0; value[index] != '\0' || target.size() == 0; ++index)
+                for (size_t index = 0; value[index] != '\0' && target.size() != 0; ++index)
                 {
                     target[0] = value[index];
                     target = target.last(target.size() - 1);
