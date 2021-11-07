@@ -70,7 +70,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
-                swimps::container::Span<char>(targetBuffer, 2),
+                std::span<char>(targetBuffer, 2),
                 7)
             ;
 
@@ -97,7 +97,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
-                swimps::container::Span<char>(targetBuffer, 2),
+                std::span<char>(targetBuffer, 2),
                 -1
             );
 
@@ -124,7 +124,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
-                swimps::container::Span<char>(targetBuffer, 1),
+                std::span<char>(targetBuffer, 1),
                 -9
             );
 
@@ -150,7 +150,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
-                swimps::container::Span<char>(targetBuffer, 2),
+                std::span<char>(targetBuffer, 2),
                 1234
             );
 
@@ -178,7 +178,7 @@ SCENARIO("swimps::io::format_string", "[swimps-io]") {
             const char formatBuffer[] = { '%' };
             const size_t bytesWritten = swimps::io::format_string(
                 formatBuffer,
-                swimps::container::Span<char>(targetBuffer, 4),
+                std::span<char>(targetBuffer, 4),
                 -1234
             );
 

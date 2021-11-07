@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "swimps-container/swimps-container.h"
 #include "swimps-io/swimps-io.h"
 
 namespace swimps::log {
@@ -89,7 +90,7 @@ namespace swimps::log {
         char targetBuffer[targetBufferSize] = { };
 
         const size_t bytesWritten = swimps::io::format_string(
-            format,
+            std::span<const char>(&format[0], format.current_size()),
             targetBuffer,
             args...
         );

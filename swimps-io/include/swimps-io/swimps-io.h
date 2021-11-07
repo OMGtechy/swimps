@@ -5,8 +5,7 @@
 #include <cstdarg>
 #include <cstddef>
 #include <concepts>
-
-#include "swimps-container/swimps-container.h"
+#include <span>
 
 namespace swimps::io {
     //!
@@ -33,8 +32,8 @@ namespace swimps::io {
     //!
     template <typename T, typename... ArgTypes>
     std::size_t format_string(
-        swimps::container::Span<const char> format,
-        swimps::container::Span<char> target,
+        std::span<const char> format,
+        std::span<char> target,
         const ArgTypes ... args);
 }
 

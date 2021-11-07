@@ -137,7 +137,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         for (auto& arg : options.targetProgramArgs) {
             targetSpan += swimps::io::format_string(
                 " %",
-                targetSpan,
+                std::span<char>(&targetSpan[0], targetSpan.current_size()),
                 arg.c_str()
             );
         }

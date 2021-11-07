@@ -1,11 +1,13 @@
 #pragma once
 
+#include "swimps-assert/swimps-assert.h"
+
 #include <tuple>
 
 namespace {
     template <typename T>
-    constexpr inline std::tuple<swimps::container::Span<char>, size_t> format_integer(
-        swimps::container::Span<char> target,
+    constexpr inline std::tuple<std::span<char>, size_t> format_integer(
+        std::span<char> target,
         T value)
         requires std::integral<T> {
 
@@ -13,22 +15,22 @@ namespace {
 
         if (value == 0) {
             target[0] = '0';
-            target += 1;
+            target = target.last(target.size() - 1);
             bytesWritten += 1;
             return std::make_tuple(target, bytesWritten);
         }
 
         // If the value is a negative, write '-' into the target buffer.
         if (value < 0) {
-            swimps_assert(target.current_size() != 0);
+            swimps_assert(target.size() != 0);
             target[0] = '-';
             bytesWritten += 1;
 
-            target += 1;
+            target = target.last(target.size() - 1);
 
             value = value * -1;
 
-            if (target.current_size() == 0) {
+            if (target.size() == 0) {
                 // No room for anything other then the '-' sign.
                 return std::make_tuple(target, bytesWritten);
             }
@@ -44,17 +46,17 @@ namespace {
         const unsigned int numberOfDigitsInValue = std::floor(std::log10(absValue)) + 1;
         unsigned int numberOfDigitsInValueLeft = numberOfDigitsInValue;
 
-        swimps_assert(target.current_size() != 0);
+        swimps_assert(target.size() != 0);
 
         // Ensure that we do not write to memory we do not own.
-        while (target.current_size() <= numberOfDigitsInValueLeft - 1)
+        while (target.size() <= numberOfDigitsInValueLeft - 1)
         {
             numberOfDigitsInValueLeft -= 1;
             value /= 10;
         }
 
         unsigned int numberOfDigitsWritten = 0;
-        while (target.current_size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
+        while (target.size() > 0 && value > 0 && numberOfDigitsInValueLeft != 0)
         {
             target[numberOfDigitsInValueLeft - 1] = '0' + (value % 10);
             bytesWritten += 1;
@@ -63,29 +65,29 @@ namespace {
             value /= 10;
         }
 
-        target += numberOfDigitsWritten;
+        target = target.last(target.size() - numberOfDigitsWritten);
         return std::make_tuple(target, bytesWritten);
     }
 }
 
 namespace swimps::io {
     inline size_t format_string(
-        swimps::container::Span<const char> format,
-        swimps::container::Span<char> target) {
-        const size_t bytesToWrite = std::min(target.current_size(), format.current_size());
+        std::span<const char> format,
+        std::span<char> target) {
+        const size_t bytesToWrite = std::min(target.size(), format.size());
         memcpy(&target[0], &format[0], bytesToWrite);
         return bytesToWrite;
     }
 
     template <typename T, typename... ArgTypes>
     inline size_t format_string(
-        swimps::container::Span<const char> format,
-        swimps::container::Span<char> target,
+        std::span<const char> format,
+        std::span<char> target,
         const T firstArg,
         const ArgTypes ... otherArgs) {
 
         size_t bytesWritten = 0;
-        const size_t bytesToProcess = std::min(format.current_size(), target.current_size());
+        const size_t bytesToProcess = std::min(format.size(), target.size());
 
         // The return value is either:
         // 1) NULL, meaning the we're done.
@@ -109,15 +111,15 @@ namespace swimps::io {
                 !foundAPercentSign ? bytesToProcess
                                    : static_cast<size_t>(formatCharacterTarget - &target[0]);
 
-            format += newBytesWritten;
+            format = format.last(format.size() - newBytesWritten);
 
             // Overwrite % sign if present.
-            target += newBytesWritten - 1;
+            target = target.last(target.size() - (newBytesWritten - 1));
 
             bytesWritten += newBytesWritten;
         }
 
-        if (formatCharacterTarget == NULL || target.current_size() == 0) {
+        if (formatCharacterTarget == NULL || target.size() == 0) {
             // end of string!
             return bytesWritten;
         }
@@ -132,15 +134,15 @@ namespace swimps::io {
                        || std::is_same_v<size_t, T>) {
 
                 const auto formatResult = format_integer(target, firstArg);
-                target = std::get<swimps::container::Span<char>>(formatResult);
+                target = std::get<std::span<char>>(formatResult);
                 bytesWritten += std::get<size_t>(formatResult);
 
             } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
                 const char* const value = firstArg;
-                for (size_t index = 0; value[index] != '\0' || target.current_size() == 0; ++index)
+                for (size_t index = 0; value[index] != '\0' || target.size() == 0; ++index)
                 {
                     target[0] = value[index];
-                    target += 1;
+                    target = target.last(target.size() - 1);
                     bytesWritten += 1;
                 }
             } else {
