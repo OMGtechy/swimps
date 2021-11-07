@@ -8,7 +8,6 @@
 
 #include <signalsafe/file.hpp>
 
-#include "swimps-container/swimps-container.h"
 #include "swimps-error/swimps-error.h"
 #include "swimps-time/swimps-time.h"
 #include "swimps-trace/swimps-trace.h"
@@ -32,7 +31,7 @@ namespace swimps::trace {
         //!
         //! \note  This function is async signal safe.
         //!
-        static TraceFile create_and_open(swimps::container::Span<const char> path, Permissions permissions) noexcept;
+        static TraceFile create_and_open(std::string_view path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Creates a temporary trace file.
@@ -53,7 +52,7 @@ namespace swimps::trace {
         //!
         //!  \note  This function is async signal safe.
         //!
-        static TraceFile open_existing(swimps::container::Span<const char> path, Permissions permissions) noexcept;
+        static TraceFile open_existing(std::string_view path, Permissions permissions) noexcept;
 
         //!
         //! \brief  Sets the proc maps.

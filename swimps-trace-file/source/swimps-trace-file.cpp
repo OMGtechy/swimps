@@ -25,7 +25,6 @@
 using signalsafe::memory::copy_no_overlap;
 
 using swimps::error::ErrorCode;
-using swimps::container::Span;
 using swimps::io::format_string;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
@@ -346,10 +345,10 @@ namespace {
     }
 }
 
-TraceFile TraceFile::create_and_open(const Span<const char> path, const Permissions permissions) noexcept {
+TraceFile TraceFile::create_and_open(std::string_view path, const Permissions permissions) noexcept {
     TraceFile traceFile;
     traceFile.create_and_open_internal(
-        { &path[0], path.current_size() },
+        path,
         permissions
     );
 
@@ -371,9 +370,9 @@ TraceFile TraceFile::create_temporary() noexcept {
     return traceFile;
 }
 
-TraceFile TraceFile::open_existing(const Span<const char> path, const Permissions permissions) noexcept {
+TraceFile TraceFile::open_existing(std::string_view path, const Permissions permissions) noexcept {
     TraceFile traceFile;
-    traceFile.open_existing_internal({ &path[0], path.current_size() }, permissions);
+    traceFile.open_existing_internal(path, permissions);
 
     swimps_assert(isSwimpsTraceFile(traceFile));
 
