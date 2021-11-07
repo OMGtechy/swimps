@@ -20,8 +20,8 @@ void swimps::log::setLevelToLog(LogLevel logLevel) noexcept {
 
 size_t swimps::log::format_message(
     const swimps::log::LogLevel logLevel,
-    swimps::container::Span<const char> message,
-    swimps::container::Span<char> target) {
+    std::span<const char> message,
+    std::span<char> target) {
 
     constexpr size_t logLevelStringSize = 15;
     const char (*logLevelString)[logLevelStringSize] = nullptr;
@@ -42,35 +42,35 @@ size_t swimps::log::format_message(
 
     newBytesWritten = copy_no_overlap(
         std::span<const char>{ *logLevelString, sizeof(*logLevelString) - 1 },
-        std::span<char>{ &target[0], target.current_size() }
+        target
     );
 
     totalBytesWritten += newBytesWritten;
-    target += newBytesWritten;
+    target = target.last(target.size() - newBytesWritten);
 
     newBytesWritten = copy_no_overlap(
-        std::span<const char>{ &message[0], message.current_size() },
-        std::span<char>{ &target[0], target.current_size() }
+        message,
+        target
     );
 
     totalBytesWritten += newBytesWritten;
-    target += newBytesWritten;
+    target = target.last(target.size() - newBytesWritten);
 
     const char newLine[] = { '\n' };
     newBytesWritten = copy_no_overlap(
-        std::span<const char>(newLine),
-        std::span<char>{ &target[0], target.current_size() }
+        newLine,
+        target
     );
 
     totalBytesWritten += newBytesWritten;
-    target += newBytesWritten;
+    target = target.last(target.size() - newBytesWritten);
 
     return totalBytesWritten;
 }
 
 size_t swimps::log::write_to_log(
     const swimps::log::LogLevel logLevel,
-    swimps::container::Span<const char> message) {
+    std::span<const char> message) {
 
     //! Log levels are in decenting order of severity
     if (static_cast<int8_t>(logLevel) > static_cast<int8_t>(logLevelFilter)) {

@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "swimps-container/swimps-container.h"
 #include "swimps-io/swimps-io.h"
 
 namespace swimps::log {
@@ -47,8 +46,8 @@ namespace swimps::log {
     //!
     size_t log_message(
         const swimps::log::LogLevel logLevel,
-        swimps::container::Span<const char> message,
-        swimps::container::Span<char> target);
+        std::span<const char> message,
+        std::span<char> target);
 
     //!
     //! \brief  Writes a message to all log targets, with the correct formatting.
@@ -65,7 +64,7 @@ namespace swimps::log {
     //!
     size_t write_to_log(
         const swimps::log::LogLevel logLevel,
-        swimps::container::Span<const char> message);
+        std::span<const char> message);
 
     //!
     //! \brief  Formats a message and writes to all log targets
@@ -84,13 +83,13 @@ namespace swimps::log {
     template <size_t targetBufferSize, typename... ArgTypes>
     size_t format_and_write_to_log(
         const swimps::log::LogLevel logLevel,
-        swimps::container::Span<const char> format,
+        std::span<const char> format,
         const ArgTypes ... args) {
 
         char targetBuffer[targetBufferSize] = { };
 
         const size_t bytesWritten = swimps::io::format_string(
-            std::span<const char>(&format[0], format.current_size()),
+            format,
             targetBuffer,
             args...
         );
@@ -114,6 +113,6 @@ namespace swimps::log {
     //!
     size_t format_message(
         const swimps::log::LogLevel logLevel,
-        swimps::container::Span<const char> message,
-        swimps::container::Span<char> target);
+        std::span<const char> message,
+        std::span<char> target);
 }

@@ -12,6 +12,7 @@
 
 #include <signalsafe/memory.hpp>
 
+#include "swimps-container/swimps-container.h"
 #include "swimps-log/swimps-log.h"
 #include "swimps-option/swimps-option-parser.h"
 
