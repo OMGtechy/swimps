@@ -5,10 +5,14 @@
 #include <functional>
 #include <string>
 
+#include <signalsafe/time.hpp>
+
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-error/swimps-error.h"
-#include "swimps-time/swimps-time.h"
 #include "swimps-trace-file/swimps-trace-file.h"
+
+using signalsafe::time::now;
+using signalsafe::time::TimeSpecification;
 
 using namespace swimps::option;
 
@@ -216,10 +220,7 @@ Options swimps::option::parse_command_line(
             throw ParseException("You must specify a target trace file to load.");
         }
 
-        swimps::time::TimeSpecification time;
-        if (swimps::time::now(CLOCK_MONOTONIC, time) == -1) {
-            throw ParseException("Could not get time to generate default trace file name.");
-        }
+        const auto time = now(CLOCK_MONOTONIC);
 
         char targetTraceFileBuffer[1024] = { };
         format_string(

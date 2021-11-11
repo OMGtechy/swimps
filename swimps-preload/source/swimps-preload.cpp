@@ -18,9 +18,11 @@
 
 #include <signalsafe/file.hpp>
 #include <signalsafe/memory.hpp>
+#include <signalsafe/time.hpp>
 
 using signalsafe::File;
 using signalsafe::memory::copy_no_overlap;
+using signalsafe::time::now;
 
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
@@ -165,17 +167,7 @@ void swimps::preload::sigprof_handler(const int, siginfo_t*, void* context) {
 
     swimps::trace::Sample sample;
     sample.backtraceID = nextBacktraceID;
-
-    {
-        if (swimps::time::now(clockID, sample.timestamp) != 0) {
-            swimps::log::write_to_log(
-                swimps::log::LogLevel::Error,
-                "swimps::time::now failed whilst taking sample."
-            );
-
-            goto swimps_preload_sigprof_cleanup;
-        }
-    }
+    sample.timestamp = now(clockID);
 
     traceFile.add_sample(sample);
 
@@ -196,6 +188,5 @@ void swimps::preload::sigprof_handler(const int, siginfo_t*, void* context) {
         traceFile.add_backtrace(backtrace);
     }
 
-swimps_preload_sigprof_cleanup:
     sigprofRunningFlag.clear();
 }

@@ -6,8 +6,9 @@
 
 #include <linux/limits.h>
 
+#include <signalsafe/time.hpp>
+
 #include "swimps-dwarf/swimps-dwarf.h"
-#include "swimps-time/swimps-time.h"
 
 namespace swimps::trace {
     // Signed integers chosen because it's easier to spot errors when they overflow.
@@ -95,7 +96,7 @@ namespace swimps::trace {
 
     struct Sample {
         backtrace_id_t backtraceID = std::numeric_limits<backtrace_id_t>::min();
-        swimps::time::TimeSpecification timestamp;
+        signalsafe::time::TimeSpecification timestamp;
     };
 
     //!

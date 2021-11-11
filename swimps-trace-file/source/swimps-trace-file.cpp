@@ -23,13 +23,13 @@
 #include "swimps-log/swimps-log.h"
 
 using signalsafe::memory::copy_no_overlap;
+using signalsafe::time::TimeSpecification;
 
 using swimps::error::ErrorCode;
 using swimps::io::format_string;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
-using swimps::time::TimeSpecification;
 using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
 using swimps::trace::function_name_length_t;
