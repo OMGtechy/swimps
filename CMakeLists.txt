@@ -27,7 +27,7 @@ include(FetchContent)
 FetchContent_Declare(
     libsignalsafe
     GIT_REPOSITORY https://github.com/OMGtechy/libsignalsafe.git
-    GIT_TAG 75afe3605638aa991d25d773c59d4a7896a1c72c
+    GIT_TAG 974e63577b98e4e31e1859027982ff0bd4a63740
 )
 
 FetchContent_MakeAvailable(libsignalsafe)
@@ -37,7 +37,6 @@ add_subdirectory(swimps-analysis)
 add_subdirectory(swimps-option)
 add_subdirectory(swimps-preload)
 add_subdirectory(swimps-log)
-add_subdirectory(swimps-io)
 add_subdirectory(swimps-profile)
 add_subdirectory(swimps-error)
 add_subdirectory(swimps-time)

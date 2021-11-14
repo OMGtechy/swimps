@@ -5,19 +5,20 @@
 #include <functional>
 #include <string>
 
+#include <signalsafe/string.hpp>
 #include <signalsafe/time.hpp>
 
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-error/swimps-error.h"
 #include "swimps-trace-file/swimps-trace-file.h"
 
+using signalsafe::string::format;
 using signalsafe::time::now;
 using signalsafe::time::TimeSpecification;
 
 using namespace swimps::option;
 
 using swimps::error::ErrorCode;
-using swimps::io::format_string;
 using swimps::log::LogLevel;
 
 namespace {
@@ -223,7 +224,7 @@ Options swimps::option::parse_command_line(
         const auto time = now(CLOCK_MONOTONIC);
 
         char targetTraceFileBuffer[1024] = { };
-        format_string(
+        format(
             "swimps_trace_%_%_%",
             targetTraceFileBuffer,
             std::filesystem::path(options.targetProgram).filename().c_str(),

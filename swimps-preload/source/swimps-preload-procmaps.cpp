@@ -6,16 +6,18 @@
 #include <linux/limits.h>
 #include <unistd.h>
 
-#include "swimps-assert/swimps-assert.h"
-#include "swimps-io/swimps-io.h"
+#include <signalsafe/string.hpp>
 
-using swimps::io::format_string;
+#include "swimps-assert/swimps-assert.h"
+
+using signalsafe::string::format;
+
 using swimps::trace::ProcMaps;
 
 ProcMaps swimps::preload::get_proc_maps() {
     char pathTargetBuffer[PATH_MAX + 1 /* null terminator */] = { };
 
-    format_string(
+    format(
         "/proc/%/maps",
         pathTargetBuffer,
         getpid()

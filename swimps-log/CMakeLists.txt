@@ -3,4 +3,4 @@ project(swimps-log VERSION 0.0.1 LANGUAGES CXX)
 
 add_library(swimps-log SHARED source/swimps-log.cpp)
 target_include_directories(swimps-log PUBLIC include)
-target_link_libraries(swimps-log swimps-io signalsafe)
+target_link_libraries(swimps-log signalsafe swimps-assert)

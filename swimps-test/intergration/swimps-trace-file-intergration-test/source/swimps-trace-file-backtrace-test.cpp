@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <array>
 
-#include "swimps-io/swimps-io.h"
 #include "swimps-trace-file/swimps-trace-file.h"
 
 using namespace swimps::trace;

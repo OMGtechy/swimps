@@ -1,14 +1,12 @@
 #include "swimps-time/swimps-time.h"
 #include "swimps-log/swimps-log.h"
 #include "swimps-trace-file/swimps-trace-file.h"
-#include "swimps-io/swimps-io.h"
 #include "swimps-preload/swimps-preload.h"
 #include "swimps-preload/private/sigprof_handler.h"
 #include "swimps-option/swimps-option-options.h"
 
 #include <atomic>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <cmath>
 

@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "swimps-io/swimps-io.h"
+#include <signalsafe/string.hpp>
 
 namespace swimps::log {
 
@@ -88,7 +88,7 @@ namespace swimps::log {
 
         char targetBuffer[targetBufferSize] = { };
 
-        const size_t bytesWritten = swimps::io::format_string(
+        const size_t bytesWritten = signalsafe::string::format(
             format,
             targetBuffer,
             args...

@@ -19,14 +19,12 @@
 
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-dwarf/swimps-dwarf.h"
-#include "swimps-io/swimps-io.h"
 #include "swimps-log/swimps-log.h"
 
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::time::TimeSpecification;
 
 using swimps::error::ErrorCode;
-using swimps::io::format_string;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;

@@ -5,19 +5,19 @@
 #include <unistd.h>
 
 #include <signalsafe/file.hpp>
+#include <signalsafe/string.hpp>
 
-#include "swimps-io/swimps-io.h"
 #include "swimps-dwarf/swimps-dwarf.h"
 
 using signalsafe::File;
+using signalsafe::string::format;
 
 using swimps::dwarf::DwarfInfo;
-using swimps::io::format_string;
 
-SCENARIO("swimps::dwarf::DwarfInfo, swimps::io::format_string", "[swimps-dwarf]") {
+SCENARIO("swimps::dwarf::DwarfInfo, swimps::string::format", "[swimps-dwarf]") {
     GIVEN("An executable with debug information across multiple CUs in it.") {
         char procExeBuffer[PATH_MAX + 1 /* null terminator */] = { };
-        format_string("/proc/%/exe", procExeBuffer, getpid());
+        format("/proc/%/exe", procExeBuffer, getpid());
 
         char executablePathBuffer[PATH_MAX + 1 /* null terminator */] = { };
         const auto bytesWritten = readlink(

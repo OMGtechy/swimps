@@ -11,11 +11,13 @@
 #include <linux/limits.h>
 
 #include <signalsafe/memory.hpp>
+#include <signalsafe/string.hpp>
 
 #include "swimps-log/swimps-log.h"
 #include "swimps-option/swimps-option-parser.h"
 
 using signalsafe::memory::copy_no_overlap;
+using signalsafe::string::format;
 
 extern char** environ;
 
@@ -142,7 +144,7 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         ));
 
         for (auto& arg : options.targetProgramArgs) {
-            targetSpan = targetSpan.last(targetSpan.size() - swimps::io::format_string(
+            targetSpan = targetSpan.last(targetSpan.size() - format(
                 " %",
                 targetSpan,
                 arg.c_str()

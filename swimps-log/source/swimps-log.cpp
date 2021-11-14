@@ -7,6 +7,8 @@
 #include <signalsafe/file.hpp>
 #include <signalsafe/memory.hpp>
 
+#include "swimps-assert/swimps-assert.h"
+
 using signalsafe::File;
 using signalsafe::memory::copy_no_overlap;
 
