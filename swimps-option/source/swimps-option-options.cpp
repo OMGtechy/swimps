@@ -5,7 +5,6 @@
 #include <sstream>
 
 namespace {
-    const std::string stringOptionsHelpLabel = "help ";
     const std::string stringOptionsTUILabel = "tui ";
     const std::string stringOptionsPtraceLabel = "ptrace ";
     const std::string stringOptionsLogLevelLabel = "log-level ";
@@ -26,12 +25,6 @@ using swimps::option::Options;
 
 Options swimps::option::Options::fromString(std::string string) {
     Options result;
-
-    // help
-    string = chompPrefix(string, stringOptionsHelpLabel);
-    swimps_assert(string.length() >= 1);
-    result.help = string[0] == '1';
-    string = chompPrefix(string.substr(1), "|");
 
     // tui
     string = chompPrefix(string, stringOptionsTUILabel);
@@ -107,9 +100,6 @@ Options swimps::option::Options::fromString(std::string string) {
 
 std::string swimps::option::Options::toString() const {
     std::stringstream stringStream;
-
-    // help
-    stringStream << stringOptionsHelpLabel << (help ? "1" : "0") << "|";
 
     // tui
     stringStream << stringOptionsTUILabel << (tui ? "1" : "0") << "|";

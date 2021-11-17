@@ -10,7 +10,6 @@ namespace swimps::option {
     //! \brief  Represents a configuration of swimps.
     //!
     struct Options {
-        bool help = false;
         bool tui = true;
         bool ptrace = true;
         bool load = false;

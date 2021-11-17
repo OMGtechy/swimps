@@ -20,7 +20,6 @@ SCENARIO("swimps::option::Options::toString, swimps::option::Options::fromString
 
     GIVEN("Non-default options.") {
         const Options original {
-            true,
             false,
             false,
             false,

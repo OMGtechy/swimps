@@ -17,32 +17,16 @@ using swimps::error::ErrorCode;
 using swimps::trace::TraceFile;
 
 int main(int argc, char** argv) {
-    bool exceptionThrown = false;
-    swimps::option::Options options;
+    auto maybeOptions = swimps::option::parse_command_line(
+        argc,
+        const_cast<const char**>(argv)
+    );
 
-    try {
-        options = swimps::option::parse_command_line(
-            argc,
-            const_cast<const char**>(argv)
-        );
-    } catch (const std::exception& exception) {
-        swimps::log::format_and_write_to_log<2048>(
-            swimps::log::LogLevel::Fatal,
-            "Error encountered whilst parsing command line: %",
-            exception.what()
-        );
-
-        exceptionThrown = true;
+    if (! maybeOptions.has_value()) {
+        return static_cast<int>(swimps::error::ErrorCode::CommandLineParseFailed);
     }
 
-    if (exceptionThrown || options.help) {
-        swimps::option::print_help();
-        exit(static_cast<int>(
-            exceptionThrown
-                ? swimps::error::ErrorCode::CommandLineParseFailed
-                : swimps::error::ErrorCode::None
-        ));
-    }
+    const auto options = *maybeOptions;
 
     swimps::log::setLevelToLog(options.logLevel);
     if (! options.load) {

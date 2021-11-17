@@ -40,13 +40,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.logLevel == log::LogLevel::Debug);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The log level is set accordingly.") {
+                    REQUIRE(maybeOptions->logLevel == log::LogLevel::Debug);
+                }
             }
         }
     }
@@ -60,14 +64,19 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.logLevel == log::LogLevel::Info);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The log level is set accordingly.") {
+                    REQUIRE(maybeOptions->logLevel == log::LogLevel::Info);
+                }
             }
+
         }
     }
 
@@ -80,13 +89,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.logLevel == log::LogLevel::Warning);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The log level is set accordingly.") {
+                    REQUIRE(maybeOptions->logLevel == log::LogLevel::Warning);
+                }
             }
         }
     }
@@ -100,13 +113,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.logLevel == log::LogLevel::Error);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The log level is set accordingly.") {
+                    REQUIRE(maybeOptions->logLevel == log::LogLevel::Error);
+                }
             }
         }
     }
@@ -120,13 +137,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.logLevel == log::LogLevel::Fatal);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The log level is set accordingly.") {
+                    REQUIRE(maybeOptions->logLevel == log::LogLevel::Fatal);
+                }
             }
         }
     }
@@ -138,13 +159,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The log level is set accordingly.") {
-                REQUIRE(options.targetProgram == "stress");
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The target program is set accordingly.") {
+                    REQUIRE(maybeOptions->targetProgram == "stress");
+                }
             }
         }
     }
@@ -158,13 +183,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("They are parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The target trace file is set accordingly.") {
-                REQUIRE(options.targetTraceFile == "myfile.txt");
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The target trace file is set accordingly.") {
+                    REQUIRE(maybeOptions->targetTraceFile == "myfile.txt");
+                }
             }
         }
 
@@ -178,13 +207,17 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("It is parsed.") {
-            const auto options = option::parse_command_line(
+            const auto maybeOptions = option::parse_command_line(
                 args.argc(),
                 args.argv()
             );
 
-            THEN("The ptrace option is set accordingly.") {
-                REQUIRE(! options.ptrace);
+            THEN("parsing succeeds.") {
+                REQUIRE(maybeOptions.has_value());
+
+                AND_THEN("The ptrace option is set accordingly.") {
+                    REQUIRE(! maybeOptions->ptrace);
+                }
             }
         }
     }
@@ -197,10 +230,11 @@ SCENARIO("swimps::option::parse_command_line", "[swimps-option]") {
         });
 
         WHEN("The options are parsed.") {
-            REQUIRE_THROWS_AS(
-                option::parse_command_line(args.argc(), args.argv()),
-                option::InvalidOptionValueException
-            );
+            const auto maybeOptions = option::parse_command_line(args.argc(), args.argv());
+
+            THEN("parsing fails.") {
+                REQUIRE(! maybeOptions.has_value());
+            }
         }
     }
 }

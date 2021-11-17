@@ -8,6 +8,8 @@
 #include <signalsafe/string.hpp>
 #include <signalsafe/time.hpp>
 
+#include <CLI/CLI.hpp>
+
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-error/swimps-error.h"
 #include "swimps-trace-file/swimps-trace-file.h"
@@ -21,208 +23,70 @@ using namespace swimps::option;
 using swimps::error::ErrorCode;
 using swimps::log::LogLevel;
 
-namespace {
-    constexpr char helpOptionName[] = "--help";
-    constexpr char noTUIOptionName[] = "--no-tui";
-    constexpr char noPtraceOptionName[] = "--no-ptrace";
-    constexpr char loadOptionName[] = "--load";
-    constexpr char targetTraceFileOptionName[] = "--target-trace-file";
-    constexpr char samplesPerSecondOptionName[] = "--samples-per-second";
-    constexpr char logLevelOptionName[] = "--log-level";
-
-    template <typename T>
-    inline T parseArgumentWithValue(
-        const std::string& argName,
-        const std::string& currentArg,
-        int& argc,
-        const char**& argv,
-        const std::function<T(const char*)>& valueConversionFunction) {
-
-        swimps_assert(argv != nullptr);
-        swimps_assert(currentArg == argName);
-        swimps_assert(currentArg == std::string(*argv));
-
-        if (argc < 2) {
-            // We need one for the parameter name and one for the parameter value.
-            throw ParseException(
-                std::string("Missing value after ") + currentArg
-            );
-        }
-
-        --argc;
-        ++argv;
-
-        swimps_assert(argc >= 1);
-        swimps_assert(*argv != nullptr);
-
-        const auto value = valueConversionFunction(*argv);
-
-        --argc;
-        ++argv;
-
-        return value;
+inline static std::ostream &operator<<(std::ostream &os, const LogLevel logLevel) {
+    switch(logLevel) {
+    case LogLevel::Fatal:   os << "Fatal";   break;
+    case LogLevel::Error:   os << "Error";   break;
+    case LogLevel::Warning: os << "Warning"; break;
+    case LogLevel::Info:    os << "Info";    break;
+    case LogLevel::Debug:   os << "Debug";   break;
+    default:                os << "Unknown"; break;
     }
 
-    std::string parseString(
-        const std::string& argName,
-        const std::string& currentArg,
-        int& argc,
-        const char**& argv) {
-
-        return parseArgumentWithValue<std::string>(
-            argName,
-            currentArg,
-            argc,
-            argv,
-            [](const char* arg) { return std::string(arg); }
-        );
-    }
-
-    double parseSamplesPerSecond(const std::string& currentArg, int& argc, const char**& argv) {
-        return parseArgumentWithValue<double>(
-            samplesPerSecondOptionName,
-            currentArg,
-            argc,
-            argv,
-            [](const char* arg) {
-
-                const auto samplesPerSecondString = std::string(arg);
-                const auto samplesPerSecond = std::stod(samplesPerSecondString);
-
-                if (samplesPerSecond < 0 || samplesPerSecond > 1'000'000'000 /* every nanosecond */) {
-                    throw InvalidOptionValueException(
-                        samplesPerSecondOptionName,
-                        samplesPerSecondString,
-                        "between 0 and 1,000,000,000, inclusive"
-                    );
-                }
-
-                return samplesPerSecond;
-            }
-        );
-    }
-
-    std::string parseTargetTraceFile(const std::string& currentArg, int& argc, const char**& argv) {
-        return parseString(
-            targetTraceFileOptionName,
-            currentArg,
-            argc,
-            argv
-        );
-    }
-
-    LogLevel parseLogLevel(const std::string& currentArg, int& argc, const char**& argv) {
-        return parseArgumentWithValue<LogLevel>(
-            logLevelOptionName,
-            currentArg,
-            argc,
-            argv,
-            [](const char* arg) {
-                const auto logLevelString = std::string(arg);
-
-                if (logLevelString == "debug")        { return LogLevel::Debug; }
-                else if (logLevelString == "info")    { return LogLevel::Info; }
-                else if (logLevelString == "warning") { return LogLevel::Warning; }
-                else if (logLevelString == "error")   { return LogLevel::Error; }
-                else if (logLevelString == "fatal")   { return LogLevel::Fatal; }
-
-                throw InvalidOptionValueException(
-                    logLevelOptionName,
-                    logLevelString,
-                    "debug, info, warning, error, fatal"
-                );
-            }
-        );
-    }
+    return os;
 }
 
-Options swimps::option::parse_command_line(
+std::optional<Options> swimps::option::parse_command_line(
     int argc,
     const char* argv[]) {
 
     swimps_assert(argv != nullptr);
 
-    // Skip the first, which should be the path to the swimps binary.
-    --argc;
-    ++argv;
+    Options options;
+    CLI::App cliApp;
 
-    swimps::option::Options options;
+    cliApp.add_flag("--load", options.load, "Load the target trace file rather than creating a new one.");
+    cliApp.add_flag("--tui,!--no-tui", options.tui, "Toggle the TUI.");
+    cliApp.add_flag("--ptrace,!--no-ptrace", options.ptrace, "Toggle ptrace."); 
+    cliApp.add_option("--target-trace-file", options.targetTraceFile);
+    cliApp.add_option("--samples-per-second", options.samplesPerSecond);
 
-    while(argc > 0) {
-        swimps_assert(argv != nullptr);
-        format_and_write_to_log<512>(LogLevel::Debug, "argv: %", *argv);
+    const auto logLevelMap = std::map<std::string, LogLevel>{
+        {"debug",   LogLevel::Debug},
+        {"info",    LogLevel::Info},
+        {"warning", LogLevel::Warning},
+        {"error",   LogLevel::Error},
+        {"fatal",   LogLevel::Fatal}
+    };
 
-        const auto currentArg = std::string(*argv);
+    cliApp.add_option("--log-level", options.logLevel, "The verbosity of log messages.")
+        ->transform(CLI::CheckedTransformer(logLevelMap)
+            .description("{debug, info, warning, error, fatal}"));
 
-        if (currentArg == logLevelOptionName) {
-            options.logLevel = parseLogLevel(currentArg, argc, argv);
-            continue;
-        }
+    cliApp.prefix_command();
 
-        if (currentArg == samplesPerSecondOptionName) {
-            options.samplesPerSecond = parseSamplesPerSecond(currentArg, argc, argv);
-            continue;
-        }
+    [&cliApp, &argc, &argv](){ CLI11_PARSE(cliApp, argc, argv); return 0; }();
 
-        if (currentArg == targetTraceFileOptionName) {
-            options.targetTraceFile = parseTargetTraceFile(currentArg, argc, argv);
-            continue;
-        }
-
-        if (currentArg == noTUIOptionName) {
-            options.tui = false;
-            --argc;
-            ++argv;
-            continue;
-        }
-
-        if (currentArg == noPtraceOptionName) {
-            options.ptrace = false;
-            --argc;
-            ++argv;
-            continue;
-        }
-
-        if (currentArg == helpOptionName) {
-            options.help = true;
-            --argc;
-            ++argv;
-            continue;
-        }
-
-        if (currentArg == loadOptionName) {
-            options.load = true;
-            --argc;
-            ++argv;
-            continue;
-        }
-
-        if (currentArg.compare(0, 1, "-") == 0) {
-            // This helps catch trailing args that haven't been processed.
-            throw ParseException(std::string("Invalid option: ") + currentArg);
-        }
-
-        // Assume anything that's left is the program to be profiled, plus its args.
-
-        swimps_assert(*argv != nullptr);
-        options.targetProgram = currentArg;
-        --argc;
-        ++argv;
-
-        while(argc > 0) {
-            options.targetProgramArgs.push_back(*argv);
-            --argc;
-            ++argv;
-        }
+    if (cliApp.get_help_ptr()->operator bool()) {
+        exit(0);
     }
 
+    const auto remaining = cliApp.remaining(true);
+
+    if (options.load) {
+        return options;
+    }
+
+    if (remaining.size() == 0) {
+        cliApp.exit({"No target program specified.", "Please specify a target program."});
+        return {};
+    }
+
+    options.targetProgram = remaining.at(0);
+    std::copy(remaining.cbegin() + 1, remaining.cend(), std::back_inserter(options.targetProgramArgs));
+
     if (options.targetTraceFile.empty()) {
-        if (options.load) {
-            throw ParseException("You must specify a target trace file to load.");
-        }
-
         const auto time = now(CLOCK_MONOTONIC);
-
         char targetTraceFileBuffer[1024] = { };
         format(
             "swimps_trace_%_%_%",
@@ -238,26 +102,3 @@ Options swimps::option::parse_command_line(
     return options;
 }
 
-void swimps::option::print_help() {
-    std::cout << "swimps: an open-source performance analysis tool.\n"
-              << "\n"
-              << "  Usage:   swimps [options]          [program]   [program arguments]\n"
-              << "  Example: swimps --log-level debug ./myprogram --program-specific-argument\n"
-              << "\n"
-              << "  Options:\n"
-              << "\n"
-              << "    --log-level [debug,   The minimum severity required to show a low message.\n"
-              << "                 info,\n"
-              << "                 warning,\n"
-              << "                 error,\n"
-              << "                 fatal]\n"
-              << "\n"
-              << "    --samples-per-second  How many samples to take per second when profiling.\n"
-              << "\n"
-              << "    --target-trace-file   Where to write the trace data.\n"
-              << "\n"
-              << "    --load                Load the target trace file instead of creating a new one.\n"
-              << "\n"
-              << "    --help                Shows this help message.\n"
-              << std::endl;
-}
