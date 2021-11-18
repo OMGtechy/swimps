@@ -23,19 +23,6 @@ using namespace swimps::option;
 using swimps::error::ErrorCode;
 using swimps::log::LogLevel;
 
-inline static std::ostream &operator<<(std::ostream &os, const LogLevel logLevel) {
-    switch(logLevel) {
-    case LogLevel::Fatal:   os << "Fatal";   break;
-    case LogLevel::Error:   os << "Error";   break;
-    case LogLevel::Warning: os << "Warning"; break;
-    case LogLevel::Info:    os << "Info";    break;
-    case LogLevel::Debug:   os << "Debug";   break;
-    default:                os << "Unknown"; break;
-    }
-
-    return os;
-}
-
 std::optional<Options> swimps::option::parse_command_line(
     int argc,
     const char* argv[]) {
