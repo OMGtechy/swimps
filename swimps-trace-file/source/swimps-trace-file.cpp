@@ -427,6 +427,8 @@ std::size_t TraceFile::set_proc_maps(const ProcMaps& procMaps) {
 std::size_t TraceFile::add_backtrace(const Backtrace& backtrace) {
     std::size_t bytesWritten = 0;
 
+    swimps_assert(backtrace.stackFrameIDCount >0);
+
     bytesWritten += write(swimps_v1_trace_symbolic_backtrace_marker);
     bytesWritten += write(backtrace.id);
     bytesWritten += write(backtrace.stackFrameIDCount);
