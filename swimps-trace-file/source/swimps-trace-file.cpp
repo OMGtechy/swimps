@@ -661,7 +661,7 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
                         backtraceIter = backtraces.insert({backtrace, nextBacktraceID++}).first;
                     }
 
-                    samples.emplace_back(backtraceIter->second, rawSample.timestamp);
+                    samples.push_back({backtraceIter->second, rawSample.timestamp});
                 },
                 [](auto& /* stackFrame */){},
                 [&procMaps](auto& _procMaps) {
