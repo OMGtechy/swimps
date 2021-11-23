@@ -806,7 +806,7 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 stop,
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
-                [&trace](auto&){ swimps_assert(false); }, // shouldn't be getting raw samples as this point
+                [](auto&){ swimps_assert(false); }, // shouldn't be getting raw samples as this point
                 [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
                 [&trace](auto& procMaps){ trace.procMaps = procMaps; }
             },
