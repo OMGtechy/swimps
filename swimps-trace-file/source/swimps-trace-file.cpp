@@ -487,7 +487,6 @@ std::size_t TraceFile::add_raw_sample(const RawSample& rawSample) {
     bytesWritten += write(swimps_v1_trace_raw_sample_marker);
 
     for (std::size_t i = 0; rawSample.backtrace[i] != 0; ++i) {
-        format_and_write_to_log<128>(LogLevel::Debug, "test write: % == %", i, rawSample.backtrace[i]);
         bytesWritten += write(rawSample.backtrace[i]);
     }
 
