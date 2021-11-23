@@ -8,6 +8,8 @@
 
 #include <signalsafe/time.hpp>
 
+#include <signalsampler/backtrace.hpp>
+
 #include "swimps-dwarf/swimps-dwarf.h"
 
 namespace swimps::trace {
@@ -48,16 +50,11 @@ namespace swimps::trace {
     using file_path_length_t = uint32_t;
     static_assert(PATH_MAX < std::numeric_limits<file_path_length_t>::max());
 
-    struct RawStackFrame {
-        stack_frame_id_t id = std::numeric_limits<stack_frame_id_t>::min();
-        address_t instructionPointer = 0;
-    };
-
     struct StackFrame {
         StackFrame() = default;
-        explicit constexpr StackFrame(const RawStackFrame& rawStackFrame)
-        : id(rawStackFrame.id),
-          instructionPointer(rawStackFrame.instructionPointer) {
+        explicit constexpr StackFrame(const stack_frame_id_t _id, const signalsampler::instruction_pointer_t _instructionPointer)
+        : id(_id),
+          instructionPointer(_instructionPointer) {
 
         }
 
@@ -92,6 +89,11 @@ namespace swimps::trace {
         backtrace_id_t id = std::numeric_limits<backtrace_id_t>::min();
         std::array<stack_frame_id_t, 64> stackFrameIDs = { };
         stack_frame_count_t stackFrameIDCount = 0;
+    };
+
+    struct RawSample {
+        signalsampler::backtrace_t<64> backtrace;
+        signalsafe::time::TimeSpecification timestamp;
     };
 
     struct Sample {

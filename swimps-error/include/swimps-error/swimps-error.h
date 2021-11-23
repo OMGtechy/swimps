@@ -14,9 +14,9 @@ namespace swimps::error {
         ChildProcessExitedDueToSignal,
         CommandLineParseFailed,
         ReadProcMapsFailed,
+        ReadRawSampleFailed,
         ReadSampleFailed,
         ReadBacktraceFailed,
-        ReadRawStackFrameFailed,
         ReadStackFrameFailed,
         UnknownEntryKind,
         EndOfFile

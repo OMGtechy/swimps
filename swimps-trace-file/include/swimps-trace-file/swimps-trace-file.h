@@ -80,6 +80,17 @@ namespace swimps::trace {
         std::size_t add_sample(const swimps::trace::Sample& sample);
 
         //!
+        //! \brief  Adds a raw sample to the trace file.
+        //!
+        //! \param[in]  rawSample  The raw sample to add.
+        //!
+        //! \returns  The number of bytes written to the file.
+        //!
+        //! \note  This function is async signal safe.
+        //!
+        std::size_t add_raw_sample(const swimps::trace::RawSample& rawSample);
+
+        //!
         //! \brief  Adds a backtrace to the trace file.
         //!
         //! \param[in]  backtrace  The backtrace to add.
@@ -101,18 +112,7 @@ namespace swimps::trace {
         //!
         std::size_t add_stack_frame(const StackFrame& stackFrame);
 
-        //!
-        //! \brief  Adds a raw stack frame to the trace file.
-        //!
-        //! \param[in]  rawStackFrame  The raw stack frame to add.
-        //!
-        //! \returns  The number of bytes written to the file.
-        //!
-        //! \note  This function is async signal safe.
-        //!
-        std::size_t add_raw_stack_frame(const RawStackFrame& stackFrame);
-
-        using Entry = std::variant<ProcMaps, Backtrace, Sample, RawStackFrame, StackFrame, swimps::error::ErrorCode>;
+        using Entry = std::variant<ProcMaps, Backtrace, RawSample, Sample, StackFrame, swimps::error::ErrorCode>;
 
         //!
         //! \brief  Reads the next entry in the trace file.

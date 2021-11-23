@@ -24,6 +24,8 @@
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::time::TimeSpecification;
 
+using signalsampler::instruction_pointer_t;
+
 using swimps::error::ErrorCode;
 using swimps::log::format_and_write_to_log;
 using swimps::log::LogLevel;
@@ -32,8 +34,8 @@ using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
 using swimps::trace::function_name_length_t;
 using swimps::trace::ProcMaps;
+using swimps::trace::RawSample;
 using swimps::trace::Sample;
-using swimps::trace::RawStackFrame;
 using swimps::trace::StackFrame;
 using swimps::trace::stack_frame_count_t;
 using swimps::trace::stack_frame_id_t;
@@ -45,27 +47,27 @@ namespace {
     constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
     constexpr char swimps_v1_trace_proc_maps_marker[swimps_v1_trace_entry_marker_size] = "\npm!\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
+    constexpr char swimps_v1_trace_raw_sample_marker[swimps_v1_trace_entry_marker_size] = "\nrs!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
-    constexpr char swimps_v1_trace_raw_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nrf!\n";
 
     struct Visitor {
         using BacktraceHandler = std::function<void(Backtrace&)>;
         using SampleHandler = std::function<void(Sample&)>;
+        using RawSampleHandler = std::function<void(RawSample&)>;
         using StackFrameHandler = std::function<void(StackFrame&)>;
-        using RawStackFrameHandler = std::function<void(RawStackFrame&)>;
         using ProcMapsHandler = std::function<void(ProcMaps&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame, RawStackFrameHandler onRawStackFrameHandler, ProcMapsHandler onProcMaps)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame), m_onRawStackFrame(onRawStackFrameHandler), m_onProcMaps(onProcMaps) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, RawSampleHandler onRawSample, StackFrameHandler onStackFrame, ProcMapsHandler onProcMaps)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onRawSample(onRawSample), m_onStackFrame(onStackFrame), m_onProcMaps(onProcMaps) {
 
         }
 
         bool& m_stopTarget;
         BacktraceHandler m_onBacktrace;
         SampleHandler m_onSample;
+        RawSampleHandler m_onRawSample;
         StackFrameHandler m_onStackFrame;
-        RawStackFrameHandler m_onRawStackFrame;
         ProcMapsHandler m_onProcMaps;
 
         void operator()(ProcMaps& procMaps) const {
@@ -76,16 +78,16 @@ namespace {
             m_onSample(sample);
         }
 
+        void operator()(RawSample& rawSample) const {
+            m_onRawSample(rawSample);
+        }
+
         void operator()(Backtrace& backtrace) const {
             m_onBacktrace(backtrace);
         }
 
         void operator()(StackFrame& stackFrame) const {
             m_onStackFrame(stackFrame);
-        }
-
-        void operator()(RawStackFrame& rawStackFrame) const {
-            m_onRawStackFrame(rawStackFrame);
         }
 
         void operator()(ErrorCode errorCode) const {
@@ -110,9 +112,9 @@ namespace {
         EndOfFile,
         ProcMaps,
         Sample,
+        RawSample,
         SymbolicBacktrace,
         StackFrame,
-        RawStackFrame
     };
 
     int read_trace_file_marker(TraceFile& traceFile) {
@@ -182,6 +184,10 @@ namespace {
             return EntryKind::ProcMaps;
         }
 
+        if (memcmp(buffer, swimps_v1_trace_raw_sample_marker, sizeof swimps_v1_trace_raw_sample_marker) == 0) {
+            return EntryKind::RawSample;
+        }
+
         if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
             return EntryKind::Sample;
         }
@@ -192,10 +198,6 @@ namespace {
 
         if (memcmp(buffer, swimps_v1_trace_stack_frame_marker, sizeof swimps_v1_trace_stack_frame_marker) == 0) {
             return EntryKind::StackFrame;
-        }
-
-        if (memcmp(buffer, swimps_v1_trace_raw_stack_frame_marker, sizeof swimps_v1_trace_raw_stack_frame_marker) == 0) {
-            return EntryKind::RawStackFrame;
         }
 
         return EntryKind::Unknown;
@@ -244,6 +246,35 @@ namespace {
         }
 
         return {{ backtraceID, timestamp }};
+    }
+
+    std::optional<RawSample> read_raw_sample(TraceFile& traceFile) {
+        decltype(RawSample::backtrace) backtrace;
+
+        for (std::size_t i = 0;; ++i) {
+            // We should hit an instruction pointer of 0 *before* this happens.
+            swimps_assert(i < backtrace.size());
+
+            if (! traceFile.read(backtrace[i])) {
+                return {};
+            }
+
+            if (backtrace[i] == 0) {
+                break;
+            }
+        }
+
+        TimeSpecification timestamp;
+
+        if (! traceFile.read(timestamp.seconds)) {
+            return {};
+        }
+
+        if (! traceFile.read(timestamp.nanoseconds)) {
+            return {};
+        }
+
+        return {{ backtrace, timestamp }};
     }
 
     int write_trace_file_marker(TraceFile& targetFile) {
@@ -326,20 +357,6 @@ namespace {
         }
 
         return stackFrame;
-    }
-
-    std::optional<RawStackFrame> read_raw_stack_frame(TraceFile& traceFile) {
-        RawStackFrame rawStackFrame;
-
-        if (! traceFile.read(rawStackFrame.id)) {
-            return {};
-        }
-
-        if (! traceFile.read(rawStackFrame.instructionPointer)) {
-            return {};
-        }
-
-        return rawStackFrame;
     }
 }
 
@@ -451,16 +468,6 @@ std::size_t TraceFile::add_stack_frame(const StackFrame& stackFrame) {
     return bytesWritten;
 }
 
-std::size_t TraceFile::add_raw_stack_frame(const RawStackFrame& stackFrame) {
-    std::size_t bytesWritten = 0;
-
-    bytesWritten += write(swimps_v1_trace_raw_stack_frame_marker);
-    bytesWritten += write(stackFrame.id);
-    bytesWritten += write(stackFrame.instructionPointer);
-
-    return bytesWritten;
-}
-
 std::size_t TraceFile::add_sample(const Sample& sample) {
     std::size_t bytesWritten = 0;
 
@@ -468,6 +475,23 @@ std::size_t TraceFile::add_sample(const Sample& sample) {
     bytesWritten += write(sample.backtraceID);
     bytesWritten += write(sample.timestamp.seconds);
     bytesWritten += write(sample.timestamp.nanoseconds);
+
+    return bytesWritten;
+}
+
+std::size_t TraceFile::add_raw_sample(const RawSample& rawSample) {
+    std::size_t bytesWritten = 0;
+
+    bytesWritten += write(swimps_v1_trace_raw_sample_marker);
+
+    for (std::size_t i = 0; rawSample.backtrace[i] != 0; ++i) {
+        format_and_write_to_log<128>(LogLevel::Debug, "test write: % == %", i, rawSample.backtrace[i]);
+        bytesWritten += write(rawSample.backtrace[i]);
+    }
+
+    bytesWritten += write(instruction_pointer_t{0});
+    bytesWritten += write(rawSample.timestamp.seconds);
+    bytesWritten += write(rawSample.timestamp.nanoseconds);
 
     return bytesWritten;
 }
@@ -511,6 +535,21 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
 
             return *sample;
         }
+    case EntryKind::RawSample:
+        {
+            const auto rawSample = read_raw_sample(*this);
+            if (!rawSample) {
+
+                write_to_log(
+                    LogLevel::Fatal,
+                    "Reading raw sample failed."
+                );
+
+                return ErrorCode::ReadRawSampleFailed;
+            }
+
+            return *rawSample;
+        }
     case EntryKind::SymbolicBacktrace:
         {
             const auto backtrace = read_backtrace(*this);
@@ -539,20 +578,6 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
 
             return *stackFrame;
         }
-    case EntryKind::RawStackFrame:
-        {
-            const auto rawStackFrame = read_raw_stack_frame(*this);
-            if (!rawStackFrame) {
-                write_to_log(
-                    LogLevel::Fatal,
-                    "Reading raw stack frame failed."
-                );
-
-                return ErrorCode::ReadRawStackFrameFailed;
-            }
-
-            return *rawStackFrame;
-        }
     case EntryKind::EndOfFile:
         return ErrorCode::EndOfFile;
     case EntryKind::Unknown:
@@ -571,175 +596,109 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
         return false;
     }
 
-    struct BacktraceHash {
-        size_t operator() (const Backtrace& backtrace) const {
-            swimps_assert(backtrace.stackFrameIDCount > 0);
-            return std::hash<stack_frame_id_t>{}(backtrace.stackFrameIDs[0]);
-        }
-    };
-
-    struct BacktraceEqual {
-        bool operator() (
-            const Backtrace& lhs,
-            const Backtrace& rhs
-        ) const {
-            if (lhs.stackFrameIDCount != rhs.stackFrameIDCount) {
-                return false;
-            }
-
-            for (decltype(lhs.stackFrameIDCount) i = 0; i < lhs.stackFrameIDCount; ++i) {
-                if (lhs.stackFrameIDs[i] != rhs.stackFrameIDs[i]) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    };
-
-    struct StackFrameHash {
-        size_t operator() (const StackFrame& stackFrame) const {
-            return stackFrame.instructionPointer;
-        }
-    };
-
-    struct StackFrameEqual {
-        bool operator() (
-            const StackFrame& lhs,
-            const StackFrame& rhs
-        ) const {
-            return lhs.isEquivalentTo(rhs);
-        }
-    };
-
-    std::vector<Sample> samples;
-
-    std::unordered_map<
-        Backtrace,
-        std::unordered_set<backtrace_id_t>,
-        BacktraceHash,
-        BacktraceEqual> backtraceMap;
-
-    std::unordered_map<
-        StackFrame,
-        std::unordered_set<stack_frame_id_t>,
-        StackFrameHash,
-        StackFrameEqual> stackFrameMap;
-
-    bool stop = false;
-    size_t preOptimisationSampleCount = 0;
-    size_t preOptimisationBacktraceCount = 0;
-    size_t preOptimisationStackFrameCount = 0;
-
     ProcMaps procMaps;
 
-    for (auto entry = read_next_entry();
-         !stop ;
-         entry = read_next_entry()) {
-        
+    std::size_t samplesInCount = 0;
+    std::size_t stackFramesInCount = 0;
+    std::size_t uniqueBacktracesCount = 0;
+
+    stack_frame_id_t nextStackFrameID = 1;
+    std::unordered_map<instruction_pointer_t, stack_frame_id_t> stackFrameIDMap;
+
+    struct BacktraceHash final {
+        std::size_t operator()(const Backtrace& backtrace) const {
+            return backtrace.id;
+        }
+    };
+
+    struct BacktraceCompare final {
+        bool operator()(const Backtrace& lhs, const Backtrace& rhs) const {
+            // TODO: don't check beyond stackFrameIDCount?
+            return lhs.stackFrameIDs == rhs.stackFrameIDs;
+        }
+    };
+
+    backtrace_id_t nextBacktraceID = 1;
+    std::unordered_map<Backtrace, backtrace_id_t, BacktraceHash, BacktraceCompare> backtraces;
+    std::vector<StackFrame> stackFrames;
+    std::vector<Sample> samples;
+
+    // Grab a 0.5GB of RAM for each.
+    constexpr std::size_t halfAGigInBytes = 500'000'000;
+    samples.reserve(halfAGigInBytes / sizeof(Sample));
+    stackFrames.reserve(halfAGigInBytes / sizeof(StackFrame));
+
+    bool stop = false;
+    for (auto entry = read_next_entry(); !stop; entry = read_next_entry()) {
         std::visit(
+            // TODO: add visitor for unfainlised so the dummy lambdas aren't needed?
             Visitor{
                 stop,
-                [&backtraceMap, &preOptimisationBacktraceCount](auto& backtrace){
-                    ++preOptimisationBacktraceCount;
-                    backtraceMap[backtrace].insert(backtrace.id);
+                // TODO: add errors for unexpected entries
+                // TODO: take RawSample&& etc?
+                [](auto& /* backtrace */){},
+                [](auto& /* sample */){},
+                [&stackFrameIDMap, &samples, &stackFrames, &backtraces, &nextBacktraceID, &nextStackFrameID, &uniqueBacktracesCount, &stackFramesInCount, &samplesInCount](auto& rawSample){
+                    samplesInCount += 1;
+
+                    Backtrace backtrace;
+
+                    swimps_assert(backtrace.stackFrameIDs.size() == rawSample.backtrace.size());
+
+                    for (std::size_t i = 0; i < rawSample.backtrace.size() && rawSample.backtrace[i] != 0; ++i) {
+                        stackFramesInCount += 1;
+
+                        const auto instructionPointer = rawSample.backtrace[i];
+
+                        if (stackFrameIDMap.find(instructionPointer) == stackFrameIDMap.cend()) {
+                            stackFrameIDMap[instructionPointer] = nextStackFrameID++;
+                        }
+
+                        const auto stackFrameID = stackFrameIDMap.at(instructionPointer);
+
+                        backtrace.stackFrameIDs[i] = stackFrameIDMap.at(instructionPointer);
+                        backtrace.stackFrameIDCount += 1;
+
+                        stackFrames.emplace_back(stackFrameID, instructionPointer);
+                    }
+
+                    auto backtraceIter = backtraces.find(backtrace);
+                    if (backtraceIter == backtraces.cend()) {
+                        uniqueBacktracesCount += 1;
+                        backtraceIter = backtraces.insert({backtrace, nextBacktraceID++}).first;
+                    }
+
+                    samples.emplace_back(backtraceIter->second, rawSample.timestamp);
                 },
-                [&samples, &preOptimisationSampleCount](auto& sample){
-                    ++preOptimisationSampleCount;
-                    samples.push_back(sample);
-                },
-                [&stackFrameMap, &preOptimisationStackFrameCount](auto& stackFrame){
-                    ++preOptimisationStackFrameCount;
-                    stackFrameMap[stackFrame].insert(stackFrame.id);
-                },
-                [&stackFrameMap, &preOptimisationStackFrameCount](auto& rawStackFrame){
-                    ++preOptimisationStackFrameCount;
-                    stackFrameMap[StackFrame(rawStackFrame)].insert(rawStackFrame.id);
-                },
-                [&procMaps](auto& readProcMaps) {
-                    procMaps = readProcMaps;
+                [](auto& /* stackFrame */){},
+                [&procMaps](auto& _procMaps) {
+                    procMaps = _procMaps;
                 }
             },
             entry
         );
     }
 
-    std::vector<Sample> samplesSharingBacktraceID;
-    for(const auto& sample : samples) {
-        const auto matchingBacktraceIter = std::find_if(
-            backtraceMap.cbegin(),
-            backtraceMap.cend(),
-            [&sample](const auto& backtracePair){
-                return backtracePair.second.contains(sample.backtraceID);
-            }
-        );
-
-        swimps_assert(matchingBacktraceIter != backtraceMap.cend());
-
-        samplesSharingBacktraceID.push_back({
-            matchingBacktraceIter->first.id,
-            sample.timestamp
-        });
-    }
-
-    std::vector<Backtrace> backtracesSharingStackFrameID;
-    for(const auto& [oldBacktrace, unused] : backtraceMap) {
-
-        Backtrace newBacktrace;
-        newBacktrace.id = oldBacktrace.id;
-
-        for(stack_frame_count_t i = 0; i < oldBacktrace.stackFrameIDCount; ++i) {
-            const auto& stackFrameID = oldBacktrace.stackFrameIDs[i];
-            const auto matchingStackFrameIter = std::find_if(
-                stackFrameMap.cbegin(),
-                stackFrameMap.cend(),
-                [stackFrameID](const auto& stackFramePair) {
-                    return stackFramePair.second.contains(stackFrameID);
-                }
-            );
-
-            swimps_assert(matchingStackFrameIter != stackFrameMap.cend());
-
-            newBacktrace.stackFrameIDs[i] = matchingStackFrameIter->first.id;
-            newBacktrace.stackFrameIDCount += 1;
-        }
-
-        swimps_assert(newBacktrace.stackFrameIDCount == oldBacktrace.stackFrameIDCount);
-
-        backtracesSharingStackFrameID.push_back(newBacktrace);
-    }
-
     const auto traceFilePath = get_path();
     const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
-    auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
 
-    format_and_write_to_log<512>(
-        LogLevel::Debug,
-        "Optimisation: % -> % samples, % -> % backtraces, % -> % stack frames.",
-        preOptimisationSampleCount,
-        samplesSharingBacktraceID.size(),
-        preOptimisationBacktraceCount,
-        backtracesSharingStackFrameID.size(),
-        preOptimisationStackFrameCount,
-        stackFrameMap.size()
-    );
+    auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
 
     tempFile.set_proc_maps(procMaps);
 
-    for(const auto& sample : samplesSharingBacktraceID) {
+    for(const auto& sample : samples) {
         tempFile.add_sample(sample);
     }
 
-    for(const auto& backtrace : backtracesSharingStackFrameID) {
-        tempFile.add_backtrace(backtrace);
+    for(const auto& backtraceKeyValue : backtraces) {
+        tempFile.add_backtrace(backtraceKeyValue.first);
     }
 
     swimps::dwarf::DwarfInfo dwarfInfo(std::move(executable));
     const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
     const auto& dwarfFunctionInfos = dwarfInfo.getFunctionInfos();
 
-    for(const auto& stackFramePair : stackFrameMap) {
-        auto stackFrame = stackFramePair.first;
+    for(auto& stackFrame : stackFrames) {
         const auto instructionPointer = stackFrame.instructionPointer;
 
         const auto procMapEntryIter = std::find_if(
@@ -843,8 +802,8 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 stop,
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
+                [&trace](auto&){ swimps_assert(false); }, // shouldn't be getting raw samples as this point
                 [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
-                [&trace](auto& rawStackFrame){ trace.stackFrames.emplace_back(rawStackFrame); },
                 [&trace](auto& procMaps){ trace.procMaps = procMaps; }
             },
             entry

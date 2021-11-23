@@ -18,14 +18,19 @@
 #include <signalsafe/memory.hpp>
 #include <signalsafe/time.hpp>
 
+#include <signalsampler/sampler.hpp>
+
 using signalsafe::File;
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::time::now;
+
+using signalsampler::get_backtrace;
 
 using swimps::log::LogLevel;
 using swimps::log::write_to_log;
 using swimps::preload::get_proc_maps;
 using swimps::option::Options;
+using swimps::trace::RawSample;
 using swimps::trace::TraceFile;
 
 namespace {
@@ -37,8 +42,6 @@ namespace {
     std::array<char, PATH_MAX> targetProgram = { };
     std::array<char, PATH_MAX> traceFilePath = { };
     timer_t sampleTimer;
-    swimps::trace::backtrace_id_t nextBacktraceID = 1;
-    swimps::trace::stack_frame_id_t nextStackFrameID = 1;
 
     template <std::size_t TraceFilePathSize>
     TraceFile swimps_preload_create_trace_file(std::array<char, TraceFilePathSize>& traceFilePath, const Options& options) {
@@ -154,27 +157,15 @@ void swimps::preload::sigprof_handler(const int, siginfo_t*, void* context) {
         return;
     }
 
-    swimps::trace::Sample sample;
-    sample.backtraceID = nextBacktraceID;
+    swimps::trace::RawSample sample;
     sample.timestamp = now(clockID);
 
-    traceFile.add_sample(sample);
-
     {
-        const auto result = swimps::preload::get_backtrace(
-            static_cast<ucontext_t*>(context),
-            nextBacktraceID,
-            nextStackFrameID
+        sample.backtrace = get_backtrace<64>(
+            static_cast<ucontext_t*>(context)
         );
 
-        const auto& backtrace = std::get<0>(result);
-        const auto& stackFrames = std::get<1>(result);
-
-        for (swimps::trace::stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-            traceFile.add_raw_stack_frame(stackFrames[i]);
-        }
-
-        traceFile.add_backtrace(backtrace);
+        traceFile.add_raw_sample(std::move(sample));
     }
 
     sigprofRunningFlag.clear();
