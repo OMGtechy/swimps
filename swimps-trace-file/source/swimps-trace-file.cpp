@@ -600,10 +600,6 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
 
     ProcMaps procMaps;
 
-    std::size_t samplesInCount = 0;
-    std::size_t stackFramesInCount = 0;
-    std::size_t uniqueBacktracesCount = 0;
-
     stack_frame_id_t nextStackFrameID = 1;
     std::unordered_map<instruction_pointer_t, stack_frame_id_t> stackFrameIDMap;
 
@@ -640,15 +636,12 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
                 // TODO: take RawSample&& etc?
                 [](auto& /* backtrace */){},
                 [](auto& /* sample */){},
-                [&stackFrameIDMap, &samples, &stackFrames, &backtraces, &nextBacktraceID, &nextStackFrameID, &uniqueBacktracesCount, &stackFramesInCount, &samplesInCount](auto& rawSample){
-                    samplesInCount += 1;
-
+                [&stackFrameIDMap, &samples, &stackFrames, &backtraces, &nextBacktraceID, &nextStackFrameID](auto& rawSample){
                     Backtrace backtrace;
 
                     swimps_assert(backtrace.stackFrameIDs.size() == rawSample.backtrace.size());
 
                     for (std::size_t i = 0; i < rawSample.backtrace.size() && rawSample.backtrace[i] != 0; ++i) {
-                        stackFramesInCount += 1;
 
                         const auto instructionPointer = rawSample.backtrace[i];
 
@@ -666,7 +659,6 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
 
                     auto backtraceIter = backtraces.find(backtrace);
                     if (backtraceIter == backtraces.cend()) {
-                        uniqueBacktracesCount += 1;
                         backtraceIter = backtraces.insert({backtrace, nextBacktraceID++}).first;
                     }
 
@@ -680,6 +672,17 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
             entry
         );
     }
+
+    format_and_write_to_log<1024>(
+        LogLevel::Debug,
+        "Finalising...\n"
+        "Samples: %\n"
+        "Backtraces: %\n"
+        "Stack Frames: %\n",
+        samples.size(),
+        backtraces.size(),
+        stackFrames.size()
+    );
 
     const auto traceFilePath = get_path();
     const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
