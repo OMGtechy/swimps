@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using signalsafe::File;
+
 using CallTreeNode = swimps::analysis::Analysis::CallTreeNode;
 using swimps::error::ErrorCode;
 using swimps::trace::TraceFile;
@@ -40,6 +42,11 @@ int main(int argc, char** argv) {
 
             return static_cast<int>(profileResult);
         }
+
+        TraceFile::open_existing(
+            { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
+            TraceFile::Permissions::ReadOnly
+        ).finalise(File::open_existing(options.targetProgram, TraceFile::Permissions::ReadOnly));
     }
 
     auto traceFile = TraceFile::open_existing(

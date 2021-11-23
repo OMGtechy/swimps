@@ -144,15 +144,6 @@ namespace {
         // Wait until the all in-progress samples are finished.
         while (sigprofRunningFlag.test_and_set());
 
-        auto executable = File::open_existing(
-            { targetProgram.data(), strnlen(targetProgram.data(), targetProgram.size()) },
-            File::Permissions::ReadOnly
-        );
-
-        if (! traceFile.finalise(std::move(executable))) {
-            abort();
-        }
-
         write_to_log(LogLevel::Debug, "Preload dtor finished.");
     }
 }
