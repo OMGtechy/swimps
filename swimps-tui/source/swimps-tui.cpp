@@ -86,7 +86,7 @@ namespace {
 
             wprintw(
                 window,
-                "%s %s %s (offset 0x%.8X, hit %s times%s)%s\n",
+                "%s %s %s (offset 0x%.8lX, hit %s times%s)%s\n",
                 selectedLine == currentLine ? "->" : "  ",
                 rootNode.children.size() == 0 ? "   " : expansionState[&rootNode] ? "[-]" : "[+]",
                 demangleFailed ? functionName : demangledFunctionName.get(),
