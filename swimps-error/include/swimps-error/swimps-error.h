@@ -10,6 +10,7 @@ namespace swimps::error {
         ReadlinkFailed,
         ExecveFailed,
         OpenFailed,
+        InjectLibraryFailed,
         ChildProcessHasNonZeroExitCode,
         ChildProcessExitedDueToSignal,
         CommandLineParseFailed,
