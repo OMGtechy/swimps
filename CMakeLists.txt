@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(swimps VERSION 0.0.1 LANGUAGES CXX)
 
-# Dump variables for debugging purposes.
-get_cmake_property(_variableNames VARIABLES)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
-
 enable_testing()
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)

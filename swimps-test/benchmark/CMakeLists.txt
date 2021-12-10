@@ -10,7 +10,7 @@ set(BUILD_GMOCK OFF)
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.10.0
+    GIT_TAG release-1.11.0
 )
 
 FetchContent_MakeAvailable(googletest)
@@ -31,3 +31,4 @@ add_executable(
 
 target_include_directories(swimps-benchmark-test PUBLIC include)
 target_link_libraries(swimps-benchmark-test benchmark::benchmark swimps-preload)
+
