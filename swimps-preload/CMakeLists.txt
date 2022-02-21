@@ -5,7 +5,7 @@ include(FetchContent)
 FetchContent_Declare(
     libsignalsampler
     GIT_REPOSITORY https://github.com/OMGtechy/libsignalsampler.git
-    GIT_TAG 771e01b8a8b7ee934cb822767c60850eb3145d43
+    GIT_TAG 7c858c980384f2969bf0213a6e730aa934b37b62
 )
 
 FetchContent_MakeAvailable(libsignalsampler)

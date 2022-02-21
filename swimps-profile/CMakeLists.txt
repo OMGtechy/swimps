@@ -5,7 +5,7 @@ include(FetchContent)
 FetchContent_Declare(
     libcodeinjector
     GIT_REPOSITORY https://github.com/OMGtechy/libcodeinjector.git
-    GIT_TAG d2086f1eb48ad7117c8be793a60e8218689b9857
+    GIT_TAG a19e6102e0f5ec393f0d09eb89dab17958a36073
 )
 
 FetchContent_MakeAvailable(libcodeinjector)
