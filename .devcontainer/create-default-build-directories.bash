@@ -2,9 +2,9 @@
 
 set -e
 
-mkdir build
+mkdir -p build
 cd build
-mkdir gcc-10-debug clang-11-debug gcc-10-release clang-11-release
+mkdir -p gcc-10-debug clang-11-debug gcc-10-release clang-11-release
 cd gcc-10-debug
 CC=gcc-10 CXX=g++-10 cmake -DCMAKE_BUILD_TYPE=Debug ../../
 make -j
