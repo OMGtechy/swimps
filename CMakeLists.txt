@@ -21,7 +21,7 @@ include(FetchContent)
 FetchContent_Declare(
     libsignalsafe
     GIT_REPOSITORY https://github.com/OMGtechy/libsignalsafe.git
-    GIT_TAG 662c62e4332a9d2eb7230440633b3eeeec394377
+    GIT_TAG c1e1b113cecb4ebd4433834ac4b375ddfdfd9b6e
 )
 
 FetchContent_MakeAvailable(libsignalsafe)
