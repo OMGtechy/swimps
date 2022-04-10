@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2020 Joshua Gerrard
+Copyright (c) 2020 Artemis Meursault Gerrard
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

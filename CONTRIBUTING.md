@@ -28,7 +28,7 @@ The more people that know about the project, the better. This leads to more peop
 
 # Who owns contributions?
 
-By contributing to the project, you are allowing the project and its owner (Joshua Gerrard) to use the contribution as if it were their own. You maintain the right to use what you've contributed elsewhere, but the project and its owner gets those rights too. This is here to avoid future problems around changing licenses. It also means this project can be simpler; everything is under the same license.
+By contributing to the project, you are allowing the project and its owner (Artemis Meursault Gerrard) to use the contribution as if it were their own. You maintain the right to use what you've contributed elsewhere, but the project and its owner gets those rights too. This is here to avoid future problems around changing licenses. It also means this project can be simpler; everything is under the same license.
 
 # Can I take something back once I've contributed it?
 
