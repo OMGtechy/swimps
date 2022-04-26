@@ -632,7 +632,6 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
             Visitor{
                 stop,
                 // TODO: add errors for unexpected entries
-                // TODO: take RawSample&& etc?
                 [](auto& /* backtrace */){},
                 [](auto& /* sample */){},
                 [&stackFrameIDMap, &samples, &stackFrames, &backtraces, &nextBacktraceID, &nextStackFrameID](auto& rawSample){
