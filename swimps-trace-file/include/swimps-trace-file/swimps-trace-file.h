@@ -54,6 +54,8 @@ namespace swimps::trace {
         //!
         static TraceFile open_existing(std::string_view path, Permissions permissions) noexcept;
 
+        static TraceFile from_raw(std::string_view pathView) noexcept;
+
         //!
         //! \brief  Sets the proc maps.
         //!

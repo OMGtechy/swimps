@@ -26,10 +26,18 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(libsignalsafe)
 
+include(FetchContent)
+FetchContent_Declare(
+    libsamplerpreload
+    GIT_REPOSITORY https://github.com/OMGtechy/libsamplerpreload.git
+    GIT_TAG 875be83715f5d154151060d09abd692fa82cb2e8
+)
+
+FetchContent_MakeAvailable(libsamplerpreload)
+
 add_subdirectory(swimps-test)
 add_subdirectory(swimps-analysis)
 add_subdirectory(swimps-option)
-add_subdirectory(swimps-preload)
 add_subdirectory(swimps-log)
 add_subdirectory(swimps-profile)
 add_subdirectory(swimps-error)

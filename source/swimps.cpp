@@ -43,9 +43,8 @@ int main(int argc, char** argv) {
             return static_cast<int>(profileResult);
         }
 
-        TraceFile::open_existing(
-            { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
-            TraceFile::Permissions::ReadOnly
+        TraceFile::from_raw(
+            { options.targetTraceFile.c_str(), options.targetTraceFile.size() }
         ).finalise();
     }
 

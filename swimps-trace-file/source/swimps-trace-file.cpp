@@ -3,17 +3,21 @@
 #include <cstring>
 #include <cerrno>
 #include <cinttypes>
+#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
 #include <string>
 #include <filesystem>
+#include <fstream>
 
 #include <fcntl.h>
 
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+
+#include <samplerpreload/trace-file.hpp>
 
 #include <signalsafe/memory.hpp>
 
@@ -403,6 +407,46 @@ TraceFile TraceFile::open_existing(std::string_view path, const Permissions perm
     traceFile.open_existing_internal(path, permissions);
 
     swimps_assert(isSwimpsTraceFile(traceFile));
+
+    return traceFile;
+}
+
+TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
+    // TODO: now TraceFile doesn't need to be signal-safe anymore, why not pass in std::filesystem::paths directly?
+
+    std::filesystem::path path(pathView);
+    swimps_assert(std::filesystem::exists(path));
+
+    std::ifstream rawFile(path.native(), std::ios_base::in | std::ios_base::binary);
+    swimps_assert(rawFile.is_open());
+
+    std::noskipws(rawFile);
+
+    std::vector<unsigned char> rawData(std::filesystem::file_size(path));
+
+    rawFile.read(reinterpret_cast<char*>(rawData.data()), rawData.size());
+    rawFile.close();
+
+    const auto rawTrace = samplerpreload::Trace::from(rawData);
+    std::filesystem::remove(path);
+
+    auto traceFile = create_and_open(path.string(), Permissions::ReadWrite);
+    for (const auto& sample : rawTrace.get_samples()) {
+        RawSample rawSample;
+        const auto& backtrace = sample.backtrace;
+        std::copy_n(backtrace.cbegin(), std::min(backtrace.size(), backtrace.size()), rawSample.backtrace.begin());
+        rawSample.timestamp = sample.timestamp;
+
+        traceFile.add_raw_sample(rawSample);
+    }
+
+    ProcMaps procMaps;
+    std::cout << "proc map pre size: " << rawTrace.get_proc_maps().ranges.size() << std::endl;
+    for (auto range : rawTrace.get_proc_maps().ranges) {
+        procMaps.entries.push_back({range.start, range.end});
+    }
+
+    traceFile.set_proc_maps(procMaps);
 
     return traceFile;
 }

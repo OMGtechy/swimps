@@ -12,6 +12,8 @@
 
 #include <codeinjector/inject.hpp>
 
+#include <samplerpreload/settings.hpp>
+
 #include <signalsafe/memory.hpp>
 #include <signalsafe/string.hpp>
 
@@ -20,6 +22,8 @@
 #include "swimps-option/swimps-option-parser.h"
 
 using codeinjector::inject_library;
+
+using samplerpreload::Settings;
 
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::string::format;
@@ -56,6 +60,13 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
         }
     }
 
+    {
+        Settings settings;
+        settings.set_samples_per_second(options.samplesPerSecond);
+        settings.set_trace_file_path(options.targetTraceFile);
+        settings.write_to_env();
+    }
+
     std::array<char, PATH_MAX> swimpsPathBuffer = { 0 };
     const auto swimpsPathBufferBytes = readlink(
         "/proc/self/exe",
@@ -73,11 +84,10 @@ swimps::error::ErrorCode swimps::profile::child(const swimps::option::Options& o
     swimpsPath.remove_filename();
 
     auto preloadPath = swimpsPath;
-    preloadPath.append("swimps-preload/libswimps-preload.so");
+    preloadPath.append("swimps-profile/libsamplerpreload.so");
 
     std::vector<std::string_view> args(options.targetProgramArgs.cbegin(), options.targetProgramArgs.cend());
 
-    setenv("SWIMPS_OPTIONS", options.toString().c_str(), true);
     inject_library(options.targetProgram, args, preloadPath);
 
     // We only get here if the something went wrong.
