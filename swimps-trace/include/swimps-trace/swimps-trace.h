@@ -6,6 +6,8 @@
 
 #include <linux/limits.h>
 
+#include <samplerpreload/trace.hpp>
+
 #include <signalsafe/time.hpp>
 
 #include <signalsampler/backtrace.hpp>
@@ -99,27 +101,11 @@ namespace swimps::trace {
         signalsafe::time::TimeSpecification timestamp;
     };
 
-    //!
-    //! \note  This is *not* async signal safe.
-    //!
-    struct ProcMaps {
-        struct Entry {
-            struct Range {
-                address_t start;
-                address_t end;
-            };
-
-            Range range;
-        };
-
-        std::vector<Entry> entries;
-        using entry_count_t = int64_t;
-    };
 
     struct Trace {
         std::vector<Sample> samples;
         std::vector<Backtrace> backtraces;
         std::vector<StackFrame> stackFrames;
-        ProcMaps procMaps;
+        samplerpreload::Trace::ProcMaps procMaps;
     };
 }

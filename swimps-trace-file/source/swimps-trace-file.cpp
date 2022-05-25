@@ -23,6 +23,8 @@
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-log/swimps-log.h"
 
+using ProcMaps = samplerpreload::Trace::ProcMaps;
+
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::time::TimeSpecification;
 
@@ -35,7 +37,6 @@ using swimps::log::write_to_log;
 using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
 using swimps::trace::function_name_length_t;
-using swimps::trace::ProcMaps;
 using swimps::trace::RawSample;
 using swimps::trace::Sample;
 using swimps::trace::StackFrame;
@@ -206,23 +207,23 @@ namespace {
     }
 
     std::optional<ProcMaps> read_proc_maps(TraceFile& traceFile) {
-        ProcMaps::entry_count_t entryCount;
+        uint64_t entryCount;
 
         if (! traceFile.read(entryCount)) {
             return {};
         }
 
         ProcMaps procMaps;
-        procMaps.entries.resize(entryCount);
+        procMaps.ranges.resize(entryCount);
 
-        for (ProcMaps::entry_count_t i = 0; i < entryCount; ++i) {
-            auto& entry = procMaps.entries[i];
+        for (uint64_t i = 0; i < entryCount; ++i) {
+            auto& entry = procMaps.ranges[i];
 
-            if (! traceFile.read(entry.range.start)) {
+            if (! traceFile.read(entry.start)) {
                 return {};
             }
 
-            if (! traceFile.read(entry.range.end)) {
+            if (! traceFile.read(entry.end)) {
                 return {};
             }
         }
@@ -441,7 +442,7 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
 
     ProcMaps procMaps;
     for (auto range : rawTrace.get_proc_maps().ranges) {
-        procMaps.entries.push_back({range.start, range.end});
+        procMaps.ranges.push_back({range.start, range.end});
     }
 
     traceFile.set_proc_maps(procMaps);
@@ -452,14 +453,14 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
 std::size_t TraceFile::set_proc_maps(const ProcMaps& procMaps) {
     std::size_t bytesWritten = 0;
 
-    const auto entryCount = static_cast<ProcMaps::entry_count_t>(procMaps.entries.size());
+    const auto entryCount = static_cast<uint64_t>(procMaps.ranges.size());
 
     bytesWritten += write(swimps_v1_trace_proc_maps_marker);    
     bytesWritten += write(entryCount);
 
-    for(const auto& entry : procMaps.entries) {
-        bytesWritten += write(entry.range.start);
-        bytesWritten += write(entry.range.end);
+    for(const auto& entry : procMaps.ranges) {
+        bytesWritten += write(entry.start);
+        bytesWritten += write(entry.end);
     };
 
     return bytesWritten;
