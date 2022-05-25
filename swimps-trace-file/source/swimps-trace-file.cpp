@@ -440,12 +440,7 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
         traceFile.add_raw_sample(rawSample);
     }
 
-    ProcMaps procMaps;
-    for (auto range : rawTrace.get_proc_maps().ranges) {
-        procMaps.ranges.push_back({range.start, range.end});
-    }
-
-    traceFile.set_proc_maps(procMaps);
+    traceFile.set_proc_maps(rawTrace.get_proc_maps());
 
     return traceFile;
 }
