@@ -46,7 +46,6 @@ using swimps::trace::TraceFile;
 namespace {
     constexpr size_t swimps_v1_trace_entry_marker_size = 6;
     constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
-    constexpr char swimps_v1_trace_proc_maps_marker[swimps_v1_trace_entry_marker_size] = "\npm!\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
     constexpr char swimps_v1_trace_raw_sample_marker[swimps_v1_trace_entry_marker_size] = "\nrs!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
