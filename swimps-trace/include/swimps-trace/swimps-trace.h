@@ -106,6 +106,5 @@ namespace swimps::trace {
         std::vector<Sample> samples;
         std::vector<Backtrace> backtraces;
         std::vector<StackFrame> stackFrames;
-        samplerpreload::Trace::ProcMaps procMaps;
     };
 }

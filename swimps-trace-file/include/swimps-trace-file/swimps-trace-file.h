@@ -57,20 +57,6 @@ namespace swimps::trace {
         static TraceFile from_raw(std::string_view pathView) noexcept;
 
         //!
-        //! \brief  Sets the proc maps.
-        //!
-        //! \param[in]  procMaps  The proc maps to set.
-        //!
-        //! \returns  The number of bytes written to the file.
-        //!
-        //! \note  This function is *not* async signal safe.
-        //!
-        //! \note  This function is only expected to be called once for each trace file.
-        //!        The behaviour is undefined if it is called more than once.
-        //!
-        std::size_t set_proc_maps(const samplerpreload::Trace::ProcMaps& procMaps);
-
-        //!
         //! \brief  Adds a sample to the trace file.
         //!
         //! \param[in]  sample  The sample to add.
@@ -114,7 +100,7 @@ namespace swimps::trace {
         //!
         std::size_t add_stack_frame(const StackFrame& stackFrame);
 
-        using Entry = std::variant<samplerpreload::Trace::ProcMaps, Backtrace, RawSample, Sample, StackFrame, swimps::error::ErrorCode>;
+        using Entry = std::variant<Backtrace, RawSample, Sample, StackFrame, swimps::error::ErrorCode>;
 
         //!
         //! \brief  Reads the next entry in the trace file.

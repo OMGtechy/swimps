@@ -23,8 +23,6 @@
 #include "swimps-assert/swimps-assert.h"
 #include "swimps-log/swimps-log.h"
 
-using ProcMaps = samplerpreload::Trace::ProcMaps;
-
 using signalsafe::memory::copy_no_overlap;
 using signalsafe::time::TimeSpecification;
 
@@ -59,10 +57,9 @@ namespace {
         using SampleHandler = std::function<void(Sample&)>;
         using RawSampleHandler = std::function<void(RawSample&)>;
         using StackFrameHandler = std::function<void(StackFrame&)>;
-        using ProcMapsHandler = std::function<void(ProcMaps&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, RawSampleHandler onRawSample, StackFrameHandler onStackFrame, ProcMapsHandler onProcMaps)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onRawSample(onRawSample), m_onStackFrame(onStackFrame), m_onProcMaps(onProcMaps) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, RawSampleHandler onRawSample, StackFrameHandler onStackFrame)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onRawSample(onRawSample), m_onStackFrame(onStackFrame) {
 
         }
 
@@ -71,11 +68,6 @@ namespace {
         SampleHandler m_onSample;
         RawSampleHandler m_onRawSample;
         StackFrameHandler m_onStackFrame;
-        ProcMapsHandler m_onProcMaps;
-
-        void operator()(ProcMaps& procMaps) const {
-            m_onProcMaps(procMaps);
-        }
 
         void operator()(Sample& sample) const {
             m_onSample(sample);
@@ -113,7 +105,6 @@ namespace {
     enum class EntryKind : int {
         Unknown,
         EndOfFile,
-        ProcMaps,
         Sample,
         RawSample,
         SymbolicBacktrace,
@@ -183,10 +174,6 @@ namespace {
             return read_next_entry_kind(traceFile);
         }
 
-        if (memcmp(buffer, swimps_v1_trace_proc_maps_marker, sizeof swimps_v1_trace_proc_maps_marker) == 0) {
-            return EntryKind::ProcMaps;
-        }
-
         if (memcmp(buffer, swimps_v1_trace_raw_sample_marker, sizeof swimps_v1_trace_raw_sample_marker) == 0) {
             return EntryKind::RawSample;
         }
@@ -204,31 +191,6 @@ namespace {
         }
 
         return EntryKind::Unknown;
-    }
-
-    std::optional<ProcMaps> read_proc_maps(TraceFile& traceFile) {
-        uint64_t entryCount;
-
-        if (! traceFile.read(entryCount)) {
-            return {};
-        }
-
-        ProcMaps procMaps;
-        procMaps.ranges.resize(entryCount);
-
-        for (uint64_t i = 0; i < entryCount; ++i) {
-            auto& entry = procMaps.ranges[i];
-
-            if (! traceFile.read(entry.start)) {
-                return {};
-            }
-
-            if (! traceFile.read(entry.end)) {
-                return {};
-            }
-        }
-
-        return procMaps;
     }
 
     std::optional<Sample> read_sample(TraceFile& traceFile) {
@@ -440,25 +402,7 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
         traceFile.add_raw_sample(rawSample);
     }
 
-    traceFile.set_proc_maps(rawTrace.get_proc_maps());
-
     return traceFile;
-}
-
-std::size_t TraceFile::set_proc_maps(const ProcMaps& procMaps) {
-    std::size_t bytesWritten = 0;
-
-    const auto entryCount = static_cast<uint64_t>(procMaps.ranges.size());
-
-    bytesWritten += write(swimps_v1_trace_proc_maps_marker);    
-    bytesWritten += write(entryCount);
-
-    for(const auto& entry : procMaps.ranges) {
-        bytesWritten += write(entry.start);
-        bytesWritten += write(entry.end);
-    };
-
-    return bytesWritten;
 }
 
 std::size_t TraceFile::add_backtrace(const Backtrace& backtrace) {
@@ -544,20 +488,6 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     );
 
     switch(entryKind) {
-    case EntryKind::ProcMaps:
-        {
-            const auto procMaps = read_proc_maps(*this);
-            if (! procMaps) {
-                write_to_log(
-                    LogLevel::Fatal,
-                    "Reading proc maps failed."
-                );
-
-                return ErrorCode::ReadProcMapsFailed;
-            }
-
-            return *procMaps;
-        }
     case EntryKind::Sample:
         {
             const auto sample = read_sample(*this);
@@ -634,8 +564,6 @@ bool TraceFile::finalise() noexcept {
         return false;
     }
 
-    ProcMaps procMaps;
-
     stack_frame_id_t nextStackFrameID = 1;
     std::unordered_map<instruction_pointer_t, stack_frame_id_t> stackFrameIDMap;
 
@@ -699,10 +627,7 @@ bool TraceFile::finalise() noexcept {
 
                     samples.push_back({backtraceIter->second, rawSample.timestamp});
                 },
-                [](auto& /* stackFrame */){},
-                [&procMaps](auto& _procMaps) {
-                    procMaps = _procMaps;
-                }
+                [](auto& /* stackFrame */){}
             },
             entry
         );
@@ -723,8 +648,6 @@ bool TraceFile::finalise() noexcept {
     const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
 
     auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
-
-    tempFile.set_proc_maps(procMaps);
 
     for(const auto& sample : samples) {
         tempFile.add_sample(sample);
@@ -779,7 +702,6 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
                 [](auto&){ swimps_assert(false); }, // shouldn't be getting raw samples as this point
                 [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
-                [&trace](auto& procMaps){ trace.procMaps = procMaps; }
             },
             entry
         );
