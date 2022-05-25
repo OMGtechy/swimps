@@ -10,8 +10,6 @@
 
 #include <signalsampler/backtrace.hpp>
 
-#include "swimps-dwarf/swimps-dwarf.h"
-
 namespace swimps::trace {
     // Signed integers chosen because it's easier to spot errors when they overflow.
 

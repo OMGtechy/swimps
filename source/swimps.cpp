@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         TraceFile::open_existing(
             { options.targetTraceFile.c_str(), options.targetTraceFile.size() },
             TraceFile::Permissions::ReadOnly
-        ).finalise(File::open_existing(options.targetProgram, TraceFile::Permissions::ReadOnly));
+        ).finalise();
     }
 
     auto traceFile = TraceFile::open_existing(

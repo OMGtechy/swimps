@@ -18,7 +18,6 @@
 #include <signalsafe/memory.hpp>
 
 #include "swimps-assert/swimps-assert.h"
-#include "swimps-dwarf/swimps-dwarf.h"
 #include "swimps-log/swimps-log.h"
 
 using signalsafe::memory::copy_no_overlap;
@@ -592,7 +591,7 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
     }
 }
 
-bool TraceFile::finalise(signalsafe::File executable) noexcept {
+bool TraceFile::finalise() noexcept {
     if (! goToStartOfFile(*this)) {
         return false;
     }
@@ -697,88 +696,23 @@ bool TraceFile::finalise(signalsafe::File executable) noexcept {
         tempFile.add_backtrace(backtraceKeyValue.first);
     }
 
-    swimps::dwarf::DwarfInfo dwarfInfo(std::move(executable));
-    const auto& dwarfLineInfos = dwarfInfo.getLineInfos();
-    const auto& dwarfFunctionInfos = dwarfInfo.getFunctionInfos();
-
     for(auto& stackFrame : stackFrames) {
         const auto instructionPointer = stackFrame.instructionPointer;
 
-        const auto procMapEntryIter = std::find_if(
-            procMaps.entries.cbegin(),
-            procMaps.entries.cend(),
-            [instructionPointer](const auto& entry){
-                return instructionPointer >= entry.range.start && instructionPointer <= entry.range.end;
-            }
-        );
+        unw_context_t unwindContext{};
 
-        swimps_assert(procMapEntryIter != procMaps.entries.cend());
-
-        const auto adjustedInstructionPointer = instructionPointer - procMapEntryIter->range.start;
-
-        const auto dwarfLineInfoIter = std::find_if(
-            dwarfLineInfos.cbegin(),
-            dwarfLineInfos.cend(),
-            [adjustedInstructionPointer](const auto& dwarfLineInfo){
-                return adjustedInstructionPointer == dwarfLineInfo.getAddress();
-            }
-        );
-
-        if (dwarfLineInfoIter != dwarfLineInfos.cend()) {
-            if (dwarfLineInfoIter->getSourceFilePath()) {
-                const auto sourceFilePath = dwarfLineInfoIter->getSourceFilePath()->string();
-                const auto bytesWritten = copy_no_overlap(
-                    std::span<const char>{ sourceFilePath.c_str(), sourceFilePath.length() },
-                    stackFrame.sourceFilePath
-                );
-
-                stackFrame.sourceFilePathLength = bytesWritten;
-            }
-
-            if (dwarfLineInfoIter->getLineNumber()) {
-                stackFrame.lineNumber = *dwarfLineInfoIter->getLineNumber();
-            }
-
-            if (dwarfLineInfoIter->getOffset()) {
-                stackFrame.offset = *dwarfLineInfoIter->getOffset();
-            }
-
-            const auto functionInfoIter = std::find_if(
-                dwarfFunctionInfos.cbegin(),
-                dwarfFunctionInfos.cend(),
-                [adjustedInstructionPointer](const auto& functionInfo){
-                    return adjustedInstructionPointer >= functionInfo.getLowPC()
-                        && adjustedInstructionPointer <  functionInfo.getHighPC();
-                }
-            );
-
-            if (functionInfoIter != dwarfFunctionInfos.cend()) {
-                const auto& name = functionInfoIter->getName();
-                stackFrame.functionNameLength = copy_no_overlap(
-                    std::span<const char>{ name.c_str(), name.length() },
-                    stackFrame.functionName
-                );
-            }
-        }
-
-        if (stackFrame.functionNameLength == 0) {
-            // Couldn't find it in debug info,
-            // see if libunwind can work it out.
-            unw_context_t unwindContext{};
-
-            #ifdef __clang__
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wgnu-statement-expression"
-            #endif
-            unw_getcontext(&unwindContext);
-            #ifdef __clang__
-            #pragma clang diagnostic pop
-            #endif
-            unw_cursor_t unwindCursor{};
-            unw_init_local(&unwindCursor, &unwindContext);
-            unw_set_reg(&unwindCursor, UNW_REG_IP, instructionPointer);
-            unw_get_proc_name(&unwindCursor, &stackFrame.functionName[0], std::size(stackFrame.functionName), &stackFrame.offset);
-        }
+        #ifdef __clang__
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wgnu-statement-expression"
+        #endif
+        unw_getcontext(&unwindContext);
+        #ifdef __clang__
+        #pragma clang diagnostic pop
+        #endif
+        unw_cursor_t unwindCursor{};
+        unw_init_local(&unwindCursor, &unwindContext);
+        unw_set_reg(&unwindCursor, UNW_REG_IP, instructionPointer);
+        unw_get_proc_name(&unwindCursor, &stackFrame.functionName[0], std::size(stackFrame.functionName), &stackFrame.offset);
 
         tempFile.add_stack_frame(stackFrame);
     }
