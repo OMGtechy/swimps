@@ -3,7 +3,6 @@
 #include <cstring>
 #include <cerrno>
 #include <cinttypes>
-#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -441,7 +440,6 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
     }
 
     ProcMaps procMaps;
-    std::cout << "proc map pre size: " << rawTrace.get_proc_maps().ranges.size() << std::endl;
     for (auto range : rawTrace.get_proc_maps().ranges) {
         procMaps.entries.push_back({range.start, range.end});
     }
