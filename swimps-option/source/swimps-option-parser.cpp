@@ -52,8 +52,8 @@ std::optional<Options> swimps::option::parse_command_line(
 
     cliApp.prefix_command();
 
-    if (const auto exitCode = [&cliApp, &argc, &argv](){ CLI11_PARSE(cliApp, argc, argv); return 0; }() != 0) {
-        exit(exitCode);
+    if ([&cliApp, &argc, &argv](){ CLI11_PARSE(cliApp, argc, argv); return 0; }() != 0) {
+        return {};
     }
 
     if (cliApp.get_help_ptr()->operator bool()) {
