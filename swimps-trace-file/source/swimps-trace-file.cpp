@@ -392,14 +392,108 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
     std::filesystem::remove(path);
 
     auto traceFile = create_and_open(path.string(), Permissions::ReadWrite);
-    for (const auto& sample : rawTrace.get_samples()) {
-        RawSample rawSample;
-        const auto& backtrace = sample.backtrace;
-        std::copy_n(backtrace.cbegin(), std::min(backtrace.size(), backtrace.size()), rawSample.backtrace.begin());
-        rawSample.timestamp = sample.timestamp;
 
-        traceFile.add_raw_sample(rawSample);
+    stack_frame_id_t nextStackFrameID = 1;
+    std::unordered_map<instruction_pointer_t, stack_frame_id_t> stackFrameIDMap;
+
+    struct BacktraceHash final {
+        std::size_t operator()(const Backtrace& backtrace) const {
+            return backtrace.id;
+        }
+    };
+
+    struct BacktraceCompare final {
+        bool operator()(const Backtrace& lhs, const Backtrace& rhs) const {
+            // TODO: don't check beyond stackFrameIDCount?
+            return lhs.stackFrameIDs == rhs.stackFrameIDs;
+        }
+    };
+
+    backtrace_id_t nextBacktraceID = 1;
+    std::unordered_map<Backtrace, backtrace_id_t, BacktraceHash, BacktraceCompare> backtraces;
+    std::vector<StackFrame> stackFrames;
+    std::vector<Sample> samples;
+
+    // Grab a 0.5GB of RAM for each.
+    constexpr std::size_t halfAGigInBytes = 500'000'000;
+    samples.reserve(halfAGigInBytes / sizeof(Sample));
+    stackFrames.reserve(halfAGigInBytes / sizeof(StackFrame));
+
+    for (const auto& rawSample : rawTrace.get_samples()) {
+        Backtrace backtrace;
+
+        swimps_assert(rawSample.backtrace.size() <= backtrace.stackFrameIDs.size());
+
+        for (std::size_t i = 0; i < rawSample.backtrace.size() && rawSample.backtrace[i] != 0; ++i) {
+
+            const auto instructionPointer = rawSample.backtrace[i];
+
+            if (stackFrameIDMap.find(instructionPointer) == stackFrameIDMap.cend()) {
+                stackFrameIDMap[instructionPointer] = nextStackFrameID++;
+            }
+
+            const auto stackFrameID = stackFrameIDMap.at(instructionPointer);
+
+            backtrace.stackFrameIDs[i] = stackFrameIDMap.at(instructionPointer);
+            backtrace.stackFrameIDCount += 1;
+
+            stackFrames.emplace_back(stackFrameID, instructionPointer);
+        }
+
+        auto backtraceIter = backtraces.find(backtrace);
+        if (backtraceIter == backtraces.cend()) {
+            backtraceIter = backtraces.insert({backtrace, nextBacktraceID++}).first;
+        }
+
+        samples.push_back({backtraceIter->second, rawSample.timestamp});
     }
+
+    format_and_write_to_log<1024>(
+        LogLevel::Debug,
+        "Finalising...\n"
+        "Samples: %\n"
+        "Backtraces: %\n"
+        "Stack Frames: %\n",
+        samples.size(),
+        backtraces.size(),
+        stackFrames.size()
+    );
+
+    const auto traceFilePath = traceFile.get_path();
+    const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
+
+    auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
+
+    for(const auto& sample : samples) {
+        tempFile.add_sample(sample);
+    }
+
+    for(const auto& backtraceKeyValue : backtraces) {
+        tempFile.add_backtrace(backtraceKeyValue.first);
+    }
+
+    for(auto& stackFrame : stackFrames) {
+        const auto instructionPointer = stackFrame.instructionPointer;
+
+        unw_context_t unwindContext{};
+
+        #ifdef __clang__
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wgnu-statement-expression"
+        #endif
+        unw_getcontext(&unwindContext);
+        #ifdef __clang__
+        #pragma clang diagnostic pop
+        #endif
+        unw_cursor_t unwindCursor{};
+        unw_init_local(&unwindCursor, &unwindContext);
+        unw_set_reg(&unwindCursor, UNW_REG_IP, instructionPointer);
+        unw_get_proc_name(&unwindCursor, &stackFrame.functionName[0], std::size(stackFrame.functionName), &stackFrame.offset);
+
+        tempFile.add_stack_frame(stackFrame);
+    }
+
+    std::filesystem::copy(tempFilePath, traceFilePath, std::filesystem::copy_options::overwrite_existing);
 
     return traceFile;
 }
@@ -556,130 +650,6 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
 
         return ErrorCode::UnknownEntryKind;
     }
-}
-
-bool TraceFile::finalise() noexcept {
-    if (! goToStartOfFile(*this)) {
-        return false;
-    }
-
-    stack_frame_id_t nextStackFrameID = 1;
-    std::unordered_map<instruction_pointer_t, stack_frame_id_t> stackFrameIDMap;
-
-    struct BacktraceHash final {
-        std::size_t operator()(const Backtrace& backtrace) const {
-            return backtrace.id;
-        }
-    };
-
-    struct BacktraceCompare final {
-        bool operator()(const Backtrace& lhs, const Backtrace& rhs) const {
-            // TODO: don't check beyond stackFrameIDCount?
-            return lhs.stackFrameIDs == rhs.stackFrameIDs;
-        }
-    };
-
-    backtrace_id_t nextBacktraceID = 1;
-    std::unordered_map<Backtrace, backtrace_id_t, BacktraceHash, BacktraceCompare> backtraces;
-    std::vector<StackFrame> stackFrames;
-    std::vector<Sample> samples;
-
-    // Grab a 0.5GB of RAM for each.
-    constexpr std::size_t halfAGigInBytes = 500'000'000;
-    samples.reserve(halfAGigInBytes / sizeof(Sample));
-    stackFrames.reserve(halfAGigInBytes / sizeof(StackFrame));
-
-    bool stop = false;
-    for (auto entry = read_next_entry(); !stop; entry = read_next_entry()) {
-        std::visit(
-            // TODO: add visitor for unfainlised so the dummy lambdas aren't needed?
-            Visitor{
-                stop,
-                // TODO: add errors for unexpected entries
-                [](auto& /* backtrace */){},
-                [](auto& /* sample */){},
-                [&stackFrameIDMap, &samples, &stackFrames, &backtraces, &nextBacktraceID, &nextStackFrameID](auto& rawSample){
-                    Backtrace backtrace;
-
-                    swimps_assert(backtrace.stackFrameIDs.size() == rawSample.backtrace.size());
-
-                    for (std::size_t i = 0; i < rawSample.backtrace.size() && rawSample.backtrace[i] != 0; ++i) {
-
-                        const auto instructionPointer = rawSample.backtrace[i];
-
-                        if (stackFrameIDMap.find(instructionPointer) == stackFrameIDMap.cend()) {
-                            stackFrameIDMap[instructionPointer] = nextStackFrameID++;
-                        }
-
-                        const auto stackFrameID = stackFrameIDMap.at(instructionPointer);
-
-                        backtrace.stackFrameIDs[i] = stackFrameIDMap.at(instructionPointer);
-                        backtrace.stackFrameIDCount += 1;
-
-                        stackFrames.emplace_back(stackFrameID, instructionPointer);
-                    }
-
-                    auto backtraceIter = backtraces.find(backtrace);
-                    if (backtraceIter == backtraces.cend()) {
-                        backtraceIter = backtraces.insert({backtrace, nextBacktraceID++}).first;
-                    }
-
-                    samples.push_back({backtraceIter->second, rawSample.timestamp});
-                },
-                [](auto& /* stackFrame */){}
-            },
-            entry
-        );
-    }
-
-    format_and_write_to_log<1024>(
-        LogLevel::Debug,
-        "Finalising...\n"
-        "Samples: %\n"
-        "Backtraces: %\n"
-        "Stack Frames: %\n",
-        samples.size(),
-        backtraces.size(),
-        stackFrames.size()
-    );
-
-    const auto traceFilePath = get_path();
-    const auto tempFilePath = std::string("/tmp/") + std::filesystem::path(traceFilePath).filename().string() + ".tmp";
-
-    auto tempFile = TraceFile::create_and_open({ tempFilePath.data(), tempFilePath.length() }, TraceFile::Permissions::ReadWrite);
-
-    for(const auto& sample : samples) {
-        tempFile.add_sample(sample);
-    }
-
-    for(const auto& backtraceKeyValue : backtraces) {
-        tempFile.add_backtrace(backtraceKeyValue.first);
-    }
-
-    for(auto& stackFrame : stackFrames) {
-        const auto instructionPointer = stackFrame.instructionPointer;
-
-        unw_context_t unwindContext{};
-
-        #ifdef __clang__
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wgnu-statement-expression"
-        #endif
-        unw_getcontext(&unwindContext);
-        #ifdef __clang__
-        #pragma clang diagnostic pop
-        #endif
-        unw_cursor_t unwindCursor{};
-        unw_init_local(&unwindCursor, &unwindContext);
-        unw_set_reg(&unwindCursor, UNW_REG_IP, instructionPointer);
-        unw_get_proc_name(&unwindCursor, &stackFrame.functionName[0], std::size(stackFrame.functionName), &stackFrame.offset);
-
-        tempFile.add_stack_frame(stackFrame);
-    }
-
-    std::filesystem::copy(tempFilePath, traceFilePath, std::filesystem::copy_options::overwrite_existing);
-
-    return true;
 }
 
 std::optional<Trace> TraceFile::read_trace() noexcept {

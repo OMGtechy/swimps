@@ -120,17 +120,6 @@ namespace swimps::trace {
         //!
         std::optional<Trace> read_trace() noexcept;
 
-        //!
-        //! \brief  Finalises the trace file.
-        //!
-        //! \returns  Whether finalising was successful or not.
-        //!
-        //! \note  You should not modify the file after finalising it.
-        //!
-        //! \note  This function is *not* async signal safe.
-        //!
-        bool finalise() noexcept;
-
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;
 

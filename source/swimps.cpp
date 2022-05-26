@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
         TraceFile::from_raw(
             { options.targetTraceFile.c_str(), options.targetTraceFile.size() }
-        ).finalise();
+        );
     }
 
     auto traceFile = TraceFile::open_existing(
