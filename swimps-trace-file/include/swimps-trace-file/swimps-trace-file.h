@@ -9,7 +9,6 @@
 #include <signalsafe/file.hpp>
 
 #include "swimps-error/swimps-error.h"
-#include "swimps-time/swimps-time.h"
 #include "swimps-trace/swimps-trace.h"
 
 namespace swimps::trace {
@@ -119,6 +118,17 @@ namespace swimps::trace {
         //! \note  This function is *not* async signal safe.
         //!
         std::optional<Trace> read_trace() noexcept;
+
+        //!
+        //! \brief  Finalises the trace file.
+        //!
+        //! \returns  Whether finalising was successful or not.
+        //!
+        //! \note  You should not modify the file after finalising it.
+        //!
+        //! \note  This function is *not* async signal safe.
+        //!
+        bool finalise() noexcept;
 
         TraceFile(TraceFile&&) = default;
         TraceFile& operator=(TraceFile&&) = default;

@@ -12,4 +12,4 @@ FetchContent_MakeAvailable(cli11)
 
 add_library(swimps-option SHARED source/swimps-option-parser.cpp source/swimps-option-options.cpp)
 target_include_directories(swimps-option PUBLIC include)
-target_link_libraries(swimps-option CLI11::CLI11 swimps-log swimps-error swimps-assert swimps-time swimps-trace-file)
+target_link_libraries(swimps-option CLI11::CLI11 swimps-log swimps-error swimps-assert swimps-trace-file)
