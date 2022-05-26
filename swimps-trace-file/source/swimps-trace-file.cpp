@@ -259,13 +259,15 @@ namespace {
             return {};
         }
 
-        if (! traceFile.read(backtrace.stackFrameIDCount)) {
+        stack_frame_count_t stackFrameIDCount = 0;
+        if (! traceFile.read(stackFrameIDCount)) {
             return {};
         }
 
-        swimps_assert(backtrace.stackFrameIDCount > 0);
+        swimps_assert(stackFrameIDCount > 0);
+        backtrace.stackFrameIDs.resize(stackFrameIDCount);
 
-        for (stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
+        for (stack_frame_count_t i = 0; i < stackFrameIDCount; ++i) {
             if (! traceFile.read(backtrace.stackFrameIDs[i])) {
                 return {};
             }
@@ -404,7 +406,6 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
 
     struct BacktraceCompare final {
         bool operator()(const Backtrace& lhs, const Backtrace& rhs) const {
-            // TODO: don't check beyond stackFrameIDCount?
             return lhs.stackFrameIDs == rhs.stackFrameIDs;
         }
     };
@@ -422,8 +423,6 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
     for (const auto& rawSample : rawTrace.get_samples()) {
         Backtrace backtrace;
 
-        swimps_assert(rawSample.backtrace.size() <= backtrace.stackFrameIDs.size());
-
         for (std::size_t i = 0; i < rawSample.backtrace.size() && rawSample.backtrace[i] != 0; ++i) {
 
             const auto instructionPointer = rawSample.backtrace[i];
@@ -434,8 +433,7 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
 
             const auto stackFrameID = stackFrameIDMap.at(instructionPointer);
 
-            backtrace.stackFrameIDs[i] = stackFrameIDMap.at(instructionPointer);
-            backtrace.stackFrameIDCount += 1;
+            backtrace.stackFrameIDs.push_back(stackFrameIDMap.at(instructionPointer));
 
             stackFrames.emplace_back(stackFrameID, instructionPointer);
         }
@@ -501,14 +499,14 @@ TraceFile TraceFile::from_raw(std::string_view pathView) noexcept {
 std::size_t TraceFile::add_backtrace(const Backtrace& backtrace) {
     std::size_t bytesWritten = 0;
 
-    swimps_assert(backtrace.stackFrameIDCount >0);
+    swimps_assert(backtrace.stackFrameIDs.size() > 0);
 
     bytesWritten += write(swimps_v1_trace_symbolic_backtrace_marker);
     bytesWritten += write(backtrace.id);
-    bytesWritten += write(backtrace.stackFrameIDCount);
+    bytesWritten += write(static_cast<stack_frame_count_t>(backtrace.stackFrameIDs.size()));
 
-    for(stack_frame_count_t i = 0; i < backtrace.stackFrameIDCount; ++i) {
-        bytesWritten += write(backtrace.stackFrameIDs[i]);
+    for(const auto& stackFrameID : backtrace.stackFrameIDs) {
+        bytesWritten += write(stackFrameID);
     }
 
     return bytesWritten;

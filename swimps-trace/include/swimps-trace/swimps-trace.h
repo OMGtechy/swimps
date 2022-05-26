@@ -87,8 +87,7 @@ namespace swimps::trace {
 
     struct Backtrace {
         backtrace_id_t id = std::numeric_limits<backtrace_id_t>::min();
-        std::array<stack_frame_id_t, 64> stackFrameIDs = { };
-        stack_frame_count_t stackFrameIDCount = 0;
+        std::vector<stack_frame_id_t> stackFrameIDs;
     };
 
     struct RawSample {

@@ -15,10 +15,9 @@ SCENARIO("swimps::trace::TraceFile::read_backtrace, "
 
         Backtrace writtenBacktrace;
         writtenBacktrace.id = 9;
-        writtenBacktrace.stackFrameIDs[0] = 0;
-        writtenBacktrace.stackFrameIDs[1] = 1;
-        writtenBacktrace.stackFrameIDs[2] = 2;
-        writtenBacktrace.stackFrameIDCount = 3;
+        writtenBacktrace.stackFrameIDs.push_back(0);
+        writtenBacktrace.stackFrameIDs.push_back(1);
+        writtenBacktrace.stackFrameIDs.push_back(2);
 
         WHEN("A valid backtrace is written to it.") {
             targetFile.add_backtrace(writtenBacktrace);
@@ -35,7 +34,7 @@ SCENARIO("swimps::trace::TraceFile::read_backtrace, "
 
                     AND_THEN("The read backtrace is equivalent to the written one.") {
                         REQUIRE(readBacktrace.id == writtenBacktrace.id);
-                        REQUIRE(readBacktrace.stackFrameIDCount == writtenBacktrace.stackFrameIDCount);
+                        REQUIRE(readBacktrace.stackFrameIDs.size() == writtenBacktrace.stackFrameIDs.size());
                         REQUIRE(readBacktrace.stackFrameIDs == writtenBacktrace.stackFrameIDs);
                     }
                 }

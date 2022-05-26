@@ -41,7 +41,7 @@ namespace {
         for(const auto& backtrace : trace.backtraces) {
             auto* targetNodeChildren = &root.children;
 
-            for(stack_frame_count_t i = backtrace.stackFrameIDCount; i > 0; --i) {
+            for(stack_frame_count_t i = backtrace.stackFrameIDs.size(); i > 0; --i) {
                 const auto stackFrameID = backtrace.stackFrameIDs[i - 1];
 
                 const auto existingChild = std::find_if(

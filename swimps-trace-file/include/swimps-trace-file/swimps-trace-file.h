@@ -84,7 +84,7 @@ namespace swimps::trace {
         //!
         //! \returns  The number of bytes written to the file.
         //!
-        //! \note  This function is async signal safe.
+        //! \note  This function is *not* async signal safe.
         //!
         std::size_t add_backtrace(const Backtrace& backtrace);
 
