@@ -35,7 +35,6 @@ using swimps::log::write_to_log;
 using swimps::trace::Backtrace;
 using swimps::trace::backtrace_id_t;
 using swimps::trace::function_name_length_t;
-using swimps::trace::RawSample;
 using swimps::trace::Sample;
 using swimps::trace::StackFrame;
 using swimps::trace::stack_frame_count_t;
@@ -47,33 +46,26 @@ namespace {
     constexpr size_t swimps_v1_trace_entry_marker_size = 6;
     constexpr char swimps_v1_trace_file_marker[swimps_v1_trace_entry_marker_size] = "s_v1\n";
     constexpr char swimps_v1_trace_symbolic_backtrace_marker[swimps_v1_trace_entry_marker_size] = "\nsb!\n";
-    constexpr char swimps_v1_trace_raw_sample_marker[swimps_v1_trace_entry_marker_size] = "\nrs!\n";
     constexpr char swimps_v1_trace_sample_marker[swimps_v1_trace_entry_marker_size] = "\nsp!\n";
     constexpr char swimps_v1_trace_stack_frame_marker[swimps_v1_trace_entry_marker_size] = "\nsf!\n";
 
     struct Visitor {
         using BacktraceHandler = std::function<void(Backtrace&)>;
         using SampleHandler = std::function<void(Sample&)>;
-        using RawSampleHandler = std::function<void(RawSample&)>;
         using StackFrameHandler = std::function<void(StackFrame&)>;
 
-        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, RawSampleHandler onRawSample, StackFrameHandler onStackFrame)
-        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onRawSample(onRawSample), m_onStackFrame(onStackFrame) {
+        Visitor(bool& stopTarget, BacktraceHandler onBacktrace, SampleHandler onSample, StackFrameHandler onStackFrame)
+        : m_stopTarget(stopTarget), m_onBacktrace(onBacktrace), m_onSample(onSample), m_onStackFrame(onStackFrame) {
 
         }
 
         bool& m_stopTarget;
         BacktraceHandler m_onBacktrace;
         SampleHandler m_onSample;
-        RawSampleHandler m_onRawSample;
         StackFrameHandler m_onStackFrame;
 
         void operator()(Sample& sample) const {
             m_onSample(sample);
-        }
-
-        void operator()(RawSample& rawSample) const {
-            m_onRawSample(rawSample);
         }
 
         void operator()(Backtrace& backtrace) const {
@@ -105,7 +97,6 @@ namespace {
         Unknown,
         EndOfFile,
         Sample,
-        RawSample,
         SymbolicBacktrace,
         StackFrame,
     };
@@ -173,10 +164,6 @@ namespace {
             return read_next_entry_kind(traceFile);
         }
 
-        if (memcmp(buffer, swimps_v1_trace_raw_sample_marker, sizeof swimps_v1_trace_raw_sample_marker) == 0) {
-            return EntryKind::RawSample;
-        }
-
         if (memcmp(buffer, swimps_v1_trace_sample_marker, sizeof swimps_v1_trace_sample_marker) == 0) {
             return EntryKind::Sample;
         }
@@ -210,35 +197,6 @@ namespace {
         }
 
         return {{ backtraceID, timestamp }};
-    }
-
-    std::optional<RawSample> read_raw_sample(TraceFile& traceFile) {
-        decltype(RawSample::backtrace) backtrace;
-
-        for (std::size_t i = 0;; ++i) {
-            // We should hit an instruction pointer of 0 *before* this happens.
-            swimps_assert(i < backtrace.size());
-
-            if (! traceFile.read(backtrace[i])) {
-                return {};
-            }
-
-            if (backtrace[i] == 0) {
-                break;
-            }
-        }
-
-        TimeSpecification timestamp;
-
-        if (! traceFile.read(timestamp.seconds)) {
-            return {};
-        }
-
-        if (! traceFile.read(timestamp.nanoseconds)) {
-            return {};
-        }
-
-        return {{ backtrace, timestamp }};
     }
 
     int write_trace_file_marker(TraceFile& targetFile) {
@@ -553,22 +511,6 @@ std::size_t TraceFile::add_sample(const Sample& sample) {
     return bytesWritten;
 }
 
-std::size_t TraceFile::add_raw_sample(const RawSample& rawSample) {
-    std::size_t bytesWritten = 0;
-
-    bytesWritten += write(swimps_v1_trace_raw_sample_marker);
-
-    for (std::size_t i = 0; rawSample.backtrace[i] != 0; ++i) {
-        bytesWritten += write(rawSample.backtrace[i]);
-    }
-
-    bytesWritten += write(instruction_pointer_t{0});
-    bytesWritten += write(rawSample.timestamp.seconds);
-    bytesWritten += write(rawSample.timestamp.nanoseconds);
-
-    return bytesWritten;
-}
-
 TraceFile::Entry TraceFile::read_next_entry() noexcept {
     const auto entryKind = read_next_entry_kind(*this);
 
@@ -593,21 +535,6 @@ TraceFile::Entry TraceFile::read_next_entry() noexcept {
             }
 
             return *sample;
-        }
-    case EntryKind::RawSample:
-        {
-            const auto rawSample = read_raw_sample(*this);
-            if (!rawSample) {
-
-                write_to_log(
-                    LogLevel::Fatal,
-                    "Reading raw sample failed."
-                );
-
-                return ErrorCode::ReadRawSampleFailed;
-            }
-
-            return *rawSample;
         }
     case EntryKind::SymbolicBacktrace:
         {
@@ -667,7 +594,6 @@ std::optional<Trace> TraceFile::read_trace() noexcept {
                 stop,
                 [&trace](auto& backtrace){ trace.backtraces.push_back(backtrace); },
                 [&trace](auto& sample){ trace.samples.push_back(sample); },
-                [](auto&){ swimps_assert(false); }, // shouldn't be getting raw samples as this point
                 [&trace](auto& stackFrame){ trace.stackFrames.push_back(stackFrame); },
             },
             entry

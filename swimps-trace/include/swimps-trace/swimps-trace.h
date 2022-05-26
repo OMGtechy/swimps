@@ -90,16 +90,10 @@ namespace swimps::trace {
         std::vector<stack_frame_id_t> stackFrameIDs;
     };
 
-    struct RawSample {
-        signalsampler::backtrace_t<64> backtrace;
-        signalsafe::time::TimeSpecification timestamp;
-    };
-
     struct Sample {
         backtrace_id_t backtraceID = std::numeric_limits<backtrace_id_t>::min();
         signalsafe::time::TimeSpecification timestamp;
     };
-
 
     struct Trace {
         std::vector<Sample> samples;

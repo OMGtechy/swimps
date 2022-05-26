@@ -14,7 +14,6 @@ namespace swimps::error {
         ChildProcessHasNonZeroExitCode,
         ChildProcessExitedDueToSignal,
         CommandLineParseFailed,
-        ReadRawSampleFailed,
         ReadSampleFailed,
         ReadBacktraceFailed,
         ReadStackFrameFailed,
