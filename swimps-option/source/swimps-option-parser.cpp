@@ -36,7 +36,7 @@ std::optional<Options> swimps::option::parse_command_line(
     cliApp.add_flag("--tui,!--no-tui", options.tui, "Toggle the TUI.");
     cliApp.add_flag("--ptrace,!--no-ptrace", options.ptrace, "Toggle ptrace."); 
     cliApp.add_option("--target-trace-file", options.targetTraceFile);
-    cliApp.add_option("--samples-per-second", options.samplesPerSecond);
+    cliApp.add_option("--samples-per-second", options.samplesPerSecond)->check(CLI::Range(0.0, 1'000'000.0));
 
     const auto logLevelMap = std::map<std::string, LogLevel>{
         {"debug",   LogLevel::Debug},
@@ -52,7 +52,9 @@ std::optional<Options> swimps::option::parse_command_line(
 
     cliApp.prefix_command();
 
-    [&cliApp, &argc, &argv](){ CLI11_PARSE(cliApp, argc, argv); return 0; }();
+    if (const auto exitCode = [&cliApp, &argc, &argv](){ CLI11_PARSE(cliApp, argc, argv); return 0; }() != 0) {
+        exit(exitCode);
+    }
 
     if (cliApp.get_help_ptr()->operator bool()) {
         exit(0);
