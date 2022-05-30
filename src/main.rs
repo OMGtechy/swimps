@@ -1,3 +1,10 @@
+pub mod args;
+
+// TODO: this shouldn't be necessary,
+//       what happened to encapsulation?
+use clap::Parser;
+
 fn main() {
-    println!("Hello, world!");
+    let args = args::Args::parse(); 
+    println!("Trace file: {}", args.trace_file());
 }
