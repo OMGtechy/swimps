@@ -6,7 +6,10 @@ pub struct Args {
     trace_file: String,
 
     #[clap()]
-    target_program: String
+    target_program: String,
+
+    #[clap()]
+    target_program_args: Option<String>
 }
 
 impl Args {
@@ -16,6 +19,13 @@ impl Args {
 
     pub fn target_program(&self) -> &str {
         &self.target_program
+    }
+
+    pub fn target_program_args(&self) -> Option<&str> {
+        match &self.target_program_args {
+            Some(s) => Some(&s),
+            None => None
+        }
     }
 }
 
@@ -35,5 +45,20 @@ mod tests {
     
         assert_eq!("hi", args.trace_file());
         assert_eq!("echo", args.target_program());
+    }
+
+    #[test]
+    fn trace_file_and_program_and_args() {
+        let args = Args::parse_from([
+            "test",
+            "--trace-file",
+            "hi",
+            "echo",
+            "bingo!"
+        ].iter());
+    
+        assert_eq!("hi", args.trace_file());
+        assert_eq!("echo", args.target_program());
+        assert_eq!(Some("bingo!"), args.target_program_args());
     }
 }
