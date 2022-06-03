@@ -27,6 +27,10 @@ impl Args {
             None => None
         }
     }
+
+    pub fn parse() -> Args {
+        Parser::parse()
+    }
 }
 
 // TODO: should this go in another file?
