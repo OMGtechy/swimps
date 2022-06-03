@@ -19,18 +19,22 @@ jobs:
 
     - name: build-debug
       uses: actions-rs/cargo@v1
-      command: build
+      with:
+        command: build
 
     - name: build-release
       uses: actions-rs/cargo@v1
-      command: build
-      args: --release
+      with:
+        command: build
+        args: --release
 
     - name: test-debug
       uses: actions-rs/cargo@v1
-      command: test
+      with:
+        command: test
 
     - name: test-release
       uses: actions-rs/cargo@v1
-      command: test
-      args: --release
+      with:
+        command: test
+        args: --release
