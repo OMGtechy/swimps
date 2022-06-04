@@ -11,3 +11,5 @@ FetchContent_MakeAvailable(libsamplerpreload)
 
 add_custom_target(swimps-cmake-dependencies
     DEPENDS samplerpreload)
+
+install(TARGETS samplerpreload samplerpreload-utils)
