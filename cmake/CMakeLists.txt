@@ -9,7 +9,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(libsamplerpreload)
 
-add_custom_target(swimps-cmake-dependencies
-    DEPENDS samplerpreload)
+FetchContent_Declare(
+    libcodeinjector
+    GIT_REPOSITORY https://github.com/OMGtechy/libcodeinjector.git
+    GIT_TAG 3ac55936df8227992c5b4bd0c84d771c31624cad
+)
+FetchContent_MakeAvailable(libcodeinjector)
 
-install(TARGETS samplerpreload samplerpreload-utils)
+add_custom_target(swimps-cmake-dependencies
+    DEPENDS samplerpreload codeinjector)
+
+install(TARGETS samplerpreload samplerpreload-utils codeinjector)
