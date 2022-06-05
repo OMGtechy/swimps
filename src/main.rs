@@ -16,15 +16,21 @@ fn main() {
     ];
 
     let dummy_arg_ptrs = dummy_args.map(|arg| arg.as_ptr());
-    let dummy_program = CString::new("testprog").unwrap();
-    let dummy_lib = CString::new("testlib").unwrap();
+    let program = CString::new(args.target_program()).unwrap();
+
+    let mut lib = std::env::current_exe().unwrap();
+    lib.pop();
+    lib.push("lib");
+    lib.push("libsamplerpreload.so");
+    let lib = CString::new(lib.as_path().to_str().unwrap()).unwrap();
+    println!("{:?}", lib);
 
     unsafe {
         codeinjector_inject_library(
-            dummy_program.as_ptr(),
+            program.as_ptr(),
             dummy_arg_ptrs.as_ptr(),
             dummy_arg_ptrs.len(),
-            dummy_lib.as_ptr()
+            lib.as_ptr()
         );
     }
 }
