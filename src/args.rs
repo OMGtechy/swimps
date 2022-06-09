@@ -23,7 +23,7 @@ impl Args {
 
     pub fn target_program_args(&self) -> Option<&str> {
         match &self.target_program_args {
-            Some(s) => Some(&s),
+            Some(s) => Some(s),
             None => None
         }
     }
