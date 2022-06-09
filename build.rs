@@ -13,5 +13,6 @@ fn main() {
 
     println!("cargo:rustc-link-search=native={}", dst.display());
     println!("cargo:rustc-link-lib=codeinjector");
+    println!("cargo:rustc-link-lib=samplerpreload-utils");
     println!("cargo:rustc-link-lib=stdc++");
 }
