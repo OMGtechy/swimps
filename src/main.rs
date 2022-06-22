@@ -15,13 +15,19 @@ extern "C" {
 
 fn main() {
     let args = args::Args::parse();
-    let dummy_args = [
-        CString::new("a").unwrap(),
-        CString::new("b").unwrap(),
-        CString::new("c").unwrap()
-    ];
+    let target_program_args =
+        [
+            // Prepend the program name as the first arg
+            vec![args.target_program()],
+            args.target_program_args()
+                .iter()
+                .map(|arg| arg.as_str())
+                .collect::<Vec<_>>()
+        ]
+        .concat();
 
-    let dummy_arg_ptrs = dummy_args.map(|arg| arg.as_ptr());
+    let target_program_args: Vec<_> = target_program_args.iter().map(|arg| CString::new(*arg).unwrap()).collect();
+    let target_program_arg_ptrs: Vec<_> = target_program_args.iter().map(|arg| arg.as_ptr()).collect();
     let program = CString::new(args.target_program()).unwrap();
 
     let mut lib = std::env::current_exe().unwrap();
@@ -41,8 +47,8 @@ fn main() {
 
         codeinjector_inject_library(
             program.as_ptr(),
-            dummy_arg_ptrs.as_ptr(),
-            dummy_arg_ptrs.len(),
+            target_program_arg_ptrs.as_ptr(),
+            target_program_arg_ptrs.len(),
             lib.as_ptr()
         );
     }
