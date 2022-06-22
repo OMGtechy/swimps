@@ -6,6 +6,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-20.04
     steps:
+    - name: Install packages
+      run: sudo apt install gcc-10=10.3.0-1ubuntu1~20.04 g++-10=10.3.0-1ubuntu1~20.04 libunwind-dev=1.2.1-9build1
+
     - uses: actions/checkout@v2
 
     - name: toolchain
