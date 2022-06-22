@@ -9,7 +9,7 @@ pub struct Args {
     target_program: String,
 
     #[clap()]
-    target_program_args: Option<String>
+    target_program_args: Vec<String>
 }
 
 impl Args {
@@ -21,11 +21,8 @@ impl Args {
         &self.target_program
     }
 
-    pub fn target_program_args(&self) -> Option<&str> {
-        match &self.target_program_args {
-            Some(s) => Some(s),
-            None => None
-        }
+    pub fn target_program_args(&self) -> &Vec<String> {
+        &self.target_program_args
     }
 
     pub fn parse() -> Args {
@@ -58,11 +55,16 @@ mod tests {
             "--trace-file",
             "hi",
             "echo",
-            "bingo!"
+            "bingo!",
+            "bango..."
         ].iter());
     
         assert_eq!("hi", args.trace_file());
         assert_eq!("echo", args.target_program());
-        assert_eq!(Some("bingo!"), args.target_program_args());
+
+        let target_program_args = args.target_program_args();
+        assert_eq!(2, target_program_args.len());
+        assert_eq!("bingo!", target_program_args[0]);
+        assert_eq!("bango...", target_program_args[1]);
     }
 }
