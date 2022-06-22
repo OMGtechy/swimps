@@ -22,7 +22,7 @@ fn main() {
             args.target_program_args()
                 .iter()
                 .map(|arg| arg.as_str())
-                .collect::<Vec<_>>()
+                .collect()
         ]
         .concat();
 
