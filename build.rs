@@ -4,6 +4,8 @@ use cmake::Config;
 
 fn main() {
     let mut dst = Config::new("cmake")
+        .configure_arg("-DCMAKE_C_COMPILER=gcc-10")
+        .configure_arg("-DCMAKE_CXX_COMPILER=g++-10")
         .out_dir(
             Path::new(&env::var("OUT_DIR").unwrap()).parent().unwrap()
                                                     .parent().unwrap()
