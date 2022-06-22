@@ -29,7 +29,6 @@ fn main() {
     lib.push("lib");
     lib.push("libsamplerpreload.so");
     let lib = CString::new(lib.as_path().to_str().unwrap()).unwrap();
-    println!("{:?}", lib);
 
     let trace_file_path = CString::new(args.trace_file()).unwrap(); 
 
