@@ -80,6 +80,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fork"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57b4f1a740392e495821244cc1658d86496ac6e67a47da67e243ed401b937717"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -182,6 +191,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "cmake",
+ "fork",
 ]
 
 [[package]]
