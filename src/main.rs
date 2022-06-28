@@ -12,12 +12,8 @@ use nix::unistd::Pid;
 fn main() {
     let args = Args::parse();
     match fork() {
-        Ok(Fork::Parent(child_pid)) => { parent(Pid::from_raw(child_pid)) },
+        Ok(Fork::Parent(child_pid)) => { parent(args, Pid::from_raw(child_pid)) },
         Ok(Fork::Child) => { child(&args) },
         Err(error) => { println!("Error {} on fork.", error) }
-    }
-
-    if args.tui() {
-        tui::run(args);
     }
 }
