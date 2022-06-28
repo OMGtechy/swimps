@@ -1,9 +1,11 @@
 use clap::Parser;
 
+static mut DEFAULT_TRACE_FILE_NAME: Option<String> = None;
+
 #[derive(Parser, Debug)]
 pub struct Args {
     #[clap(long)]
-    trace_file: String,
+    trace_file: Option<String>,
 
     #[clap(long)]
     tui: bool,
@@ -17,7 +19,20 @@ pub struct Args {
 
 impl Args {
     pub fn trace_file(&self) -> &str {
-        &self.trace_file
+        match &self.trace_file {
+            Some(trace_file) => trace_file,
+            None => {
+                unsafe {
+                    match &DEFAULT_TRACE_FILE_NAME {
+                        Some(name) => name,
+                        None => {
+                            DEFAULT_TRACE_FILE_NAME = Some(generate_trace_file_name(self));
+                            DEFAULT_TRACE_FILE_NAME.as_ref().unwrap().as_str()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn tui(&self) -> bool {
@@ -35,6 +50,14 @@ impl Args {
     pub fn parse() -> Args {
         Parser::parse()
     }
+}
+
+fn generate_trace_file_name(args: &Args) -> String {
+    format!(
+        "{}-{}.trace",
+        args.target_program().split(['\\', '/']).last().unwrap(),
+        chrono::Local::now().format("%F-%H-%M-%S")
+    )
 }
 
 // TODO: should this go in another file?

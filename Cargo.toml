@@ -12,6 +12,7 @@ fork = "0.1.19"
 nix = { version = "0.24.1", features = ["process"] }
 tui = "0.18.0"
 crossterm = "0.23.2"
+chrono = "0.4.19"
 
 [build-dependencies]
 cmake = "0.1.48"
