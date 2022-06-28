@@ -5,6 +5,9 @@ pub struct Args {
     #[clap(long)]
     trace_file: String,
 
+    #[clap(long)]
+    tui: bool,
+
     #[clap()]
     target_program: String,
 
@@ -15,6 +18,10 @@ pub struct Args {
 impl Args {
     pub fn trace_file(&self) -> &str {
         &self.trace_file
+    }
+
+    pub fn tui(&self) -> bool {
+        self.tui
     }
 
     pub fn target_program(&self) -> &str {
@@ -46,6 +53,7 @@ mod tests {
     
         assert_eq!("hi", args.trace_file());
         assert_eq!("echo", args.target_program());
+        assert!(!args.tui());
     }
 
     #[test]
@@ -66,5 +74,21 @@ mod tests {
         assert_eq!(2, target_program_args.len());
         assert_eq!("bingo!", target_program_args[0]);
         assert_eq!("bango...", target_program_args[1]);
+        assert!(!args.tui());
+    }
+
+    #[test]
+    fn tui() {
+        let args = Args::parse_from([
+            "test",
+            "--trace-file",
+            "foobar",
+            "--tui",
+            "blah"
+        ]);
+
+        assert_eq!("foobar", args.trace_file());
+        assert_eq!("blah", args.target_program());
+        assert!(args.tui());
     }
 }

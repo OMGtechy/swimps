@@ -1,6 +1,7 @@
 pub mod args;
 pub mod child;
 pub mod parent;
+pub mod tui;
 
 use args::Args;
 use child::child;
@@ -14,5 +15,9 @@ fn main() {
         Ok(Fork::Parent(child_pid)) => { parent(Pid::from_raw(child_pid)) },
         Ok(Fork::Child) => { child(&args) },
         Err(error) => { println!("Error {} on fork.", error) }
-    } 
+    }
+
+    if args.tui() {
+        tui::run(args);
+    }
 }
