@@ -5,7 +5,7 @@ include(FetchContent)
 FetchContent_Declare(
     libsamplerpreload
     GIT_REPOSITORY https://github.com/OMGtechy/libsamplerpreload.git
-    GIT_TAG cc812200dce8f9564db5d6ce9c2b619facb4e4a7
+    GIT_TAG db5f4d8f56a32fcd733e8cf24acbf989fae9a832
 )
 FetchContent_MakeAvailable(libsamplerpreload)
 
