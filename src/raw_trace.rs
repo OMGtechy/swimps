@@ -12,11 +12,11 @@ extern "C" {
     fn samplerpreload_sample_get_backtrace_entry(sample: *const c_void, n: usize) -> u64;
 }
 
-#[derive(Debug)]
-pub struct InstructionPointer(u64);
+#[derive(Debug, PartialEq, Eq)]
+pub struct InstructionPointer(pub u64);
 
 #[derive(Debug)]
-pub struct Backtrace(Vec<InstructionPointer>);
+pub struct Backtrace(pub Vec<InstructionPointer>);
 
 #[derive(Debug)]
 pub struct Timestamp {

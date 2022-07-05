@@ -1,4 +1,4 @@
-use crate::args::Args;
+use crate::{args::Args, optimised_trace::OptimisedTrace};
 use crate::raw_trace::RawTrace;
 
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{self, Event::Key, KeyCode, KeyModifiers}};
@@ -6,13 +6,17 @@ use std::time::Duration;
 use tui::{Terminal, backend::CrosstermBackend, widgets::{Block, Borders, Row, Table, TableState}, layout::Constraint};
 
 pub fn run(args: Args) {
-    let trace = RawTrace::from(
+    let raw_trace = RawTrace::from(
         std::fs::read(
             args.trace_file()
         ).unwrap_or_else(|_| panic!("Could not read trace file {}", args.trace_file()))
     );
 
-    println!("{:?}", trace);
+    println!("{:?}\n- {:?}\n", raw_trace.samples().iter().map(|s| s.backtrace.0.len()).collect::<Vec<_>>(), raw_trace);
+
+    let optimised_trace = OptimisedTrace::new(raw_trace);
+
+    println!("{:?}\n- {:?}\n", optimised_trace.stack_frames.len(), optimised_trace);
 
     enable_raw_mode().expect("Cannot enable raw mode");
     let mut stdout = std::io::stdout();
