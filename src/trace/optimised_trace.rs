@@ -1,6 +1,6 @@
 use std::{collections::HashSet, hash::Hash};
 
-use crate::raw_trace::{RawTrace, InstructionPointer, Timestamp};
+use crate::trace::raw_trace::{RawTrace, InstructionPointer, Timestamp};
 
 #[derive(Debug)]
 pub struct StackFrameID(u64);

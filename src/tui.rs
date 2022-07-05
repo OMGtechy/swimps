@@ -1,5 +1,4 @@
-use crate::{args::Args, optimised_trace::OptimisedTrace};
-use crate::raw_trace::RawTrace;
+use crate::{args::Args, trace::{raw_trace::RawTrace, optimised_trace::OptimisedTrace}};
 
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{self, Event::Key, KeyCode, KeyModifiers}};
 use std::time::Duration;

@@ -1,9 +1,8 @@
 pub mod args;
 pub mod child;
-pub mod optimised_trace;
 pub mod parent;
-pub mod raw_trace;
 pub mod tui;
+pub mod trace;
 
 use args::Args;
 use child::child;
