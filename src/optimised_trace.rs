@@ -12,9 +12,21 @@ pub struct StackFrame {
     // TODO: add function name, line number...
 }
 
-// TODO: remove pub
-#[derive(Debug)]
-pub struct StackFrameInstructionPointerEqualityWrapper(pub StackFrame);
+impl PartialEq for StackFrame {
+    fn eq(&self, other: &Self) -> bool {
+        self.id.0 == other.id.0
+    }
+}
+
+impl Eq for StackFrame {}
+
+impl Hash for StackFrame {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.0.hash(state)
+    }
+}
+
+struct StackFrameInstructionPointerEqualityWrapper(pub StackFrame);
 
 impl PartialEq for StackFrameInstructionPointerEqualityWrapper {
     fn eq(&self, other: &Self) -> bool {
@@ -39,8 +51,21 @@ pub struct OptimisedBacktrace {
     stack_frames: Vec<StackFrameID>
 }
 
-#[derive(Debug)]
-pub struct BacktraceStackFramesEqualityWrapper(pub OptimisedBacktrace);
+impl PartialEq for OptimisedBacktrace {
+    fn eq(&self, other: &Self) -> bool {
+        self.id.0 == other.id.0
+    }
+}
+
+impl Eq for OptimisedBacktrace {}
+
+impl Hash for OptimisedBacktrace {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.0.hash(state)
+    }
+}
+
+struct BacktraceStackFramesEqualityWrapper(pub OptimisedBacktrace);
 
 impl PartialEq for BacktraceStackFramesEqualityWrapper {
     fn eq(&self, other: &Self) -> bool {
@@ -64,9 +89,8 @@ pub struct OptimisedSample {
 
 #[derive(Debug)]
 pub struct OptimisedTrace {
-    // TODO: remove wrapper type
-    pub stack_frames: HashSet::<StackFrameInstructionPointerEqualityWrapper>,
-    pub backtraces: HashSet::<BacktraceStackFramesEqualityWrapper>,
+    pub stack_frames: HashSet::<StackFrame>,
+    pub backtraces: HashSet::<OptimisedBacktrace>,
     pub samples: Vec<OptimisedSample>    
 }
 
@@ -115,7 +139,11 @@ impl OptimisedTrace {
                 }
             });
         }
-        
-        OptimisedTrace { stack_frames , samples, backtraces }
+
+        OptimisedTrace {
+            stack_frames: stack_frames.drain().map(|wrapper| wrapper.0).collect(),
+            samples,
+            backtraces: backtraces.drain().map(|wrapper| wrapper.0).collect()
+        }
     }
 }
