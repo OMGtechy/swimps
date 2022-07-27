@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use crate::trace::shared::instruction_pointer::InstructionPointer;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct StackFrameID(pub u64);
 
 #[derive(Debug)]
@@ -13,7 +13,7 @@ pub struct StackFrame {
 
 impl PartialEq for StackFrame {
     fn eq(&self, other: &Self) -> bool {
-        self.id.0 == other.id.0
+        self.id == other.id
     }
 }
 
@@ -21,6 +21,6 @@ impl Eq for StackFrame {}
 
 impl Hash for StackFrame {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.0.hash(state)
+        self.id.hash(state)
     }
 }
