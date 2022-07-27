@@ -1,5 +1,7 @@
 use std::os::raw::{c_void, c_uchar};
 
+use crate::trace::shared::{instruction_pointer::InstructionPointer, timestamp::Timestamp};
+
 extern "C" {
     fn samplerpreload_trace_from(data: *const c_uchar, data_length: usize) -> *const c_void;
     fn samplerpreload_trace_dtor(trace: *const c_void);
@@ -12,17 +14,8 @@ extern "C" {
     fn samplerpreload_sample_get_backtrace_entry(sample: *const c_void, n: usize) -> u64;
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct InstructionPointer(pub u64);
-
 #[derive(Debug)]
 pub struct Backtrace(pub Vec<InstructionPointer>);
-
-#[derive(Debug)]
-pub struct Timestamp {
-    pub seconds: i64,
-    pub nanoseconds: i64
-}
 
 #[derive(Debug)]
 pub struct Sample {

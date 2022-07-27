@@ -1,30 +1,8 @@
 use std::{collections::HashSet, hash::Hash};
 
-use crate::trace::raw_trace::{RawTrace, InstructionPointer, Timestamp};
-
-#[derive(Debug)]
-pub struct StackFrameID(u64);
-
-#[derive(Debug)]
-pub struct StackFrame {
-    pub id: StackFrameID,
-    pub instruction_pointer: InstructionPointer,
-    // TODO: add function name, line number...
-}
-
-impl PartialEq for StackFrame {
-    fn eq(&self, other: &Self) -> bool {
-        self.id.0 == other.id.0
-    }
-}
-
-impl Eq for StackFrame {}
-
-impl Hash for StackFrame {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.0.hash(state)
-    }
-}
+use crate::trace::optimised::{backtrace::{Backtrace, BacktraceID}, sample::Sample, stack_frame::{StackFrame, StackFrameID}};
+use crate::trace::raw_trace::RawTrace;
+use crate::trace::shared::{instruction_pointer::InstructionPointer, timestamp::Timestamp};
 
 struct StackFrameInstructionPointerEqualityWrapper(pub StackFrame);
 
@@ -42,30 +20,7 @@ impl Hash for StackFrameInstructionPointerEqualityWrapper {
     }
 }
 
-#[derive(Debug)]
-pub struct BacktraceID(u64);
-
-#[derive(Debug)]
-pub struct OptimisedBacktrace {
-    id: BacktraceID,
-    stack_frames: Vec<StackFrameID>
-}
-
-impl PartialEq for OptimisedBacktrace {
-    fn eq(&self, other: &Self) -> bool {
-        self.id.0 == other.id.0
-    }
-}
-
-impl Eq for OptimisedBacktrace {}
-
-impl Hash for OptimisedBacktrace {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.0.hash(state)
-    }
-}
-
-struct BacktraceStackFramesEqualityWrapper(pub OptimisedBacktrace);
+struct BacktraceStackFramesEqualityWrapper(pub Backtrace);
 
 impl PartialEq for BacktraceStackFramesEqualityWrapper {
     fn eq(&self, other: &Self) -> bool {
@@ -82,31 +37,25 @@ impl Hash for BacktraceStackFramesEqualityWrapper {
 }
 
 #[derive(Debug)]
-pub struct OptimisedSample {
-    backtrace: BacktraceID,
-    timestamp: Timestamp
-}
-
-#[derive(Debug)]
-pub struct OptimisedTrace {
+pub struct Trace {
     pub stack_frames: HashSet::<StackFrame>,
-    pub backtraces: HashSet::<OptimisedBacktrace>,
-    pub samples: Vec<OptimisedSample>    
+    pub backtraces: HashSet::<Backtrace>,
+    pub samples: Vec<Sample>    
 }
 
-impl OptimisedTrace {
-    pub fn new(raw_trace: RawTrace) -> OptimisedTrace {
+impl Trace {
+    pub fn new(raw_trace: RawTrace) -> Trace {
         let mut stack_frames = HashSet::<StackFrameInstructionPointerEqualityWrapper>::new();
         let mut next_stack_frame_id = StackFrameID(1);
 
         let mut backtraces = HashSet::<BacktraceStackFramesEqualityWrapper>::new();
         let mut next_backtrace_id = BacktraceID(1);
 
-        let mut samples = Vec::<OptimisedSample>::new();
+        let mut samples = Vec::<Sample>::new();
 
         for raw_sample in raw_trace.samples() {
             let mut new_backtrace = BacktraceStackFramesEqualityWrapper(
-                OptimisedBacktrace { id: BacktraceID(next_backtrace_id.0), stack_frames: vec![] }
+                Backtrace { id: BacktraceID(next_backtrace_id.0), stack_frames: vec![] }
             );
 
             raw_sample.backtrace.0.iter().for_each(|ip| {
@@ -126,7 +75,7 @@ impl OptimisedTrace {
                 });
             });
 
-            samples.push(OptimisedSample {
+            samples.push(Sample {
                 timestamp: Timestamp { seconds: raw_sample.timestamp.seconds, nanoseconds: raw_sample.timestamp.nanoseconds },
                 backtrace: match backtraces.get(&new_backtrace) {
                     None => {
@@ -140,7 +89,7 @@ impl OptimisedTrace {
             });
         }
 
-        OptimisedTrace {
+        Trace {
             stack_frames: stack_frames.drain().map(|wrapper| wrapper.0).collect(),
             samples,
             backtraces: backtraces.drain().map(|wrapper| wrapper.0).collect()
