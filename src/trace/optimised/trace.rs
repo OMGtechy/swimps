@@ -1,7 +1,7 @@
 use std::{collections::HashSet, hash::Hash};
 
 use crate::trace::optimised::{backtrace::{Backtrace, BacktraceID}, sample::Sample, stack_frame::{StackFrame, StackFrameID}};
-use crate::trace::raw_trace::RawTrace;
+use crate::trace::raw::trace::Trace as RawTrace;
 use crate::trace::shared::{instruction_pointer::InstructionPointer, timestamp::Timestamp};
 
 struct StackFrameInstructionPointerEqualityWrapper(pub StackFrame);

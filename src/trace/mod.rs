@@ -1,3 +1,3 @@
 pub mod optimised;
-pub mod raw_trace;
+pub mod raw;
 pub mod shared;

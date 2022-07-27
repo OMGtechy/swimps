@@ -1,5 +1,7 @@
 use std::os::raw::{c_void, c_uchar};
 
+use crate::trace::raw::backtrace::Backtrace;
+use crate::trace::raw::sample::Sample;
 use crate::trace::shared::{instruction_pointer::InstructionPointer, timestamp::Timestamp};
 
 extern "C" {
@@ -15,21 +17,12 @@ extern "C" {
 }
 
 #[derive(Debug)]
-pub struct Backtrace(pub Vec<InstructionPointer>);
-
-#[derive(Debug)]
-pub struct Sample {
-    pub backtrace: Backtrace,
-    pub timestamp: Timestamp
-}
-
-#[derive(Debug)]
-pub struct RawTrace {
+pub struct Trace {
     pub samples: Vec<Sample>
 }
 
-impl RawTrace {
-    pub fn from(data: Vec<u8>) -> RawTrace {
+impl Trace {
+    pub fn from(data: Vec<u8>) -> Trace {
         let c_trace = unsafe { samplerpreload_trace_from(data.as_ptr(), data.len()) };
         let c_sample_count = unsafe { samplerpreload_trace_get_sample_count(c_trace) };
 
@@ -61,7 +54,7 @@ impl RawTrace {
             )
         };
 
-        let result = RawTrace {
+        let result = Trace {
             samples:
                 c_samples.map(
                     |c_sample| Sample {

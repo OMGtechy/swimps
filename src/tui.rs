@@ -1,4 +1,4 @@
-use crate::{args::Args, trace::{raw_trace::RawTrace, optimised::trace::Trace}};
+use crate::{args::Args, trace::{raw::trace::Trace as RawTrace, optimised::trace::Trace as OptimisedTrace}};
 
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{self, Event::Key, KeyCode, KeyModifiers}};
 use std::time::Duration;
@@ -13,7 +13,7 @@ pub fn run(args: Args) {
 
     println!("{:?}\n- {:?}\n", raw_trace.samples().iter().map(|s| s.backtrace.0.len()).collect::<Vec<_>>(), raw_trace);
 
-    let optimised_trace = Trace::new(raw_trace);
+    let optimised_trace = OptimisedTrace::new(raw_trace);
 
     println!("{:?}\n- {:?}\n", optimised_trace.stack_frames.len(), optimised_trace);
 
