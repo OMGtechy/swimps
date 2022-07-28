@@ -40,7 +40,7 @@ impl Hash for BacktraceStackFramesEqualityWrapper {
 pub struct Trace {
     pub stack_frames: HashSet::<StackFrame>,
     pub backtraces: HashSet::<Backtrace>,
-    pub samples: Vec<Sample>    
+    pub samples: Vec<Sample>
 }
 
 impl Trace {
