@@ -43,6 +43,22 @@ pub struct Trace {
     pub samples: Vec<Sample>
 }
 
+fn get_or_insert_stack_frame(to_insert: StackFrameInstructionPointerEqualityWrapper,
+                                stack_frames: &mut HashSet::<StackFrameInstructionPointerEqualityWrapper>,
+                                next_stack_frame_id: &mut StackFrameID) -> StackFrameID {
+    match stack_frames.get(&to_insert) {
+        None => {
+            let id = to_insert.0.id.0;
+            stack_frames.insert(to_insert);
+            *next_stack_frame_id = StackFrameID(
+                next_stack_frame_id.0.checked_add(1).expect("Stack frame ID overflowed")
+            );
+            StackFrameID(id)
+        }
+        Some(sf) => StackFrameID(sf.0.id.0)
+    }
+}
+
 impl Trace {
     pub fn new(raw_trace: RawTrace) -> Trace {
         let mut stack_frames = HashSet::<StackFrameInstructionPointerEqualityWrapper>::new();
@@ -59,20 +75,14 @@ impl Trace {
             );
 
             raw_sample.backtrace.0.iter().for_each(|ip| {
-                let new_stack_frame = StackFrameInstructionPointerEqualityWrapper(StackFrame {
-                    id: StackFrameID(next_stack_frame_id.0),
-                    instruction_pointer: InstructionPointer(ip.0)
-                });
-
-                new_backtrace.0.stack_frames.push(match stack_frames.get(&new_stack_frame) {
-                    None => {
-                        let id = new_stack_frame.0.id.0;
-                        stack_frames.insert(new_stack_frame);
-                        next_stack_frame_id = StackFrameID(next_stack_frame_id.0.checked_add(1).expect("Stack frame ID overflowed"));
-                        StackFrameID(id)
-                    }
-                    Some(sf) => StackFrameID(sf.0.id.0)
-                });
+                new_backtrace.0.stack_frames.push(
+                    get_or_insert_stack_frame(
+                        StackFrameInstructionPointerEqualityWrapper(StackFrame {
+                            id: StackFrameID(next_stack_frame_id.0),
+                            instruction_pointer: InstructionPointer(ip.0)
+                        }),
+                        &mut stack_frames,
+                        &mut next_stack_frame_id));
             });
 
             samples.push(Sample {
