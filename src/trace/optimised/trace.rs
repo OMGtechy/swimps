@@ -70,20 +70,20 @@ impl Trace {
         let mut samples = Vec::<Sample>::new();
 
         for raw_sample in raw_trace.samples() {
-            let mut new_backtrace = BacktraceStackFramesEqualityWrapper(
-                Backtrace { id: BacktraceID(next_backtrace_id.0), stack_frames: vec![] }
+            let new_backtrace = BacktraceStackFramesEqualityWrapper(
+                Backtrace {
+                    id: BacktraceID(next_backtrace_id.0),
+                    stack_frames: raw_sample.backtrace.0.iter().map(|ip|
+                        get_or_insert_stack_frame(
+                            StackFrameInstructionPointerEqualityWrapper(StackFrame {
+                                id: StackFrameID(next_stack_frame_id.0),
+                                instruction_pointer: InstructionPointer(ip.0)
+                            }),
+                            &mut stack_frames,
+                            &mut next_stack_frame_id)
+                    ).collect()
+                }
             );
-
-            raw_sample.backtrace.0.iter().for_each(|ip| {
-                new_backtrace.0.stack_frames.push(
-                    get_or_insert_stack_frame(
-                        StackFrameInstructionPointerEqualityWrapper(StackFrame {
-                            id: StackFrameID(next_stack_frame_id.0),
-                            instruction_pointer: InstructionPointer(ip.0)
-                        }),
-                        &mut stack_frames,
-                        &mut next_stack_frame_id));
-            });
 
             samples.push(Sample {
                 timestamp: Timestamp { seconds: raw_sample.timestamp.seconds, nanoseconds: raw_sample.timestamp.nanoseconds },
