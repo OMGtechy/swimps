@@ -1,4 +1,4 @@
-use crate::{args::Args, trace::{raw::trace::Trace as RawTrace, optimised::trace::Trace as OptimisedTrace}};
+use crate::{args::Args, analysis::backtrace_by_frequency, trace::{raw::trace::Trace as RawTrace, optimised::trace::Trace as OptimisedTrace}};
 
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{self, Event::Key, KeyCode, KeyModifiers}};
 use std::time::Duration;
@@ -16,6 +16,10 @@ pub fn run(args: Args) {
     let optimised_trace = OptimisedTrace::new(raw_trace);
 
     println!("{:?}\n- {:?}\n", optimised_trace.stack_frames.len(), optimised_trace);
+
+    let bbf = backtrace_by_frequency(&optimised_trace);
+
+    println!("bbf {:?}", bbf);
 
     enable_raw_mode().expect("Cannot enable raw mode");
     let mut stdout = std::io::stdout();

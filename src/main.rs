@@ -1,4 +1,5 @@
 pub mod args;
+pub mod analysis;
 pub mod child;
 pub mod parent;
 pub mod tui;
