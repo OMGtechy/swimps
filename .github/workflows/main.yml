@@ -1,41 +1,39 @@
 name: Build and test
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  
+on: [push]
+
 jobs:
   build-and-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-20.04]
-        c-compiler: [gcc-10, clang]
-        cxx-compiler: [g++-10, clang++]
-        cmake-build-type: [DEBUG, RELEASE]
-        exclude:
-          - { c-compiler: clang, cxx-compiler: g++-10 }
-          - { c-compiler: gcc-10, cxx-compiler: clang++  }
-
+    runs-on: ubuntu-20.04
     steps:
     - name: Install packages
-      run: sudo apt install gcc-10 g++-10 clang libunwind-dev libdwarf-dev libelf-dev
+      run: sudo apt install gcc-10=10.3.0-1ubuntu1~20.04 g++-10=10.3.0-1ubuntu1~20.04 libunwind-dev=1.2.1-9build1
 
     - uses: actions/checkout@v2
 
-    - name: build
-      uses: lukka/run-cmake@v2.5
+    - name: toolchain
+      uses: actions-rs/toolchain@v1
       with:
-        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-        cmakeBuildType: ${{ matrix.cmake-build.type }}
-        buildDirectory: ${{ github.workspace }}/build
-      env:
-        CC:   ${{ matrix.c-compiler }}
-        CXX:  ${{ matrix.cxx-compiler }}
-        
-    - name: test
-      working-directory: ${{ github.workspace }}/build
-      run: ctest -VV
+        toolchain: stable
+
+    - name: build-debug
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+
+    - name: build-release
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+
+    - name: test-debug
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+
+    - name: test-release
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --release
