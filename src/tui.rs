@@ -35,21 +35,18 @@ pub fn run(args: Args) {
         terminal.draw(|frame| {
 
             let table = Table::new(
-                vec![
-                    Row::new(vec!["a", "b", "c"]),
-                    Row::new(vec!["d", "e", "f"]),
-                    Row::new(vec!["h", "i", "j"])
-                ]
+                bbf.iter()
+                   .map(|(k, v)| Row::new(vec![k.0.to_string(), v.to_string()]))
+                   .collect::<Vec<_>>()
             )
-            .header(Row::new(vec!["h1", "h2", "h3"].into_iter()))
+            .header(Row::new(vec!["Backtrace ID", "Samples"].into_iter()))
             .block(Block::default()
                 .title(format!(" swimps ─ {} ─ {} ", args.target_program(), args.trace_file()))
                 .borders(Borders::ALL),
             )
             .widths(&[
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 2),
+                Constraint::Ratio(1, 2),
             ])
             .highlight_symbol("> ");
 
