@@ -1,7 +1,7 @@
 use crate::{args::Args, analysis::backtrace_by_frequency, trace::{raw::trace::Trace as RawTrace, optimised::trace::Trace as OptimisedTrace}};
 
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{self, Event::Key, KeyCode, KeyModifiers}};
-use std::time::Duration;
+use std::{time::Duration, cmp::min};
 use tui::{Terminal, backend::CrosstermBackend, widgets::{Block, Borders, Row, Table, TableState}, layout::Constraint};
 
 pub fn run(args: Args) {
@@ -63,8 +63,12 @@ pub fn run(args: Args) {
                     KeyCode::Char('d') | KeyCode::Char('c') if key_event.modifiers.contains(KeyModifiers::CONTROL) => break,
                     KeyCode::Char('q') => break,
                     KeyCode::Up => table_state.select(table_state.selected().map(|n| n.saturating_sub(1))),
-                    // TODO: will want to limit this to number of rows once real data is in
-                    KeyCode::Down => table_state.select(table_state.selected().map(|n| n.saturating_add(1))),
+                    KeyCode::Down => table_state.select(
+                        min(
+                            Some(bbf.len().saturating_sub(1)),
+                            table_state.selected().map(|n| n.saturating_add(1))
+                        )
+                    ),
                     _ => (),
                 }
             }
